@@ -80,14 +80,6 @@ Helpers and assertions for [BATS](https://github.com/bats-core/bats-core) testin
    }
    ```
 
-## Maintenance
-
-    npm install
-
-    npm run lint
-
-    npm run test
-
 ## Why not `bats-assert`, `bats-file`, `bats-support`
 
 The goal is to merge is to eventually merge this package with [bats-assert](https://github.com/bats-core/bats-assert).
@@ -97,3 +89,19 @@ However:
    projects and were waiting for BATS to provide support for libraries
    functionality to be extracted into a standalone package.
 2. Those packages have outdated version constraints which leads to conflicts.
+
+## Maintenance
+
+    npm install
+
+    npm run lint
+
+    npm run test
+
+### Publishing
+
+    npm version minor
+
+    git push
+
+    npm publish
