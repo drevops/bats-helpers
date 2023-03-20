@@ -31,3 +31,8 @@ fi
 
 # Load library.
 load '../load.bash'
+
+setup() {
+  # Setup command mocking.
+  setup_mock
+}
