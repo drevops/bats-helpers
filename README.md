@@ -58,13 +58,13 @@ Helpers and assertions for [BATS](https://github.com/bats-core/bats-core) testin
 1. Install as NPM package.
 
    ```bash
-   npm install -D @drevops/bats-helpers
+   npm install -D bats-helpers@npm:@drevops/bats-helpers
    ```
 
 2. Create a `_loader.bash` file next to your BATS tests with content:
 
    ```bash
-   export BATS_LIB_PATH="${BATS_TEST_DIRNAME}/../node_modules/@drevops:${BATS_TEST_DIRNAME}/../node_modules"
+   export BATS_LIB_PATH="${BATS_TEST_DIRNAME}/../node_modules"
    bats_load_library bats-helpers
    ```
 
