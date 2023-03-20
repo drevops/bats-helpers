@@ -2,8 +2,8 @@
 Helpers and assertions for [BATS](https://github.com/bats-core/bats-core) testing.
 
 [![Tests](https://github.com/drevops/bats-helpers/actions/workflows/tests.yml/badge.svg)](https://github.com/drevops/bats-helpers/actions/workflows/tests.yml)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/drevops/behat-steps)
-![LICENSE](https://img.shields.io/github/license/drevops/behat-steps)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/drevops/bats-helpers)
+![LICENSE](https://img.shields.io/github/license/drevops/bats-helpers)
 
 ## Assertions
 
