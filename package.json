@@ -21,7 +21,7 @@
     "lint": "./lint.sh",
     "test": "bats tests"
   },
-  "devDependencies": {
+  "dependencies": {
     "bats": "^1"
   },
   "keywords": [
