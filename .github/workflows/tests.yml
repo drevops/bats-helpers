@@ -1,0 +1,24 @@
+name: Tests
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+    - name: Install Shellcheck
+      shell: bash
+      env:
+        SHELLCHECK_VERSION: 0.9.0
+      run: |
+        curl -L -o "/tmp/shellcheck-v${SHELLCHECK_VERSION}.tar.xz" "https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" \
+          && tar --xz -xvf "/tmp/shellcheck-v${SHELLCHECK_VERSION}.tar.xz" \
+          && mv "shellcheck-v${SHELLCHECK_VERSION}/shellcheck" "$HOME/.local/bin" \
+          && shellcheck --version
+    - run: npm install
+    - run: npm run lint
+    - run: git config --global user.name "Test user" && git config --global user.email "someone@example.com"
+    - run: BATS_LIB_PATH="$PWD/node_modules" npm test

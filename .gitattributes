@@ -1,0 +1,6 @@
+/.gitattributes       export-ignore
+/.gitignore           export-ignore
+/.github              export-ignore
+/.npmignore           export-ignore
+/lint.sh              export-ignore
+/tests                export-ignore
