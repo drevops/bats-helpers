@@ -2,6 +2,7 @@
 ##
 # Lint scripts.
 #
+# LCOV_EXCL_START
 
 set -e
 [ -n "${DREVOPS_DEBUG}" ] && set -x

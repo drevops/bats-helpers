@@ -32,6 +32,7 @@
     ],
     "scripts": {
         "lint": "./lint.sh",
-        "test": "bats tests"
+        "test": "bats tests",
+        "test:coverage": "kcov --clean --include-pattern=.bash --bash-parse-files-in-dir=. --exclude-path=node_modules,vendor,coverage coverage bats tests"
     }
 }
