@@ -19,6 +19,7 @@
 
 <p align="center"> Helpers and assertions for <a href="https://github.com/bats-core/bats-core">BATS</a> testing.
     <br>
+   <a href="https://behat-helpers.drevops.com">Documentation</a>  
 </p>
 
 ## Features
