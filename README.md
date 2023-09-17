@@ -19,7 +19,7 @@
 
 <p align="center"> Helpers and assertions for <a href="https://github.com/bats-core/bats-core">BATS</a> testing.
     <br>
-   <a href="https://behat-helpers.drevops.com">Documentation</a>  
+   <a href="https://behat-helpers.drevops.com">Documentation</a>
 </p>
 
 ## Features
@@ -64,6 +64,13 @@ However:
    projects and were waiting for BATS to provide support for libraries
    functionality to be extracted into a standalone package.
 2. Those packages have outdated version constraints which leads to conflicts.
+
+
+## Acknowledgments
+
+The mocking functionality is based on
+the [bats-mock](https://github.com/grayhemp/bats-mock) project.
+A special thank you to the contributors for their original work.
 
 ## Maintenance
 
