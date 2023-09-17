@@ -3,4 +3,5 @@
 /.github              export-ignore
 /.npmignore           export-ignore
 /lint.sh              export-ignore
+/docs                 export-ignore
 /tests                export-ignore
