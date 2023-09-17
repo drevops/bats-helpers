@@ -6,3 +6,40 @@ nav_order: 1
 
 # Introduction
 
+The `bats-helpers` package is an extension to the [BATS](ttps://github.com/bats-core/bats-core)
+core testing framework, offering enhanced functionality and a larger set of
+assertions and tests.
+
+## Features
+
+- [Assertions](assertions)
+- [Mocking](mocking)
+- [Helpers](helpers)
+
+
+## Installation
+
+```bash
+npm install -D bats-helpers@npm:@drevops/bats-helpers
+```
+
+## Usage
+
+1. Create a `_loader.bash` file next to your BATS tests with content:
+
+   ```bash
+   export BATS_LIB_PATH="${BATS_TEST_DIRNAME}/../node_modules"
+   bats_load_library bats-helpers
+   ```
+
+2. Use `load _loader.bash` in every BATS file:
+
+   ```bash
+   #!/usr/bin/env bats
+   load _loader
+
+   @test "My test" {
+     run ls
+     assert_success
+   }
+   ```

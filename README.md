@@ -50,7 +50,7 @@ npm install -D bats-helpers@npm:@drevops/bats-helpers
 
    @test "My test" {
      run ls
-     asser_success
+     assert_success
    }
    ```
 
