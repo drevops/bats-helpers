@@ -18,7 +18,15 @@ jobs:
         env:
           SHELLCHECK_OPTS: -e SC2223
           SHFMT_OPTS: -i 2 -ci -s -d
+      - run: sudo apt-get install -y kcov
       - uses: actions/setup-node@v3
       - run: npm install
       - run: git config --global user.name "Test user" && git config --global user.email "someone@example.com"
-      - run: BATS_LIB_PATH="$PWD/node_modules" npm test
+      - run: BATS_LIB_PATH="$PWD/node_modules" npm run test:coverage
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          directory: ./coverage
+          fail_ci_if_error: true

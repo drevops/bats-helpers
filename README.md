@@ -9,8 +9,8 @@
 
 [![GitHub Issues](https://img.shields.io/github/issues/drevops/bats-helpers.svg)](https://github.com/drevops/bats-helpers/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/drevops/bats-helpers.svg)](https://github.com/drevops/bats-helpers/pulls)
-[![Test](https://github.com/drevops/bats-helpers/actions/workflows/test.yml/badge.svg)](https://github.com/drevops/bats-helpers/actions/workflows/test.yml)
 [![Tests](https://github.com/drevops/bats-helpers/actions/workflows/tests.yml/badge.svg)](https://github.com/drevops/bats-helpers/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/drevops/bats-helpers/graph/badge.svg?token=O0ZYROWCCK)](https://codecov.io/gh/drevops/bats-helpers)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/drevops/bats-helpers)
 ![LICENSE](https://img.shields.io/github/license/drevops/bats-helpers)
 </div>
