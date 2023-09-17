@@ -177,11 +177,11 @@ mock_set_property() {
   local property_value="${3?'Property value must be specified'}"
   local n="$4"
 
-  if [[ "${property_value}" = '-' ]]; then
+  if [[ ${property_value} == '-' ]]; then
     property_value="$(cat -)"
   fi
 
-  if [[ -n "${n}" ]]; then
+  if [[ -n ${n} ]]; then
     echo -e "${property_value}" >"${mock}.${property_name}.${n}"
   else
     echo -e "${property_value}" >"${mock}.${property_name}"
@@ -203,11 +203,11 @@ mock_default_n() {
   call_num="$(cat ${mock}.call_num)"
   local n="${2:-${call_num}}"
 
-  if [[ "${n}" -eq 0 ]]; then
+  if [[ ${n} -eq 0 ]]; then
     n=1
   fi
 
-  if [[ "${n}" -gt "${call_num}" ]]; then
+  if [[ ${n} -gt ${call_num} ]]; then
     echo "$(basename $0): Mock must be called at least ${n} time(s)" >&2
     exit 1
   fi

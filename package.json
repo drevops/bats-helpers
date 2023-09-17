@@ -1,34 +1,37 @@
 {
-  "name": "@drevops/bats-helpers",
-  "version": "1.1.1",
-  "description": "Helpers and assertions for BATS testing.",
-  "license": "GPL-2.0-or-later",
-  "homepage": "https://github.com/drevops/bats-helpers",
-  "contributors": [
-    "Alex Skrypnyk <alex@drevops.com>"
-  ],
-  "repository": "github:drevops/bats-helpers",
-  "bugs": "https://github.com/drevops/bats-helpers/issues",
-  "directories": {
-    "lib": "src",
-    "test": "tests"
-  },
-  "files": [
-    "src",
-    "load.bash"
-  ],
-  "scripts": {
-    "lint": "./lint.sh",
-    "test": "bats tests"
-  },
-  "dependencies": {
-    "bats": "^1"
-  },
-  "keywords": [
-    "bats",
-    "bash",
-    "shell",
-    "test",
-    "assertions"
-  ]
+    "name": "@drevops/bats-helpers",
+    "version": "1.1.1",
+    "description": "Helpers and assertions for BATS testing.",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://github.com/drevops/bats-helpers",
+    "author": {
+        "name": "Alex Skrypnyk",
+        "email": "alex@drevops.com",
+        "url": "https://bats-helpers.drevops.com"
+    },
+    "contributors": [],
+    "repository": "github:drevops/bats-helpers",
+    "bugs": "https://github.com/drevops/bats-helpers/issues",
+    "directories": {
+        "lib": "src",
+        "test": "tests"
+    },
+    "files": [
+        "src",
+        "load.bash"
+    ],
+    "dependencies": {
+        "bats": "^1"
+    },
+    "keywords": [
+        "bats",
+        "bash",
+        "shell",
+        "test",
+        "assertions"
+    ],
+    "scripts": {
+        "lint": "./lint.sh",
+        "test": "bats tests"
+    }
 }

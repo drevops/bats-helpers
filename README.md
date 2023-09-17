@@ -1,74 +1,48 @@
-# BATS helpers
-Helpers and assertions for [BATS](https://github.com/bats-core/bats-core) testing.
+<p align="center">
+  <a href="" rel="noopener">
+ <img width=200px height=200px src="https://placehold.jp/000000/ffffff/200x200.png?text=BATS%20helpers&css=%7B%22border-radius%22%3A%22%20100px%22%7D" alt="Project logo"></a>
+</p>
 
+<h1 align="center">BATS helpers</h1>
+
+<div align="center">
+
+[![GitHub Issues](https://img.shields.io/github/issues/drevops/bats-helpers.svg)](https://github.com/drevops/bats-helpers/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/drevops/bats-helpers.svg)](https://github.com/drevops/bats-helpers/pulls)
+[![Test](https://github.com/drevops/bats-helpers/actions/workflows/test.yml/badge.svg)](https://github.com/drevops/bats-helpers/actions/workflows/test.yml)
 [![Tests](https://github.com/drevops/bats-helpers/actions/workflows/tests.yml/badge.svg)](https://github.com/drevops/bats-helpers/actions/workflows/tests.yml)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/drevops/bats-helpers)
 ![LICENSE](https://img.shields.io/github/license/drevops/bats-helpers)
+</div>
 
-## Assertions
+---
 
-- `assert_binary_files_equal`
-- `assert_binary_files_not_equal`
-- `assert_contains`
-- `assert_dir_contains_string`
-- `assert_dir_empty`
-- `assert_dir_exists`
-- `assert_dir_not_contains_string`
-- `assert_dir_not_empty`
-- `assert_dir_not_exists`
-- `assert_dirs_equal`
-- `assert_empty`
-- `assert_equal`
-- `assert_failure`
-- `assert_file_contains`
-- `assert_file_exists`
-- `assert_file_mode`
-- `assert_file_not_contains`
-- `assert_file_not_exists`
-- `assert_files_equal`
-- `assert_files_not_equal`
-- `assert_git_clean`
-- `assert_git_file_is_not_tracked`
-- `assert_git_file_is_tracked`
-- `assert_git_not_clean`
-- `assert_git_repo`
-- `assert_not_contains`
-- `assert_not_empty`
-- `assert_not_git_repo`
-- `assert_output`
-- `assert_output_contains`
-- `assert_output_not_contains`
-- `assert_success`
-- `assert_symlink_exists`
-- `assert_symlink_not_exists`
+<p align="center"> Helpers and assertions for <a href="https://github.com/bats-core/bats-core">BATS</a> testing.
+    <br>
+</p>
 
-## Helpers
+## Features
 
-- `add_var_to_file`
-- `debug`
-- `format_error`
-- `mktouch`
-- `prepare_fixture_dir`
-- `random_string`
-- `restore_file`
-- `trim_file`
+- [Assertions](docs/assertions.md)
+- [Mocking](docs/mocking.md)
+- [Helpers](docs/helpers.md)
 
-## Installation and usage
+## Installation
 
-1. Install as NPM package.
+```bash
+npm install -D bats-helpers@npm:@drevops/bats-helpers
+```
 
-   ```bash
-   npm install -D bats-helpers@npm:@drevops/bats-helpers
-   ```
+## Usage
 
-2. Create a `_loader.bash` file next to your BATS tests with content:
+1. Create a `_loader.bash` file next to your BATS tests with content:
 
    ```bash
    export BATS_LIB_PATH="${BATS_TEST_DIRNAME}/../node_modules"
    bats_load_library bats-helpers
    ```
 
-3. Use `load _loader.bash` in every BATS file:
+2. Use `load _loader.bash` in every BATS file:
 
    ```bash
    #!/usr/bin/env bats

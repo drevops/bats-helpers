@@ -274,7 +274,7 @@ assert_git_not_clean() {
 }
 
 assert_git_file_is_tracked() {
-  local file="${1:-}"
+  local file="${1-}"
   local dir="${2:-$(pwd)}"
 
   if [ ! -d "${dir}/.git" ]; then
@@ -286,7 +286,7 @@ assert_git_file_is_tracked() {
 }
 
 assert_git_file_is_not_tracked() {
-  local file="${1:-}"
+  local file="${1-}"
   local dir="${2:-$(pwd)}"
 
   if [ ! -d "${dir}/.git" ]; then
