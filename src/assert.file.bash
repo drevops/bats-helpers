@@ -167,7 +167,7 @@ assert_files_equal() {
   local file2="${2}"
   local ignore_spaces="${3:-0}"
 
-  diff_opts=()
+  diff_opts=(--normal)
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
 
   assert_file_exists "${file1}" || return 1
@@ -185,7 +185,7 @@ assert_files_not_equal() {
   local file2="${2}"
   local ignore_spaces="${3:-0}"
 
-  diff_opts=()
+  diff_opts=(--normal)
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
 
   assert_file_exists "${file1}" || return 1

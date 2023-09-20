@@ -9,7 +9,7 @@ assert_contains() {
   local needle="${1}"
   local haystack="${2}"
 
-  if echo "$haystack" | $(type -p ggrep grep | head -1) -i -F -- "$needle" >/dev/null; then
+  if echo "$haystack" | $(type -p grep | head -1) -i -F -- "$needle" >/dev/null; then
     return 0
   else
     format_error "String '${haystack}' does not contain '${needle}'" | flunk
@@ -20,7 +20,7 @@ assert_not_contains() {
   local needle="${1}"
   local haystack="${2}"
 
-  if echo "$haystack" | $(type -p ggrep grep | head -1) -i -F -- "$needle" >/dev/null; then
+  if echo "$haystack" | $(type -p grep | head -1) -i -F -- "$needle" >/dev/null; then
     format_error "String '${haystack}' contains '${needle}', but should not" | flunk
   else
     return 0
