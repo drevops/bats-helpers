@@ -63,9 +63,6 @@ set -eu
 #
 ################################################################################
 run_steps() {
-  declare -g STEPS
-  declare -g RUN_STEPS_DEBUG
-
   local PHASE_SETUP="setup"
   local PHASE_ASSERT="assert"
 

@@ -9,24 +9,42 @@ on:
     branches:
       - main
 
+env:
+  BATS_LIB_PATH: "./node_modules"
+
 jobs:
   test-shell:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-20.04
+          - ubuntu-22.04
+          - macos-11
+          - macos-12
+          - macos-13
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: luizm/action-sh-checker@v0.7.0
-        env:
-          SHELLCHECK_OPTS: -e SC2223
-          SHFMT_OPTS: -i 2 -ci -s -d
-      - run: sudo apt-get install -y kcov
+      - name: Install current Bash on macOS
+        if: startsWith(matrix.os, 'macos-')
+        run: brew install bash
       - uses: actions/setup-node@v3
       - run: npm install
       - run: git config --global user.name "Test user" && git config --global user.email "someone@example.com"
-      - run: BATS_LIB_PATH="$PWD/node_modules" npm run test:coverage
+      - run: sudo apt-get install -y kcov
+        if: matrix.os == 'ubuntu-latest'
+      - name: Run Tests and Code Coverage on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run test:coverage
       - name: Upload coverage reports to Codecov
+        if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           directory: ./coverage
           fail_ci_if_error: true
+      - name: Run Tests on other OSes
+        if: matrix.os != 'ubuntu-latest'
+        run: npm run test

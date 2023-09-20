@@ -18,7 +18,7 @@ flunk() {
 
 assert_success() {
   # shellcheck disable=SC2154
-  if [ "${status}" -ne 0 ]; then
+  if [ "${status-}" -ne 0 ]; then
     format_error "command failed with exit status ${status}" | flunk
   elif [ "$#" -gt 0 ]; then
     assert_output "${1}"
@@ -27,7 +27,7 @@ assert_success() {
 
 assert_failure() {
   # shellcheck disable=SC2154
-  if [ "${status}" -eq 0 ]; then
+  if [ "${status-}" -eq 0 ]; then
     format_error "expected failed exit status" | flunk
   elif [ "$#" -gt 0 ]; then
     assert_output "${1}"
@@ -35,7 +35,7 @@ assert_failure() {
 }
 
 assert_equal() {
-  if [ "$1" != "$2" ]; then
+  if [ "${1-}" != "${2-}" ]; then
     {
       echo "expected: ${1}"
       echo "actual:   ${2}"
@@ -77,7 +77,7 @@ assert_output_not_contains() {
 }
 
 assert_empty() {
-  if [ "${1}" = "" ]; then
+  if [ "${1-}" = "" ]; then
     return 0
   else
     format_error "String ${1} is not empty, but should be" | flunk
@@ -85,7 +85,7 @@ assert_empty() {
 }
 
 assert_not_empty() {
-  if [ "${1}" = "" ]; then
+  if [ "${1-}" = "" ]; then
     format_error "String ${1} is empty, but should not be" | flunk
   else
     return 0
@@ -106,7 +106,7 @@ format_error() {
   echo "##################################################"
   echo
 
-  if [ "${output}" != "" ]; then
+  if [ "${output-}" != "" ]; then
     echo "----------------------------------------"
     echo "${BATS_TEST_TMPDIR}"
     echo "${output}"

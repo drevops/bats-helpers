@@ -13,14 +13,15 @@ assert_git_repo() {
   if [ -d "${dir}/.git" ]; then
     log=$(git --work-tree="${dir}" --git-dir="${dir}/.git" status 2>&1)
 
-    if echo "${log}" | $(type -p ggrep grep | head -1) -i -F -- "not a git repository" >/dev/null; then
-      format_error "Directory ${dir} exists, but it is not a git repository"
+    if echo "${log}" | $(type -p grep | head -1) -i -F -- "not a git repository" >/dev/null; then
+      format_error "Directory ${dir} exists, but it is not a git repository" | flunk
       return 1
     fi
 
     return 0
   else
     format_error "Directory ${dir} exists, but it is not a git repository" | flunk
+    return 1
   fi
 }
 
