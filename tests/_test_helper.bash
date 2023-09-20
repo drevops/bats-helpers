@@ -36,3 +36,10 @@ setup() {
   # Setup command mocking.
   setup_mock
 }
+
+prepare_fixture_dir() {
+  local dir="${1:-$(pwd)}"
+  rm -Rf "${dir}" >/dev/null
+  mkdir -p "${dir}"
+  assert_dir_exists "${dir}"
+}
