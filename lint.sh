@@ -5,7 +5,7 @@
 # LCOV_EXCL_START
 
 set -e
-[ -n "${DREVOPS_DEBUG}" ] && set -x
+[ -n "${SCRIPT_DEBUG}" ] && set -x
 
 CUR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

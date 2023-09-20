@@ -8,107 +8,6 @@
 
 load _test_helper
 
-@test "bats_internals" {
-  echo "Bats version ${BATS_VERSION}" >&3
-  [ "${BATS_FILE_TMPDIR}" != "" ]
-  [ "${BATS_TEST_TMPDIR}" != "" ]
-  [ "${BATS_SUITE_TMPDIR}" != "" ]
-}
-
-@test "assert_success" {
-  status=0
-  assert_success
-
-  status=1
-  run assert_success
-  [ "$status" -eq 1 ]
-}
-
-@test "assert_failure" {
-  status=1
-  assert_failure
-
-  status=0
-  run assert_failure
-  [ "$status" -eq 1 ]
-}
-
-@test "assert_output" {
-  output="output needle"
-  assert_output "output needle"
-
-  output="output not needle"
-  run assert_output "output needle"
-  assert_failure
-}
-
-@test "assert_output_contains" {
-  run echo "some existing text"
-  assert_output_contains "some existing text"
-
-  run echo "some existing text"
-  assert_output_contains "some EXISTING text"
-
-  run echo "some existing text"
-  assert_output_contains "existing"
-
-  run assert_output_contains "non-existing"
-  assert_failure
-}
-
-@test "assert_output_not_contains" {
-  run echo "some existing text"
-  assert_output_not_contains "non-existing"
-
-  run assert_output_not_contains "some existing text"
-  assert_failure
-
-  run assert_output_not_contains "some EXISTING text"
-  assert_failure
-
-  run assert_output_not_contains "existing"
-  assert_failure
-}
-
-@test "assert_equal" {
-  assert_equal 1 1
-
-  run assert_equal 1 2
-  assert_failure
-}
-
-@test "assert_empty" {
-  assert_empty ""
-
-  run assert_empty "something"
-  assert_failure
-}
-
-@test "assert_not_empty" {
-  assert_not_empty "something"
-
-  run assert_not_empty ""
-  assert_failure
-}
-
-@test "assert_contains" {
-  assert_contains "needle" "some needle in a haystack"
-  assert_contains "n[ee]dle" "some n[ee]dle in a haystack"
-
-  run assert_contains "needle" "some ne edle in a haystack"
-  assert_failure
-}
-
-@test "assert_not_contains" {
-  assert_not_contains "otherneedle" "some needle in a haystack"
-  assert_not_contains "othern[ee]dle" "some n[ee]dle in a haystack"
-
-  run assert_not_contains "needle" "some needle in a haystack"
-  assert_failure
-  run assert_not_contains "n[ee]dle" "some n[ee]dle in a haystack"
-  assert_failure
-}
-
 @test "assert_file_exists" {
   assert_file_exists "${BATS_TEST_FILENAME}"
 
@@ -294,8 +193,8 @@ load _test_helper
 
   # Excluded dir.
   rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
-  mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/drevops"
-  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/drevops/2.txt"
+  mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
 
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
@@ -320,123 +219,10 @@ load _test_helper
 
   # Excluded dir.
   rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
-  mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/drevops"
-  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/drevops/2.txt"
+  mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
 
   assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
-}
-
-@test "assert_git_repo" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo_empty_dot_git"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
-
-  assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
-
-  mkdir "${BATS_TEST_TMPDIR}/fixture/git_repo_empty_dot_git/.git"
-  assert_dir_exists "${BATS_TEST_TMPDIR}/fixture/git_repo_empty_dot_git/.git"
-  assert_file_not_exists "${BATS_TEST_TMPDIR}/fixture/git_repo_empty_dot_git/HEAD"
-  run assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo_empty_dot_git"
-  assert_failure
-
-  run assert_git_repo "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
-  assert_failure
-
-  run assert_git_repo "${BATS_TEST_TMPDIR}/fixture/some_dir"
-  assert_failure
-}
-
-@test "assert_not_git_repo" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
-
-  assert_not_git_repo "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
-
-  run assert_not_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  assert_failure
-
-  run assert_not_git_repo "${BATS_TEST_TMPDIR}/fixture/some_dir"
-  assert_failure
-}
-
-@test "assert_git_clean" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
-  assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
-
-  assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
-
-  mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/uncommitted_file"
-  run assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  assert_failure
-
-  # Now, commit first file and create another, but do not add.
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" add -A >/dev/null
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" commit -m "First commit" >/dev/null
-  assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/other_uncommitted_file"
-  run assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  assert_failure
-}
-
-@test "assert_git_not_clean" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
-  assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
-
-  run assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  assert_failure
-
-  mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/uncommitted_file"
-  assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
-
-  # Now, commit first file and create another, but do not add.
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" add -A >/dev/null
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" commit -m "First commit" >/dev/null
-  run assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  assert_failure
-  mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/other_uncommitted_file"
-  assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
-}
-
-@test "assert_git_file_is_tracked" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
-  assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  touch "${BATS_TEST_TMPDIR}/fixture/git_repo/1.txt"
-  touch "${BATS_TEST_TMPDIR}/fixture/git_repo/2.txt"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" add 1.txt >/dev/null
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" commit -m "some message" >/dev/null
-
-  assert_git_file_is_tracked "1.txt" "${BATS_TEST_TMPDIR}/fixture/git_repo"
-
-  run assert_git_file_is_tracked "2.txt" "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  assert_failure
-
-  run assert_git_file_is_tracked "1.txt" "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
-  assert_failure
-}
-
-@test "assert_git_file_is_not_tracked" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
-  assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  touch "${BATS_TEST_TMPDIR}/fixture/git_repo/1.txt"
-  touch "${BATS_TEST_TMPDIR}/fixture/git_repo/2.txt"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" add 1.txt >/dev/null
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" commit -m "some message" >/dev/null
-
-  assert_git_file_is_not_tracked "2.txt" "${BATS_TEST_TMPDIR}/fixture/git_repo"
-
-  run assert_git_file_is_not_tracked "1.txt" "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  assert_failure
-
-  run assert_git_file_is_not_tracked "2.txt" "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
-  assert_failure
 }
 
 @test "assert_files_equal" {
