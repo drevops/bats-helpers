@@ -26,6 +26,7 @@
 
 - [Assertions](docs/assertions.md)
 - [Mocking](docs/mocking.md)
+- [Step runner](docs/step-runner.md)
 - [Helpers](docs/helpers.md)
 
 ## Installation

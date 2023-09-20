@@ -1,0 +1,65 @@
+---
+title: Step runner
+layout: default
+nav_order: 5
+---
+
+# Step runner
+
+When working with mocks, you would have to setup a mock for each command call
+with the expected argument numbers, return value, possible output and an index
+of the call.
+
+Then, you would run the code to be tested and run assertions for each of the
+mocked commands.
+
+For large scripts maintaining both parts becomes a tedious task.
+
+This helper allows to setup and process a sequence of string and mocked command
+assertions. It helps to make maintenance of complex tests easier.
+
+Consider this example:
+
+```bash
+ # Declare STEPS as a global variable, as `process_steps` needs to be called
+ # twice and it does not store the steps internally.
+ declare -a STEPS=(
+   # Mock `drush` binary with an exit status of 1 and no output.
+   "@drush -y status --field=drupal-version # 1"
+   # Mock `drush` binary with an exit status of 0 and output "success".
+   "@drush -y status --fields=bootstrap # success"
+   # Mock `drush` binary with an exit status of 1 and output "failure".
+   "@drush -y status --fields=bootstrap # 1 # failure"
+   # Assert presence of the partial string in the output "Hello world"
+   "Hello world"
+   # Assert absence of the partial string in the output "Goodbye world"
+   "- Goodbye world"
+ )
+
+ # Setup phase.
+ mocks="$(process_steps "setup")" # $mocks will hold created mocks
+
+ # ... code to be tested ...
+
+ # Assert phase.
+ process_steps "assert" "$mocks" # Assertions will be performed.
+
+```
+
+Every step is a string that can be one of the following:
+
+  `@<command> [<args>] # <mock_status> [ # <mock_output> ]`
+
+  Mock the command `<command>` with the given status and optional output.<br/>
+  Status can be omitted and `<mock_output>` can be used instead.<br/>
+  Different commands can be mocked multiple times.<br/>
+  Call to the same command will be using the same mock.<br/>
+
+  `<substring>`
+
+  Check that the output contains the given substring.
+
+  `- <substring>`
+
+  Ensure the output does NOT contain the specified substring.
+  Starts with `- ` (minus followed by space).

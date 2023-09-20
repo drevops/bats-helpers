@@ -12,3 +12,4 @@ source "$(dirname "${BASH_SOURCE[0]}")/src/assert.file.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/src/assert.git.bash"
 
 source "$(dirname "${BASH_SOURCE[0]}")/src/mock.bash"
+source "$(dirname "${BASH_SOURCE[0]}")/src/steps.bash"
