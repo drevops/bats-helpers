@@ -25,26 +25,30 @@ jobs:
           - macos-13
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
       - name: Install current Bash on macOS
         if: startsWith(matrix.os, 'macos-')
         run: brew install bash
-      - uses: actions/setup-node@v3
-      - run: npm install
+      - uses: actions/checkout@v4
       - run: git config --global user.name "Test user" && git config --global user.email "someone@example.com"
-      - run: sudo apt-get install -y kcov
+      - uses: actions/setup-node@v3
+      - uses: luizm/action-sh-checker@v0.7.0
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          SHFMT_OPTS: -i 2 -ci -s -d
+      - run: npm install
+      - run: wget https://github.com/SimonKagstrom/kcov/releases/download/v42/kcov-amd64.tar.gz && tar -xf kcov-amd64.tar.gz && sudo mv ./usr/local/bin/kcov /usr/local/bin/kcov && kcov --version
         if: matrix.os == 'ubuntu-latest'
       - name: Run Tests and Code Coverage on Ubuntu
         if: matrix.os == 'ubuntu-latest'
-        run: npm run test:coverage
+        run: kcov --clean --include-pattern=.bash --bash-parse-files-in-dir=. --exclude-path=node_modules,vendor,coverage $(pwd)/coverage ./node_modules/.bin/bats tests
+        shell: bash
       - name: Upload coverage reports to Codecov
         if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           directory: ./coverage
           fail_ci_if_error: true
       - name: Run Tests on other OSes
         if: matrix.os != 'ubuntu-latest'
-        run: npm run test
+        run: ./node_modules/.bin/bats tests
+        shell: bash
