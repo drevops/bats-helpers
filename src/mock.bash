@@ -76,7 +76,7 @@ EOF
 mock_set_status() {
   local mock="${1?'Mock must be specified'}"
   local status="${2?'Status must be specified'}"
-  local n="$3"
+  local n="${3-}"
 
   mock_set_property "${mock}" 'status' "${status}" "${n}"
 }
@@ -89,7 +89,7 @@ mock_set_status() {
 mock_set_output() {
   local mock="${1?'Mock must be specified'}"
   local output="${2?'Output must be specified'}"
-  local n="$3"
+  local n="${3-}"
 
   mock_set_property "${mock}" 'output' "${output}" "${n}"
 }
@@ -102,7 +102,7 @@ mock_set_output() {
 mock_set_side_effect() {
   local mock="${1?'Mock must be specified'}"
   local side_effect="${2?'Side effect must be specified'}"
-  local n="$3"
+  local n="${3-}"
 
   mock_set_property "${mock}" 'side_effect' "${side_effect}" "${n}"
 }
@@ -127,7 +127,7 @@ mock_get_call_num() {
 mock_get_call_user() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_default_n ${mock} $2)" || exit "$?"
+  n="$(mock_default_n ${mock} ${2-})" || exit "$?"
 
   echo "$(cat ${mock}.user.${n})"
 }
@@ -141,7 +141,7 @@ mock_get_call_user() {
 mock_get_call_args() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_default_n ${mock} $2)" || exit "$?"
+  n="$(mock_default_n ${mock} ${2-})" || exit "$?"
 
   echo "$(cat ${mock}.args.${n})"
 }
@@ -156,8 +156,8 @@ mock_get_call_args() {
 mock_get_call_env() {
   local mock="${1?'Mock must be specified'}"
   local var="${2?'Variable name must be specified'}"
-  local n="$3"
-  n="$(mock_default_n ${mock} $3)" || exit "$?"
+  local n="${3-}"
+  n="$(mock_default_n ${mock} ${3})" || exit "$?"
 
   source "${mock}.env.${n}"
   echo "${!var}"
@@ -175,7 +175,7 @@ mock_set_property() {
   local mock="${1?'Mock must be specified'}"
   local property_name="${2?'Property name must be specified'}"
   local property_value="${3?'Property value must be specified'}"
-  local n="$4"
+  local n="${4-}"
 
   if [[ ${property_value} == '-' ]]; then
     property_value="$(cat -)"
@@ -245,7 +245,7 @@ mock_prepare_tmp() {
 # Outputs:
 #   STDOUT: path to created mock file.
 mock_command() {
-  mocked_command="${1}"
+  mocked_command="${1?'Mocked command must be specified'}"
   mock="$(mock_create)"
   mock_path="${mock%/*}"
   mock_file="${mock##*/}"
