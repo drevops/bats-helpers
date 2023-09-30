@@ -1,7 +1,7 @@
 ---
 title: Step runner
 layout: default
-nav_order: 5
+nav_order: 6
 ---
 
 # Step runner
@@ -43,7 +43,6 @@ Consider this example:
 
  # Assert phase.
  process_steps "assert" "$mocks" # Assertions will be performed.
-
 ```
 
 Every step is a string that can be one of the following:

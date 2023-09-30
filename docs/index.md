@@ -13,8 +13,10 @@ assertions and tests.
 ## Features
 
 - [Assertions](assertions)
-- [Mocking](mocking)
+- [Data provider](data-provider)
 - [Helpers](helpers)
+- [Mocking](mocking)
+- [Step runner](step-runner)
 
 
 ## Installation
