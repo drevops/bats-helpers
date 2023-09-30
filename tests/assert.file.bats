@@ -73,7 +73,7 @@ load _test_helper
 }
 
 @test "assert_symlink_exists" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture_symlink"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_symlink"
 
   # Assert file.
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_symlink/src.txt"
@@ -92,7 +92,7 @@ load _test_helper
 }
 
 @test "assert_symlink_not_exists" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture_symlink"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_symlink"
 
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_symlink/src.txt"
   ln -s "${BATS_TEST_TMPDIR}/fixture_symlink/src.txt" "${BATS_TEST_TMPDIR}/fixture_symlink/dst.txt"
@@ -107,7 +107,7 @@ load _test_helper
 }
 
 @test "assert_file_mode" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture_mode"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_mode"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_mode/1.txt"
   chmod 644 "${BATS_TEST_TMPDIR}/fixture_mode/1.txt"
   assert_file_mode "${BATS_TEST_TMPDIR}/fixture_mode/1.txt" "644"
@@ -125,7 +125,7 @@ load _test_helper
 }
 
 @test "assert_file_contains" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
   echo "some existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
   echo "other existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
   echo "one more line of existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
@@ -137,7 +137,7 @@ load _test_helper
 }
 
 @test "assert_file_not_contains" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
   echo "some existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
   echo "other existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
   echo "one more line of existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
@@ -152,8 +152,8 @@ load _test_helper
 }
 
 @test "assert_dir_empty" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/dir1"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/dir2"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dir1"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dir2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/dir2/1.txt"
 
   assert_dir_empty "${BATS_TEST_TMPDIR}/fixture/dir1"
@@ -166,8 +166,8 @@ load _test_helper
 }
 
 @test "assert_dir_not_empty" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/dir1"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/dir2"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dir1"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dir2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/dir2/1.txt"
 
   assert_dir_not_empty "${BATS_TEST_TMPDIR}/fixture/dir2"
@@ -180,7 +180,7 @@ load _test_helper
 }
 
 @test "assert_dir_contains_string" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
 
   assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
@@ -201,7 +201,7 @@ load _test_helper
 }
 
 @test "assert_dir_not_contains_string" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
   echo "some other text" >"${BATS_TEST_TMPDIR}/fixture/2.txt"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/3.txt"
