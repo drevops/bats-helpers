@@ -7,6 +7,7 @@
 # shellcheck disable=1090
 
 source "$(dirname "${BASH_SOURCE[0]}")/src/assert.base.bash"
+source "$(dirname "${BASH_SOURCE[0]}")/src/assert.command.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/src/assert.string.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/src/assert.file.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/src/assert.git.bash"

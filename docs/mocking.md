@@ -1,7 +1,7 @@
 ---
 title: Mocking
 layout: default
-nav_order: 4
+nav_order: 5
 ---
 
 # Mocking
@@ -12,6 +12,9 @@ It allows to mock commands and check how they were called.
 
 This is a very powerful feature that allows to test complex scenarios as unit
 tests.
+
+{: .note }
+To run multiple mock assertions, check out the [step runner](step-runner) helper.
 
 ## Acknowledgments
 
