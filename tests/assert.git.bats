@@ -9,9 +9,9 @@
 load _test_helper
 
 @test "assert_git_repo" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo_empty_dot_git"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo_empty_dot_git"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
 
   assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
@@ -30,8 +30,8 @@ load _test_helper
 }
 
 @test "assert_not_git_repo" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
 
   assert_not_git_repo "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
@@ -44,7 +44,7 @@ load _test_helper
 }
 
 @test "assert_git_clean" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
   assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
 
@@ -64,7 +64,7 @@ load _test_helper
 }
 
 @test "assert_git_not_clean" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
   assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
 
@@ -84,8 +84,8 @@ load _test_helper
 }
 
 @test "assert_git_file_is_tracked" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
   assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
   touch "${BATS_TEST_TMPDIR}/fixture/git_repo/1.txt"
@@ -103,8 +103,8 @@ load _test_helper
 }
 
 @test "assert_git_file_is_not_tracked" {
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  prepare_fixture_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
   assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
   touch "${BATS_TEST_TMPDIR}/fixture/git_repo/1.txt"

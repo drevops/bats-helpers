@@ -3,7 +3,6 @@
 # @file
 # Bats test helpers.
 #
-# shellcheck disable=SC2119,SC2120,SC2044,SC2294
 
 # Load library.
 load '../load.bash'
@@ -11,11 +10,11 @@ load '../load.bash'
 setup() {
   # Setup command mocking.
   setup_mock
-}
 
-prepare_fixture_dir() {
-  local dir="${1:-$(pwd)}"
-  rm -Rf "${dir}" >/dev/null
-  mkdir -p "${dir}"
-  assert_dir_exists "${dir}"
+  # Print debug information if "--verbose-run" is passed.
+  # LCOV_EXCL_START
+  if [ "${BATS_VERBOSE_RUN-}" = "1" ]; then
+    echo "BATS_TEST_TMPDIR: ${BATS_TEST_TMPDIR}" >&3
+  fi
+  # LCOV_EXCL_END
 }
