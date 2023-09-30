@@ -37,8 +37,3 @@ format_error() {
     echo "----------------------------------------"
   fi
 }
-
-# Run bats with `--tap` option to debug the output.
-debug() {
-  echo "${1}" >&3
-}
