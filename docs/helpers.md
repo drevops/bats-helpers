@@ -10,7 +10,6 @@ nav_order: 4
 |---------------------------|-------------------------------------------------------------------------------|
 | `add_var_to_file`         | Appends a variable to a specified file                                        |
 | `restore_file`            | Restores a file to its original state                                         |
-| `debug`                   | Outputs debug information                                                     |
 | `format_error`            | Formats an error message                                                      |
 | `mktouch`                 | Creates an empty file and all parent directories                              |
 | `fixture_export_codebase` | Export codebase source code at the latest commit to the destination directory |
