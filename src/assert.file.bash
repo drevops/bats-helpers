@@ -3,7 +3,7 @@
 # @file
 # Bats test helpers.
 #
-# shellcheck disable=SC2119,SC2120,SC2044,SC2294
+# shellcheck disable=SC2119,SC2120,SC2044,SC2294,SC2086
 
 assert_file_exists() {
   local file="${1}"
@@ -139,10 +139,16 @@ assert_file_not_contains() {
 assert_dir_contains_string() {
   local dir="${1}"
   local string="${2}"
+  local default_exclude_dirs=(".git" ".idea" "vendor" "node_modules")
 
   assert_dir_exists "${dir}" || return 1
 
-  if grep -rI --exclude-dir=".git" --exclude-dir=".idea" --exclude-dir="vendor" --exclude-dir="node_modules" --exclude-dir=".data" -l "${string}" "${dir}"; then
+  local exclude_params=""
+  for exclude_dir in "${default_exclude_dirs[@]}" "${ASSERT_DIR_EXCLUDE[@]-}"; do
+    [ -n "${exclude_dir}" ] && exclude_params+="--exclude-dir=${exclude_dir} "
+  done
+
+  if grep -rI ${exclude_params} -l "${string}" "${dir}"; then
     return 0
   else
     format_error "Directory ${dir} does not contain a string '${string}'" | flunk
@@ -152,10 +158,16 @@ assert_dir_contains_string() {
 assert_dir_not_contains_string() {
   local dir="${1}"
   local string="${2}"
+  local default_exclude_dirs=(".git" ".idea" "vendor" "node_modules")
 
   [ ! -d "${dir}" ] && return 0
 
-  if grep -rI --exclude-dir=".git" --exclude-dir=".idea" --exclude-dir="vendor" --exclude-dir="node_modules" --exclude-dir=".data" -l "${string}" "${dir}"; then
+  local exclude_params=""
+  for exclude_dir in "${default_exclude_dirs[@]}" "${ASSERT_DIR_EXCLUDE[@]-}"; do
+    [ -n "${exclude_dir}" ] && exclude_params+="--exclude-dir=${exclude_dir} "
+  done
+
+  if grep -rI ${exclude_params} -l "${string}" "${dir}"; then
     format_error "Directory ${dir} contains string '${string}', but should not" | flunk
   else
     return 0
