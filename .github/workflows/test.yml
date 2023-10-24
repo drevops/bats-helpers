@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: git config --global user.name "Test user" && git config --global user.email "someone@example.com"
       - uses: actions/setup-node@v3
-      - uses: luizm/action-sh-checker@v0.7.0
+      - uses: luizm/action-sh-checker@v0.8.0
         if: matrix.os == 'ubuntu-latest'
         env:
           SHFMT_OPTS: -i 2 -ci -s -d
