@@ -13,6 +13,7 @@
 [![codecov](https://codecov.io/gh/drevops/bats-helpers/graph/badge.svg?token=O0ZYROWCCK)](https://codecov.io/gh/drevops/bats-helpers)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/drevops/bats-helpers)
 ![LICENSE](https://img.shields.io/github/license/drevops/bats-helpers)
+![Renovate](https://img.shields.io/badge/renovate-enabled-green?logo=renovatebot)
 </div>
 
 ---

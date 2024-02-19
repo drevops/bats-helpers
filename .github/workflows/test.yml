@@ -1,13 +1,13 @@
 name: Test
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
       - 'feature/**'
-  push:
-    branches:
-      - main
 
 env:
   BATS_LIB_PATH: "./node_modules"
@@ -24,30 +24,48 @@ jobs:
           - macos-12
           - macos-13
     runs-on: ${{ matrix.os }}
+
     steps:
       - name: Install current Bash on macOS
         if: startsWith(matrix.os, 'macos-')
         run: brew install bash
-      - uses: actions/checkout@v4
-      - run: git config --global user.name "Test user" && git config --global user.email "someone@example.com"
-      - uses: actions/setup-node@v4
-      - uses: luizm/action-sh-checker@v0.8.0
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Config Git user.
+        run: git config --global user.name "Test user" && git config --global user.email "someone@example.com"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup sh-checker
+        uses: luizm/action-sh-checker@v0.8.0
         if: matrix.os == 'ubuntu-latest'
         env:
           SHFMT_OPTS: -i 2 -ci -s -d
-      - run: npm install
-      - run: wget https://github.com/SimonKagstrom/kcov/releases/download/v42/kcov-amd64.tar.gz && tar -xf kcov-amd64.tar.gz && sudo mv ./usr/local/bin/kcov /usr/local/bin/kcov && kcov --version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Kcov
+        run: wget https://github.com/SimonKagstrom/kcov/releases/download/v42/kcov-amd64.tar.gz && tar -xf kcov-amd64.tar.gz && sudo mv ./usr/local/bin/kcov /usr/local/bin/kcov && kcov --version
         if: matrix.os == 'ubuntu-latest'
+
       - name: Run Tests and Code Coverage on Ubuntu
         if: matrix.os == 'ubuntu-latest'
         run: kcov --clean --include-pattern=.bash --bash-parse-files-in-dir=. --exclude-path=node_modules,vendor,coverage $(pwd)/coverage ./node_modules/.bin/bats tests
         shell: bash
+
       - name: Upload coverage reports to Codecov
         if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v3
         with:
           directory: ./coverage
           fail_ci_if_error: true
+
       - name: Run Tests on other OSes
         if: matrix.os != 'ubuntu-latest'
         run: ./node_modules/.bin/bats tests
