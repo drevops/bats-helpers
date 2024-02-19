@@ -1,4 +1,4 @@
-name: Test Node.js
+name: Test
 
 on:
   push:
