@@ -1,4 +1,4 @@
-name: Test
+name: Test shell
 
 on:
   push:
@@ -61,10 +61,11 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         if: matrix.os == 'ubuntu-latest'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           directory: ./coverage
           fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Run Tests on other OSes
         if: matrix.os != 'ubuntu-latest'
