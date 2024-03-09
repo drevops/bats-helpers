@@ -386,3 +386,26 @@ load _test_helper
   run run_steps "assert" "${mocks[@]}"
   assert_success
 }
+
+@test "Command, multi-line argument" {
+  declare -a STEPS=(
+    "@somebin --opt1 \
+    --opt2 \
+      --opt3 \
+  { \
+  test: 1 \
+  }
+    # 0 # multi-line arg"
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1 \
+    --opt2 \
+    --opt3 \
+    "{" \
+    "test": 1 \
+    "}"
+  run run_steps "assert" "${mocks[@]}"
+  assert_success
+
+}
