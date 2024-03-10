@@ -100,7 +100,33 @@ load _test_helper
 
 @test "Command, args - negative: wrong args" {
   declare -a STEPS=(
+    "@somebin --opt4 --opt5 # 0 # someval"
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1 --opt2 --opt3
+  assert_output_contains "someval"
+
+  run run_steps "assert" "${mocks[@]}"
+  assert_failure
+}
+
+@test "Command, args - argument substring match" {
+  declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1 --opt2 --opt3
+  assert_output_contains "someval"
+
+  run run_steps "assert" "${mocks[@]}"
+  assert_success
+}
+
+@test "Command, args - different ordering of arguments" {
+  declare -a STEPS=(
+    "@somebin --opt2 --opt1 # 0 # someval"
   )
 
   mocks="$(run_steps "setup")"
