@@ -60,11 +60,11 @@ npm install -D bats-helpers@npm:@drevops/bats-helpers
 
 ## Why not `bats-assert`, `bats-file`, `bats-support`
 
-The goal is to merge is to eventually merge this package with [bats-assert](https://github.com/bats-core/bats-assert).
+The goal is to merge this package with [bats-assert](https://github.com/bats-core/bats-assert).
 
 However:
 1. This package has more assertions and tests. They were battle-tested on many
-   projects and were waiting for BATS to provide support for libraries
+   projects and were waiting for BATS to provide support for library
    functionality to be extracted into a standalone package.
 2. Those packages have outdated version constraints which leads to conflicts.
 
