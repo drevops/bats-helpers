@@ -90,3 +90,7 @@ A special thank you to the contributors for their original work.
     git push
 
     npm publish
+
+---
+Repository created using https://getscaffold.dev/ project scaffold template
+    
