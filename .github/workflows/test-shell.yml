@@ -8,6 +8,13 @@ on:
     branches:
       - main
       - 'feature/**'
+  workflow_dispatch:
+    inputs:
+      enable_terminal:
+        type: boolean
+        description: 'Enable terminal session.'
+        required: false
+        default: false
 
 env:
   BATS_LIB_PATH: "./node_modules"
@@ -71,3 +78,8 @@ jobs:
         if: matrix.os != 'ubuntu-latest'
         run: ./node_modules/.bin/bats tests
         shell: bash
+
+      - name: Setup tmate session
+        if: ${{ !cancelled() && github.event.inputs.enable_terminal }}
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 5
