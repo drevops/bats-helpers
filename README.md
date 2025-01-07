@@ -92,5 +92,5 @@ A special thank you to the contributors for their original work.
     npm publish
 
 ---
-Repository created using https://getscaffold.dev/ project scaffold template
+_This repository was created using the [Scaffold](https://getscaffold.dev/) project template_
     
