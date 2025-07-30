@@ -67,6 +67,7 @@ However:
    projects and were waiting for BATS to provide support for library
    functionality to be extracted into a standalone package.
 2. Those packages have outdated version constraints which leads to conflicts.
+3. This package has an extensive unit test suite with coverage. We also test on multiple OSes.
 
 
 ## Acknowledgments
