@@ -30,9 +30,10 @@ set -eu
 # process_steps "assert" "$mocks"
 #
 # Every step is a string that can be one of the following:
-# @<command> [<args>] # <mock_status> [ # <mock_output> ]
-#   Mock the command <command> with the given status and optional output.
+# @<command> [<args>] # <mock_status> [ # <mock_output> [ # <mock_side_effect> ]]
+#   Mock the command <command> with the given status, optional output, and optional side effect.
 #   Status can be omitted and <mock_output> can be used instead.
+#   Side effect is Bash code that will be executed when the mock is called.
 #   Different commands can be mocked multiple times.
 #   Call to the same command will be using the same mock.
 #
@@ -51,6 +52,8 @@ set -eu
 #   "@drush -y status --fields=bootstrap # success"
 #   # Mock `drush` binary with an exit status of 1 and output "failure".
 #   "@drush -y status --fields=bootstrap # 1 # failure"
+#   # Mock `drush` binary with side effect that creates a file.
+#   "@drush cache-rebuild # 0 # Cache rebuilt # touch /tmp/cache-cleared"
 #   # Assert presence of the partial string in the output "Hello world"
 #   "Hello world"
 #   # Assert absence of the partial string in the output "Goodbye world"
@@ -114,8 +117,8 @@ run_steps() {
 
       substepdebug "PARSE: STARTED"
 
-      if [[ ${item} =~ (##) || $(echo "${item}" | grep -o "#" | wc -l) -gt 2 ]]; then
-        echo "ERROR: The string should not contain consecutive '##' and should have a maximum of two '#' characters in total."
+      if [[ ${item} =~ (##) || $(echo "${item}" | grep -o "#" | wc -l) -gt 3 ]]; then
+        echo "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
         exit 1
       fi
 
@@ -133,6 +136,7 @@ run_steps() {
 
       local mock_status="${command_parts[1]-}"
       local mock_output="${command_parts[2]-}"
+      local mock_side_effect="${command_parts[3]-}"
 
       if ! [[ ${mock_status} =~ ^[0-9]+$ ]]; then
         substepdebug "PARSE: Converting output to '${mock_status}' output."
@@ -142,10 +146,11 @@ run_steps() {
       fi
 
       substepdebug "PARSE: FINISHED"
-      substepdebug "       cmd    : '${command_binary}'"
-      substepdebug "       args   : '${command_args}'"
-      substepdebug "       status : '${mock_status}'"
-      substepdebug "       output : '${mock_output}'"
+      substepdebug "       cmd         : '${command_binary}'"
+      substepdebug "       args        : '${command_args}'"
+      substepdebug "       status      : '${mock_status}'"
+      substepdebug "       output      : '${mock_output}'"
+      substepdebug "       side_effect : '${mock_side_effect}'"
 
       #------------------------------------------------------------------------
       # Processing the command.
@@ -172,6 +177,11 @@ run_steps() {
         if [[ -n ${mock_output} ]]; then
           substepdebug "SETUP: Setting mock output to '${mock_output}'."
           mock_set_output "${mock_cmd}" "${mock_output}" "${mock_cmd_index}"
+        fi
+
+        if [[ -n ${mock_side_effect} ]]; then
+          substepdebug "SETUP: Setting mock side effect to '${mock_side_effect}'."
+          mock_set_side_effect "${mock_cmd}" "${mock_side_effect}" "${mock_cmd_index}"
         fi
 
         substepdebug "SETUP: Setup mock for binary '${command_binary}' complete."
