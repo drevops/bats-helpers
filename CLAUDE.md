@@ -47,8 +47,11 @@ This is a BATS (Bash Automated Testing System) helpers library that provides ass
 # Install dependencies
 npm install
 
-# Lint code (not defined in package.json - likely shell linting)
+# Lint code (shellcheck + shfmt)
 npm run lint
+
+# Fix lint issues automatically
+npm run lint-fix
 
 # Run tests
 npm run test

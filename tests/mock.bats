@@ -37,3 +37,43 @@ load _test_helper
   assert_failure
   assert_equal 1 "$(mock_get_call_num "${mock_curl}")"
 }
+
+@test "Mock: assert call args - exact match" {
+  mock_curl=$(mock_command "curl")
+
+  curl -L -s -o /dev/null -w '%{http_code}' example.com
+
+  run mock_assert_call_args "${mock_curl}" "-L -s -o /dev/null -w %{http_code} example.com" 1
+  assert_success
+}
+
+@test "Mock: assert call args - wildcard match" {
+  mock_curl=$(mock_command "curl")
+
+  curl -L -s -o /dev/null -w '%{http_code}' example.com
+
+  run mock_assert_call_args "${mock_curl}" "*" 1
+  assert_success
+}
+
+@test "Mock: assert call args - exact mismatch" {
+  mock_curl=$(mock_command "curl")
+
+  curl -L -s -o /dev/null -w '%{http_code}' example.com
+
+  run mock_assert_call_args "${mock_curl}" "different args" 1
+  assert_failure
+}
+
+@test "Mock: assert call args - multiple calls with wildcard" {
+  mock_curl=$(mock_command "curl")
+
+  curl -L -s -o /dev/null -w '%{http_code}' example.com
+  curl example.com
+
+  run mock_assert_call_args "${mock_curl}" "*" 1
+  assert_success
+
+  run mock_assert_call_args "${mock_curl}" "*" 2
+  assert_success
+}

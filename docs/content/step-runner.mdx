@@ -27,6 +27,8 @@ Consider this example:
    "@drush -y status --fields=bootstrap # 1 # failure"
    # Mock `drush` binary with side effect that creates a file.
    "@drush cache-rebuild # 0 # Cache rebuilt # touch /tmp/cache-cleared"
+   # Mock any git command with wildcard arguments
+   "@git * # 0 # Git operation successful"
    # Assert presence of the partial string in the output "Hello world"
    "Hello world"
    # Assert absence of the partial string in the output "Goodbye world"
@@ -55,6 +57,10 @@ A step can be one of the following types:
   Steps for the same `@command` can be mocked multiple times.<br/>
   Call to the same command will use the same mock.<br/>
 
+  **Wildcard Arguments**: Use `*` as `<args>` to accept any arguments for the command:
+
+  `@<command> * # <mock_status> [ # <mock_output> [ # <mock_side_effect> ]]`
+
 #### Substring presence:
 
   `<substring>`
@@ -67,6 +73,35 @@ A step can be one of the following types:
 
   Assert that the output does not contain the specified substring.
   Starts with `- ` (minus followed by a space).
+
+### Wildcard Arguments
+
+Wildcard arguments (`*`) allow you to mock any invocation of a command regardless of the arguments passed to it. This is useful when:
+
+- You don't care about the specific arguments
+- The arguments vary but you want consistent mock behavior
+- You want to mock multiple calls to the same command with different arguments
+
+#### Wildcard Examples
+
+```bash
+declare -a STEPS=(
+  # Mock any curl command - accepts any arguments
+  "@curl * # 0 # Mock response data"
+  
+  # Mock git commands with any arguments
+  "@git * # 0 # Git operation completed"
+  
+  # Mix specific and wildcard mocks - specific ones take precedence
+  "@npm install express # 0 # Installing express"
+  "@npm * # 0 # Generic npm operation"
+  
+  # Wildcard with side effects
+  "@backup * # 0 # Backup completed # touch \${BATS_TEST_TMPDIR}/backup.done"
+)
+```
+
+**Note**: When both specific argument patterns and wildcards are defined for the same command, the specific patterns take precedence over wildcards.
 
 ### Side Effects
 

@@ -20,6 +20,11 @@
         "src",
         "load.bash"
     ],
+    "scripts": {
+        "test": "./node_modules/.bin/bats tests/",
+        "lint": "shellcheck src/*.bash load.bash tests/*.bats && shfmt -i 2 -ci -s -d src/*.bash load.bash tests/*.bats",
+        "lint-fix": "shfmt -i 2 -ci -s -w src/*.bash load.bash tests/*.bats"
+    },
     "dependencies": {
         "bats": "^1"
     },

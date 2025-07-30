@@ -594,3 +594,119 @@ load _test_helper
   assert_failure
   assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
+
+@test "Wildcard command - any arguments accepted" {
+  declare -a STEPS=(
+    "@somebin * # 0 # wildcard output 1"
+    "@somebin * # 0 # wildcard output 2"
+    "@somebin * # 0 # wildcard output 3"
+  )
+
+  mocks="$(run_steps "setup")"
+
+  # Test with different arguments - all should work
+  run somebin --opt1 --opt2
+  assert_output_contains "wildcard output 1"
+  assert_success
+
+  run somebin completely different args
+  assert_output_contains "wildcard output 2"
+  assert_success
+
+  run somebin
+  assert_output_contains "wildcard output 3"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Wildcard command - multiple calls with different args" {
+  declare -a STEPS=(
+    "@git * # 0 # git output 1"
+    "@git * # 0 # git output 2"
+  )
+
+  mocks="$(run_steps "setup")"
+
+  run git status
+  assert_output_contains "git output 1"
+  assert_success
+
+  run git commit -m "test"
+  assert_output_contains "git output 2"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Wildcard command - with side effects" {
+  declare -a STEPS=(
+    '@somebin * # 0 # wildcard success # touch ${BATS_TEST_TMPDIR}/wildcard_file'
+  )
+
+  mocks="$(run_steps "setup")"
+
+  run somebin any args here
+  assert_output_contains "wildcard success"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify side effect was executed
+  assert_file_exists "${BATS_TEST_TMPDIR}/wildcard_file"
+}
+
+@test "Wildcard command - error status" {
+  declare -a STEPS=(
+    "@somebin * # 1 # wildcard error"
+  )
+
+  mocks="$(run_steps "setup")"
+
+  run somebin any args
+  assert_output_contains "wildcard error"
+  assert_failure
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Mixed exact and wildcard commands" {
+  declare -a STEPS=(
+    "@git status # 0 # exact status output"
+    "@git * # 0 # wildcard git output"
+    "@npm * # 1 # npm error"
+  )
+
+  mocks="$(run_steps "setup")"
+
+  # This should match the exact command
+  run git status
+  assert_output_contains "exact status output"
+  assert_success
+
+  # This should match the wildcard
+  run git commit -m "test"
+  assert_output_contains "wildcard git output"
+  assert_success
+
+  # This should match the npm wildcard
+  run npm install --save express
+  assert_output_contains "npm error"
+  assert_failure
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Wildcard command - shorthand syntax" {
+  declare -a STEPS=(
+    "@somebin * # wildcard shorthand output"
+  )
+
+  mocks="$(run_steps "setup")"
+
+  run somebin any arguments
+  assert_output_contains "wildcard shorthand output"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}

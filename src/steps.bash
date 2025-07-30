@@ -203,11 +203,9 @@ run_steps() {
         mock_args_actual="$(mock_get_call_args "${mock_cmd}" "${mock_cmd_index}")"
         substepdebug "        actual args : ${mock_args_actual}"
 
-        assert_equal "${command_args}" "${mock_args_actual}"
-
-        # shellcheck disable=SC2181
-        if [[ $? -ne 0 ]]; then
-          substepdebug "ASSERT: Assertion failed. Returning error code."
+        # Use wildcard-aware assertion
+        if ! mock_assert_call_args "${mock_cmd}" "${command_args}" "${mock_cmd_index}"; then
+          substepdebug "ASSERT: Assertion failed. Expected '${command_args}', got '${mock_args_actual}'."
           exit 1
         fi
       fi
