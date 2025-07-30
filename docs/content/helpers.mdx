@@ -7,12 +7,14 @@ sidebar_position: 4
 
 | Function Name             | Description                                                                   |
 |---------------------------|-------------------------------------------------------------------------------|
-| `add_var_to_file`         | Appends a variable to a specified file                                        |
-| `restore_file`            | Restores a file to its original state                                         |
-| `format_error`            | Formats an error message                                                      |
-| `mktouch`                 | Creates an empty file and all parent directories                              |
+| `add_var_to_file`         | Adds a variable assignment to a file and creates a backup                     |
+| `restore_file`            | Restores a file from its backup created by add_var_to_file                    |
+| `read_env`                | Reads .env file and evaluates variable expressions in that context            |
+| `format_error`            | Formats error messages with decorative borders and includes command output    |
+| `flunk`                   | Causes a test to fail with an optional error message                          |
+| `mktouch`                 | Creates a file and any necessary parent directories                            |
 | `fixture_export_codebase` | Export codebase source code at the latest commit to the destination directory |
-| `fixture_prepare_dir`     | Prepares a directory for fixture data                                         |
-| `random_string`           | Generates a random string                                                     |
-| `trim_file`               | Trims leading and trailing whitespace from a file                             |
-| `tui_run`                 | Run Terminal User Interface (TUI) command with inputs                         |
+| `fixture_prepare_dir`     | Prepares a directory for fixture use by removing existing content             |
+| `random_string`           | Generates a random alphanumeric string of specified length                     |
+| `trim_file`               | Removes the last line from a file                                             |
+| `tui_run`                 | Runs a TUI script with predefined answers, simulating user input              |

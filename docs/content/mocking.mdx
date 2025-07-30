@@ -14,7 +14,8 @@ tests.
 
 :::note
 
-To run multiple mock assertions, check out the [step runner](step-runner) helper.
+To run multiple mock assertions in a more convenient way, check out
+the [step runner](step-runner) helper.
 
 :::
 
@@ -35,7 +36,7 @@ setup() {
   app_id="9876543210"
 
   # Mock curl command.
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   # Setup mock responses for curl call with specific arguments in notify.sh.
   mock_set_output "${mock_curl}" "12345678910-1234567890-${app_id}-12345" 1
@@ -56,6 +57,17 @@ setup() {
 ```
 
 ## Setup functions
+
+### `mock_create`
+
+- **Description**: Creates a mock program that can be executed and tracked.
+- **Arguments**: None
+- **Global Variables**: Uses `BATS_MOCK_TMPDIR` if set, otherwise `BATS_TMPDIR`
+- **Outputs**: Path to the created mock file
+- **Usage**:
+  ```bash
+  mock=$(mock_create)
+  ```
 
 ### `setup_mock`
 
@@ -81,7 +93,7 @@ Setup mock support. Call this function from your test's `setup()` method.
   - Index of the call (optional)
 - **Usage**:
   ```bash
-  mock_set_output ${mock} "some output"
+  mock_set_output "${mock}" "some output"
   ```
 
 ### `mock_set_status`
@@ -93,19 +105,19 @@ Setup mock support. Call this function from your test's `setup()` method.
   - Index of the call (optional)
 - **Usage**:
   ```bash
-  mock_set_status ${mock} 0
+  mock_set_status "${mock}" 0
   ```
 
 ### `mock_set_side_effect`
 
-- **Description**: Sets the side effect of the mock.
+- **Description**: Sets shell code to be executed when the mock runs.
 - **Arguments**:
   - Path to the mock
-  - Side effect or `-` for STDIN
+  - Side effect (shell code) or `-` for STDIN
   - Index of the call (optional)
 - **Usage**:
   ```bash
-  mock_set_side_effect ${mock} "some_command"
+  mock_set_side_effect "${mock}" "echo 'side effect executed' > /tmp/log"
   ```
 
 ## Assertion functions
@@ -130,7 +142,7 @@ Setup mock support. Call this function from your test's `setup()` method.
 - **Outputs**: Number of calls
 - **Usage**:
   ```bash
-  assert_equal "1" "$(mock_get_call_num "${mock}" 1)"
+  assert_equal "1" "$(mock_get_call_num "${mock}")"
   ```
 
 ### `mock_get_call_user`
@@ -142,7 +154,7 @@ Setup mock support. Call this function from your test's `setup()` method.
 - **Outputs**: User name
 - **Usage**:
   ```bash
-  assert_equal "expected_user" "$(mock_get_call_user "${mock}" VAR_NAME 1)"
+  assert_equal "expected_user" "$(mock_get_call_user "${mock}" 1)"
   ```
 
 ### `mock_get_call_env`
