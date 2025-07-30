@@ -2,7 +2,7 @@
 #
 # Tests for steps helper.
 #
-# shellcheck disable=SC2034,SC2030,SC2031
+# shellcheck disable=SC2034,SC2030,SC2031,SC2016
 
 load _test_helper
 
@@ -157,7 +157,7 @@ load _test_helper
 
   run run_steps "setup" "${mocks[@]}"
   assert_failure
-  assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of two '#' characters in total."
+  assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
 
 @test "Command, multiple commands, same, repeated call" {
@@ -408,4 +408,189 @@ load _test_helper
   run run_steps "assert" "${mocks[@]}"
   assert_success
 
+}
+
+@test "Command with side effect - basic file creation" {
+  declare -a STEPS=(
+    '@somebin --opt1 # 0 # success # touch ${BATS_TEST_TMPDIR}/side_effect_file'
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1
+  assert_output_contains "success"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify side effect was executed
+  assert_file_exists "${BATS_TEST_TMPDIR}/side_effect_file"
+}
+
+@test "Command with side effect - environment variable" {
+  declare -a STEPS=(
+    "@somebin --opt1 # 0 # success # export TEST_SIDE_EFFECT=executed"
+  )
+
+  mocks="$(run_steps "setup")"
+
+  # Side effects are executed in the mock's context, not the test context
+  run somebin --opt1
+  assert_output_contains "success"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Command with side effect - echo to file" {
+  declare -a STEPS=(
+    "@somebin --opt1 # 0 # success # echo 'side effect executed' > \${BATS_TEST_TMPDIR}/side_effect_output"
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1
+  assert_output_contains "success"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify side effect output
+  assert_file_exists "${BATS_TEST_TMPDIR}/side_effect_output"
+  run cat "${BATS_TEST_TMPDIR}/side_effect_output"
+  assert_output_contains "side effect executed"
+}
+
+@test "Command with side effect - multiple commands" {
+  declare -a STEPS=(
+    "@somebin --opt1 # 0 # success # touch \${BATS_TEST_TMPDIR}/file1; echo 'data' > \${BATS_TEST_TMPDIR}/file2"
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1
+  assert_output_contains "success"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify both side effects were executed
+  assert_file_exists "${BATS_TEST_TMPDIR}/file1"
+  assert_file_exists "${BATS_TEST_TMPDIR}/file2"
+  run cat "${BATS_TEST_TMPDIR}/file2"
+  assert_output_contains "data"
+}
+
+@test "Command with side effect - exit status and output" {
+  declare -a STEPS=(
+    "@somebin --opt1 # 1 # error message # echo 'error logged' > \${BATS_TEST_TMPDIR}/error_log"
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1
+  assert_output_contains "error message"
+  assert_failure
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify side effect was executed even with failure status
+  assert_file_exists "${BATS_TEST_TMPDIR}/error_log"
+  run cat "${BATS_TEST_TMPDIR}/error_log"
+  assert_output_contains "error logged"
+}
+
+@test "Command with side effect - no output, only side effect" {
+  declare -a STEPS=(
+    '@somebin --opt1 # 0 # # touch ${BATS_TEST_TMPDIR}/no_output_side_effect'
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify side effect was executed
+  assert_file_exists "${BATS_TEST_TMPDIR}/no_output_side_effect"
+}
+
+@test "Command with side effect - shorthand status with side effect" {
+  declare -a STEPS=(
+    '@somebin --opt1 # success output # # touch ${BATS_TEST_TMPDIR}/shorthand_side_effect'
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1
+  assert_output_contains "success output"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify side effect was executed
+  assert_file_exists "${BATS_TEST_TMPDIR}/shorthand_side_effect"
+}
+
+@test "Multiple commands with different side effects" {
+  declare -a STEPS=(
+    '@cmd1 # 0 # output1 # touch ${BATS_TEST_TMPDIR}/cmd1_file'
+    "@cmd2 # 0 # output2 # echo 'cmd2 executed' > \${BATS_TEST_TMPDIR}/cmd2_file"
+  )
+
+  mocks="$(run_steps "setup")"
+
+  run cmd1
+  assert_output_contains "output1"
+  assert_success
+
+  run cmd2
+  assert_output_contains "output2"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify both side effects were executed
+  assert_file_exists "${BATS_TEST_TMPDIR}/cmd1_file"
+  assert_file_exists "${BATS_TEST_TMPDIR}/cmd2_file"
+  run cat "${BATS_TEST_TMPDIR}/cmd2_file"
+  assert_output_contains "cmd2 executed"
+}
+
+@test "Command with side effect - repeated calls with different side effects" {
+  declare -a STEPS=(
+    '@somebin # 0 # call1 # touch ${BATS_TEST_TMPDIR}/call1_file'
+    '@somebin # 0 # call2 # touch ${BATS_TEST_TMPDIR}/call2_file'
+  )
+
+  mocks="$(run_steps "setup")"
+
+  run somebin
+  assert_output_contains "call1"
+  assert_success
+
+  run somebin
+  assert_output_contains "call2"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify both side effects were executed
+  assert_file_exists "${BATS_TEST_TMPDIR}/call1_file"
+  assert_file_exists "${BATS_TEST_TMPDIR}/call2_file"
+}
+
+@test "Command with side effect - error in parsing too many separators" {
+  declare -a STEPS=(
+    "@somebin # 0 # output # side effect # extra"
+  )
+
+  run run_steps "setup"
+  assert_failure
+  assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
+}
+
+@test "Command with side effect - consecutive ## still forbidden" {
+  declare -a STEPS=(
+    "@somebin # 0 ## output # side effect"
+  )
+
+  run run_steps "setup"
+  assert_failure
+  assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
