@@ -12,6 +12,7 @@
         "autoloader",
         "cobertura",
         "daemonized",
+        "dataprovider",
         "lhotari",
         "mksh",
         "mktouch",

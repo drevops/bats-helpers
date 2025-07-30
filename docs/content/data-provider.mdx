@@ -14,12 +14,12 @@ Arguments:
       value.
 
 Global Variables:
-  `TEST_CASES`: An array containing test cases with their expected values.
+  - `TEST_CASES`: An array containing test cases with their expected values.
 
-Examples:
-  To run a function `test_func` with `TEST_CASES` containing two arguments per row,
-  you can call run_test_cases like so:
-    `run_test_cases "test_func" 2`
+**Examples:**
+
+To run a function `add_numbers` with `TEST_CASES` containing three arguments per
+row, you can call `dataprovider_run` like so:
 
 ```bash
 # Function to test.
@@ -28,7 +28,7 @@ add_numbers() {
 }
 
 @test "Test add_numbers" {
-  # Numbers.
+  # Numbers: first two are inputs, last is expected output.
   TEST_CASES=(
     1 2 3
     4 5 9
