@@ -146,6 +146,33 @@ mock_get_call_args() {
   echo "$(cat ${mock}.args.${n})"
 }
 
+# Checks if the mock was called with arguments matching the expected pattern
+# Arguments:
+#   1: Path to the mock
+#   2: Expected arguments pattern (use "*" for wildcard matching)
+#   3: Index of the call, optional
+# Returns:
+#   0: If arguments match (or wildcard), 1: If arguments don't match
+mock_assert_call_args() {
+  local mock="${1?'Mock must be specified'}"
+  local expected_args="${2?'Expected arguments must be specified'}"
+  local n="${3-}"
+
+  # If expected args is "*", accept any arguments
+  if [[ ${expected_args} == "*" ]]; then
+    return 0
+  fi
+
+  local actual_args
+  actual_args="$(mock_get_call_args "${mock}" "${n}")"
+
+  if [[ ${expected_args} == "${actual_args}" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Returns the value of the environment variable the mock was called with
 # Arguments:
 #   1: Path to the mock
