@@ -77,3 +77,14 @@ load _test_helper
   run mock_assert_call_args "${mock_curl}" "*" 2
   assert_success
 }
+
+@test "Mock: BATS_MOCK_TMPDIR with spaces" {
+  export BATS_MOCK_TMPDIR="/tmp/bats mock with spaces"
+  mkdir -p "${BATS_MOCK_TMPDIR}"
+  mock_curl=$(mock_command "curl")
+
+  PATH="${BATS_MOCK_TMPDIR}":$PATH run curl example.com
+
+  assert_success
+  rm -rf "${BATS_MOCK_TMPDIR}"
+}

@@ -3,7 +3,6 @@
 # @file
 # Assertions for git repositories.
 #
-# shellcheck disable=SC2119,SC2120,SC2044,SC2294
 
 assert_git_repo() {
   local dir="${1:-$(pwd)}"

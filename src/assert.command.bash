@@ -3,7 +3,6 @@
 # @file
 # Bats test helpers to run commands.
 #
-# shellcheck disable=SC2119,SC2120,SC2044,SC2294
 
 assert_success() {
   # shellcheck disable=SC2154
