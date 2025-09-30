@@ -4,7 +4,7 @@
 # @see https://github.com/grayhemp/bats-mock
 #
 # This file was modified - look for @note comments.
-# shellcheck disable=SC2086,SC1090,SC2005,SC2061
+# shellcheck disable=SC1090,SC2005,SC2061
 
 # Creates a mock program
 # Globals:
@@ -19,7 +19,7 @@ mock_create() {
   # directory. BATS_TMPDIR below was changed to BATS_MOCK_TMPDIR.
   BATS_MOCK_TMPDIR="${BATS_MOCK_TMPDIR:-$BATS_TMPDIR}"
 
-  index="$(find ${BATS_MOCK_TMPDIR} -name bats-mock.$$.* | wc -l | tr -d ' ')"
+  index="$(find "${BATS_MOCK_TMPDIR}" -name bats-mock.$$.* | wc -l | tr -d ' ')"
   local mock
   mock="${BATS_MOCK_TMPDIR}/bats-mock.$$.${index}"
   echo -n 0 >"${mock}.call_num"
@@ -34,7 +34,7 @@ set -e
 
 mock="${mock}"
 
-call_num="\$(( \$(cat \${mock}.call_num) + 1 ))"
+call_num="\$(( \$(cat "\${mock}.call_num") + 1 ))"
 echo "\${call_num}" > "\${mock}.call_num"
 
 echo "\${_USER:-\$(id -un)}" > "\${mock}.user.\${call_num}"
@@ -58,9 +58,9 @@ else
 fi
 
 if [[ -e "\${mock}.status.\${call_num}" ]]; then
-  exit "\$(cat \${mock}.status.\${call_num})"
+  exit "\$(cat "\${mock}.status.\${call_num}")"
 else
-  exit "\$(cat \${mock}.status)"
+  exit "\$(cat "\${mock}.status")"
 fi
 EOF
   chmod +x "${mock}"
@@ -115,7 +115,7 @@ mock_set_side_effect() {
 mock_get_call_num() {
   local mock="${1?'Mock must be specified'}"
 
-  echo "$(cat ${mock}.call_num)"
+  echo "$(cat "${mock}.call_num")"
 }
 
 # Returns the user the mock was called with
@@ -127,9 +127,9 @@ mock_get_call_num() {
 mock_get_call_user() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_default_n ${mock} ${2-})" || exit "$?"
+  n="$(mock_default_n "${mock}" "${2-}")" || exit "$?"
 
-  echo "$(cat ${mock}.user.${n})"
+  echo "$(cat "${mock}.user.${n}")"
 }
 
 # Returns the arguments line the mock was called with
@@ -141,9 +141,9 @@ mock_get_call_user() {
 mock_get_call_args() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_default_n ${mock} ${2-})" || exit "$?"
+  n="$(mock_default_n "${mock}" "${2-}")" || exit "$?"
 
-  echo "$(cat ${mock}.args.${n})"
+  echo "$(cat "${mock}.args.${n}")"
 }
 
 # Checks if the mock was called with arguments matching the expected pattern
@@ -184,7 +184,7 @@ mock_get_call_env() {
   local mock="${1?'Mock must be specified'}"
   local var="${2?'Variable name must be specified'}"
   local n="${3-}"
-  n="$(mock_default_n ${mock} ${3})" || exit "$?"
+  n="$(mock_default_n "${mock}" "${3}")" || exit "$?"
 
   source "${mock}.env.${n}"
   echo "${!var}"
@@ -227,7 +227,7 @@ mock_set_property() {
 mock_default_n() {
   local mock="${1?'Mock must be specified'}"
   local call_num
-  call_num="$(cat ${mock}.call_num)"
+  call_num="$(cat "${mock}.call_num")"
   local n="${2:-${call_num}}"
 
   if [[ ${n} -eq 0 ]]; then
@@ -235,7 +235,7 @@ mock_default_n() {
   fi
 
   if [[ ${n} -gt ${call_num} ]]; then
-    echo "$(basename $0): Mock must be called at least ${n} time(s)" >&2
+    echo "$(basename "$0"): Mock must be called at least ${n} time(s)" >&2
     exit 1
   fi
 
@@ -261,9 +261,12 @@ setup_mock() {
 
 # Prepare temporary mock directory.
 mock_prepare_tmp() {
-  rm -rf "${BATS_TMPDIR}/bats-mock-tmp" >/dev/null
-  mkdir -p "${BATS_TMPDIR}/bats-mock-tmp"
-  echo "${BATS_TMPDIR}/bats-mock-tmp"
+  # @note: Modification to the original file: allow to provide custom temp
+  # directory. BATS_TMPDIR below was changed to BATS_MOCK_TMPDIR.
+  BATS_MOCK_TMPDIR="${BATS_MOCK_TMPDIR:-$BATS_TMPDIR}"
+  rm -rf "${BATS_MOCK_TMPDIR}/bats-mock-tmp" >/dev/null
+  mkdir -p "${BATS_MOCK_TMPDIR}/bats-mock-tmp"
+  echo "${BATS_MOCK_TMPDIR}/bats-mock-tmp"
 }
 
 # Mock provided command.
