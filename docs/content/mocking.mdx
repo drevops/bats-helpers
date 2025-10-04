@@ -60,13 +60,18 @@ setup() {
 
 ### `mock_create`
 
-- **Description**: Creates a mock program that can be executed and tracked.
-- **Arguments**: None
+- **Description**: Creates a mock program that can be executed and tracked. Optionally creates a named command.
+- **Arguments**:
+  - Command name (optional) - If provided, creates a symbolic link with the given name
 - **Global Variables**: Uses `BATS_MOCK_TMPDIR` if set, otherwise `BATS_TMPDIR`
-- **Outputs**: Path to the created mock file
+- **Outputs**: Path to the created mock file or mocked command
 - **Usage**:
   ```bash
+  # Create unnamed mock
   mock=$(mock_create)
+
+  # Create named mock command
+  mock_wget=$(mock_create wget)
   ```
 
 ### `setup_mock`
@@ -118,6 +123,18 @@ Setup mock support. Call this function from your test's `setup()` method.
 - **Usage**:
   ```bash
   mock_set_side_effect "${mock}" "echo 'side effect executed' > /tmp/log"
+  ```
+
+### `teardown_mock`
+
+- **Description**: Cleans up all mock files and directories created during tests.
+- **Arguments**: None
+- **Global Variables**: Uses `BATS_MOCK_TMPDIR` if set, otherwise `BATS_TMPDIR`
+- **Usage**:
+  ```bash
+  teardown() {
+    teardown_mock
+  }
   ```
 
 ### `path_prefix`
