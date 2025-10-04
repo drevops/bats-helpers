@@ -354,6 +354,48 @@ mock_default_n() {
   echo "${n}"
 }
 
+# Returns a path to directory populated with symbolic links to basic commands
+# Globals:
+#   BATS_MOCK_TMPDIR
+# Arguments:
+#   1: List of commands to be added to the directory, optional
+# Returns:
+#   1: If one of the commands provided in the argument can't be found
+# Outputs:
+#   STDOUT: Path to the directory
+#   STDERR: Corresponding error message
+mock_chroot() {
+  local commands=("$@")
+  local chroot_path=
+  local customized_chroot=true
+
+  chroot_path="$(__get_mock_bin_dir)"
+
+  # Use absolute paths for mkdir and ln, since '/bin' may be not in $PATH anymore.
+  command -p mkdir -p "${chroot_path}" || {
+    echo "Failed to create chroot directory: ${chroot_path}" >&2
+    exit 1
+  }
+  if [[ ${#commands[@]} -eq 0 ]]; then
+    customized_chroot=false
+    commands=(awk basename bash cat chmod chown cp cut date env dirname getopt grep head id find hostname ln ls mkdir mktemp mv pidof readlink rm rmdir sed sh sleep sort split tail tee tempfile touch tr tty uname uniq unlink wc which xargs)
+  fi
+  for c in "${commands[@]}"; do
+    if ! target=$(command -v "$c" 2>&1); then
+      if ${customized_chroot}; then
+        echo "$c: command not found" && exit 1
+      fi
+    else
+      if ! error_msg=$(command -p ln -s "${target}" "${chroot_path}/${c}" 2>&1); then
+        if ${customized_chroot}; then
+          echo "${error_msg}" && exit 1
+        fi
+      fi
+    fi
+  done
+  echo "${chroot_path}"
+}
+
 # Returns a path prefixed with the mock's directory
 # Arguments:
 #   1: Path to the mock which may be a file, directory or link

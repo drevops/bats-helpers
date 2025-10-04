@@ -177,6 +177,14 @@ load _test_helper
   assert_file_not_exists "${mock2}"
 }
 
+@test "Mock: teardown_mock removes mock_chroot directory" {
+  chroot_path=$(mock_chroot ls cat)
+
+  teardown_mock
+
+  assert_dir_not_exists "${chroot_path}"
+}
+
 # Tests for path_prefix
 @test "Mock: path_prefix returns PATH prefixed with mock directory" {
   mock=$(mock_create)
@@ -250,4 +258,110 @@ load _test_helper
 
   run echo ":${result}:"
   assert_output_not_contains ":${path_to_cmd}:"
+}
+
+# Tests for mock_chroot
+@test "Mock: mock_chroot creates directory with default commands" {
+  chroot_path=$(mock_chroot)
+
+  # Test subset of created links
+  run test -x "${chroot_path}/bash"
+  assert_success
+  run test -x "${chroot_path}/ls"
+  assert_success
+  run test -x "${chroot_path}/cat"
+  assert_success
+}
+
+@test "Mock: mock_chroot is idempotent" {
+  chroot1=$(mock_chroot)
+  chroot2=$(mock_chroot)
+
+  assert_equal "${chroot1}" "${chroot2}"
+}
+
+@test "Mock: mock_chroot shares directory with mock_create command" {
+  mock_wget=$(mock_create wget)
+  chroot_path=$(mock_chroot)
+
+  assert_equal "$(dirname "${mock_wget}")" "${chroot_path}"
+}
+
+@test "Mock: mock_chroot with custom command list" {
+  chroot_path=$(mock_chroot cat ls grep)
+
+  run test -x "${chroot_path}/cat"
+  assert_success
+  run test -x "${chroot_path}/ls"
+  assert_success
+  run test -x "${chroot_path}/grep"
+  assert_success
+}
+
+@test "Mock: mock_chroot custom list fails if command not found" {
+  run mock_chroot cat nonexistent_command_12345 ls
+  assert_failure
+  assert_output_contains "command not found"
+}
+
+@test "Mock: mock_chroot does not overwrite existing mock" {
+  # Create a mock ls command first, then call mock_chroot
+  mock_ls=$(mock_create ls)
+  chroot_path=$(mock_chroot)
+
+  # Use the mocked 'ls' inside the chroot
+  ls -l
+  assert_equal 1 "$(mock_get_call_num "${mock_ls}")"
+  assert_equal "-l" "$(mock_get_call_args "${mock_ls}")"
+}
+
+@test "Mock: mock_chroot custom list fails if mock already exists" {
+  # Create a mock cat command first
+  mock_create cat >/dev/null
+
+  run mock_chroot ls cat head
+  assert_failure
+  assert_output_contains "File exists"
+}
+
+@test "Mock: mock_chroot skips missing commands in default mode" {
+  # mock_chroot should succeed even if some commands don't exist
+  # This is tested implicitly since some commands in the default list
+  # (like tempfile, pidof) don't exist on all systems
+  chroot_path=$(mock_chroot)
+
+  # Should succeed
+  assert_file_exists "${chroot_path}"
+
+  # At least some commands should be linked (bash, ls, cat should exist everywhere)
+  run test -L "${chroot_path}/bash"
+  assert_success
+}
+
+# Integration test
+@test "Mock: integration - combine path_prefix, path_rm and mock_chroot" {
+  # Create mock command
+  mock_wget=$(mock_create wget)
+
+  # Create chroot with basic commands
+  chroot_path=$(mock_chroot cat echo bash)
+
+  # Verify mock and chroot share same directory
+  assert_equal "$(dirname "${mock_wget}")" "${chroot_path}"
+
+  # Build PATH with chroot and without /usr/bin
+  test_path=$(path_prefix "${chroot_path}" "$(path_rm /usr/bin)")
+
+  # Verify PATH contains chroot directory
+  run echo "${test_path}"
+  assert_output_contains "${chroot_path}"
+
+  # Verify PATH doesn't contain /usr/bin
+  run echo ":${test_path}:"
+  assert_output_not_contains ":/usr/bin:"
+
+  # Verify mock is accessible via PATH
+  PATH="${test_path}" run command -v wget
+  assert_success
+  assert_output_contains "${mock_wget}"
 }
