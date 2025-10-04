@@ -2,7 +2,6 @@
 #
 # Tests for mock.
 #
-# shellcheck disable=SC2129
 
 load _test_helper
 
@@ -87,4 +86,80 @@ load _test_helper
 
   assert_success
   rm -rf "${BATS_MOCK_TMPDIR}"
+}
+
+# Tests for path_prefix
+@test "Mock: path_prefix returns PATH prefixed with mock directory" {
+  mock=$(mock_create)
+  mock_dir=$(dirname "${mock}")
+
+  run path_prefix "${mock}"
+  assert_success
+  assert_output_contains "${mock_dir}:"
+}
+
+@test "Mock: path_prefix requires mock to be specified" {
+  run path_prefix
+  assert_failure
+  assert_output_contains "Mock must be specified"
+}
+
+@test "Mock: path_prefix works with directory" {
+  mock=$(mock_create)
+  mock_dir=$(dirname "${mock}")
+
+  run path_prefix "${mock_dir}"
+  assert_success
+  assert_output_contains "${mock_dir}:"
+}
+
+@test "Mock: path_prefix with custom path" {
+  run path_prefix "/x/y" "/a/b:/c/d"
+  assert_success
+  assert_equal "/x/y:/a/b:/c/d" "${output}"
+}
+
+@test "Mock: path_prefix is idempotent" {
+  mock=$(mock_create)
+
+  path1=$(path_prefix "${mock}")
+  path2=$(path_prefix "${mock}" "${path1}")
+
+  assert_equal "${path1}" "${path2}"
+}
+
+# Tests for path_rm
+@test "Mock: path_rm removes directory from PATH" {
+  run path_rm "/usr/bin"
+  assert_success
+  run echo "${output}"
+  assert_output_not_contains ":/usr/bin:"
+}
+
+@test "Mock: path_rm requires path or command to be specified" {
+  run path_rm
+  assert_failure
+  assert_output_contains "Path or command to remove must be specified"
+}
+
+@test "Mock: path_rm removes directory from custom path" {
+  run path_rm "/a/b" "/c/d:/a/b:/e/f"
+  assert_success
+  assert_equal "/c/d:/e/f" "${output}"
+}
+
+@test "Mock: path_rm returns path unchanged if not contained" {
+  run path_rm "/a/x" "/c/d:/a/b:/e/f"
+  assert_success
+  assert_equal "/c/d:/a/b:/e/f" "${output}"
+}
+
+@test "Mock: path_rm removes directory of command" {
+  cmd=$(command -v bash)
+  path_to_cmd=$(dirname "${cmd}")
+
+  result=$(path_rm "${cmd}")
+
+  run echo ":${result}:"
+  assert_output_not_contains ":${path_to_cmd}:"
 }

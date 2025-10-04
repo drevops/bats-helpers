@@ -68,6 +68,20 @@ EOF
   echo "${mock}"
 }
 
+# Mock provided command.
+# Arguments:
+#  1. Mocked command name,
+# Outputs:
+#   STDOUT: path to created mock file.
+mock_command() {
+  mocked_command="${1?'Mocked command must be specified'}"
+  mock="$(mock_create)"
+  mock_path="${mock%/*}"
+  mock_file="${mock##*/}"
+  ln -sf "${mock_path}/${mock_file}" "${mock_path}/${mocked_command}"
+  echo "$mock"
+}
+
 # Sets the exit status of the mock
 # Arguments:
 #   1: Path to the mock
@@ -269,16 +283,49 @@ mock_prepare_tmp() {
   echo "${BATS_MOCK_TMPDIR}/bats-mock-tmp"
 }
 
-# Mock provided command.
+# Returns a path prefixed with the mock's directory
 # Arguments:
-#  1. Mocked command name,
+#   1: Path to the mock which may be a file, directory or link
+#   2: Path to be prefixed by the path from the 1st argument. Defaults to $PATH if not provided.
 # Outputs:
-#   STDOUT: path to created mock file.
-mock_command() {
-  mocked_command="${1?'Mocked command must be specified'}"
-  mock="$(mock_create)"
-  mock_path="${mock%/*}"
-  mock_file="${mock##*/}"
-  ln -sf "${mock_path}/${mock_file}" "${mock_path}/${mocked_command}"
-  echo "$mock"
+#   STDOUT: the path prefixed with the mock's directory
+path_prefix() {
+  local mock="${1?'Mock must be specified'}"
+  local path=${2:-${PATH}}
+  local mock_path="${mock}"
+
+  if [[ -f ${mock} ]]; then
+    # Parameter expansion to get the folder portion of the mock's path
+    local mock_path="${mock%/*}"
+  fi
+
+  # Putting the directory with the mocked commands at the beginning of the PATH
+  # so it gets picked up first
+  if [[ :${path}: == *:${mock_path}:* ]]; then
+    echo "${path}"
+  else
+    echo "${mock_path}:${path}"
+  fi
+}
+
+# Returns $PATH without a provided path
+# Arguments:
+#   1: Path to be removed
+#   2: Path from which the 1st argument is removed. Defaults to $PATH if not provided.
+# Outputs:
+#   STDOUT: a path without the path provided in ${1}
+path_rm() {
+  local path_to_remove=${1?'Path or command to remove must be specified'}
+  local path=${2:-${PATH}}
+  if [[ -f ${path_to_remove} ]]; then
+    # Parameter expansion to get the folder portion of the temp mock's path
+    path_to_remove=${path_to_remove%/*}
+  fi
+  path=":$path:"
+  path=${path//":"/"::"}
+  path=${path//":${path_to_remove}:"/}
+  path=${path//"::"/":"}
+  path=${path#:}
+  path=${path%:}
+  echo "${path}"
 }
