@@ -60,13 +60,18 @@ setup() {
 
 ### `mock_create`
 
-- **Description**: Creates a mock program that can be executed and tracked.
-- **Arguments**: None
+- **Description**: Creates a mock program that can be executed and tracked. Optionally creates a named command.
+- **Arguments**:
+  - Command name (optional) - If provided, creates a symbolic link with the given name
 - **Global Variables**: Uses `BATS_MOCK_TMPDIR` if set, otherwise `BATS_TMPDIR`
-- **Outputs**: Path to the created mock file
+- **Outputs**: Path to the created mock file or mocked command
 - **Usage**:
   ```bash
+  # Create unnamed mock
   mock=$(mock_create)
+
+  # Create named mock command
+  mock_wget=$(mock_create wget)
   ```
 
 ### `setup_mock`
@@ -119,6 +124,97 @@ Setup mock support. Call this function from your test's `setup()` method.
   ```bash
   mock_set_side_effect "${mock}" "echo 'side effect executed' > /tmp/log"
   ```
+
+### `teardown_mock`
+
+- **Description**: Cleans up all mock files and directories created during tests.
+- **Arguments**: None
+- **Global Variables**: Uses `BATS_MOCK_TMPDIR` if set, otherwise `BATS_TMPDIR`
+- **Usage**:
+  ```bash
+  teardown() {
+    teardown_mock
+  }
+  ```
+
+## Deterministic Test Setup
+
+These functions enable you to create isolated, deterministic test environments by manipulating the `PATH` variable and creating controlled command environments. This is particularly useful for negative testing scenarios where you need to test behavior when certain commands are unavailable.
+
+### `mock_chroot`
+
+- **Description**: Creates a directory populated with symbolic links to basic system commands. This provides a controlled environment for testing.
+- **Arguments**:
+  - List of commands (optional) - If provided, only creates links for specified commands. If not provided, creates links for a default set of common commands.
+- **Returns**: Exit code 1 if a specified command cannot be found
+- **Outputs**: Path to the chroot directory
+- **Usage**:
+  ```bash
+  # Create chroot with default commands
+  chroot_path=$(mock_chroot)
+
+  # Create chroot with specific commands only
+  chroot_path=$(mock_chroot cat ls grep)
+  ```
+
+:::note
+
+`mock_create` with a command name and `mock_chroot` both place commands in the same directory (`bats-mock.$$.bin`), making them work seamlessly together.
+
+:::
+
+### `path_prefix`
+
+- **Description**: Returns a PATH string with the mock directory prepended. This ensures mocked commands are found first.
+- **Arguments**:
+  - Path to mock/command/directory to prepend
+  - PATH to modify (optional) - Defaults to `$PATH` if not provided
+- **Outputs**: Modified PATH string
+- **Usage**:
+  ```bash
+  mock_wget=$(mock_create wget)
+  new_path=$(path_prefix "${mock_wget}")
+  PATH="${new_path}" run ./script.sh
+  ```
+
+### `path_rm`
+
+- **Description**: Returns a PATH string with a specific directory removed. Useful for testing command unavailability.
+- **Arguments**:
+  - Path or command to remove
+  - PATH to modify (optional) - Defaults to `$PATH` if not provided
+- **Outputs**: Modified PATH string
+- **Usage**:
+  ```bash
+  # Remove /usr/bin from PATH
+  new_path=$(path_rm /usr/bin)
+
+  # Remove directory containing curl
+  new_path=$(path_rm "$(command -v curl)")
+  ```
+
+### Example: Testing Command Fallback
+
+This example demonstrates testing a script that falls back from `curl` to `wget` when `curl` is not available:
+
+```bash
+@test "Script falls back to wget when curl unavailable" {
+  # Create mock wget
+  mock_wget=$(mock_create wget)
+  mock_set_output "${mock_wget}" "Downloaded successfully"
+
+  # Create isolated environment without curl
+  chroot_path=$(mock_chroot cat echo bash)
+  test_path=$(path_prefix "${chroot_path}" "$(path_rm /usr/bin "$(path_rm /bin)")")
+
+  # Run script in isolated environment
+  PATH="${test_path}" run ./download-script.sh "http://example.com/file"
+
+  assert_success
+  assert_output_contains "Downloaded successfully"
+  assert_equal 1 "$(mock_get_call_num "${mock_wget}")"
+}
+```
 
 ## Assertion functions
 
