@@ -29,6 +29,8 @@ Consider this example:
    "@drush cache-rebuild # 0 # Cache rebuilt # touch /tmp/cache-cleared"
    # Mock any git command with wildcard arguments
    "@git * # 0 # Git operation successful"
+   # Mock command with URL containing hash fragment (use \# to escape)
+   "@git clone https://github.com/user/repo.git\#stable # 0 # Cloning repository"
    # Assert presence of the partial string in the output "Hello world"
    "Hello world"
    # Assert absence of the partial string in the output "Goodbye world"
@@ -73,6 +75,41 @@ A step can be one of the following types:
 
   Assert that the output does not contain the specified substring.
   Starts with `- ` (minus followed by a space).
+
+### Escaping Hash Characters
+
+Since `#` is used as a delimiter to separate command parts, you need to escape literal `#` characters that appear in your command arguments, output, or side effects. Use `\#` to escape hash characters.
+
+This is commonly needed for:
+- URLs with fragment identifiers (e.g., `https://github.com/user/repo.git#stable`)
+- Git references with hash symbols
+- Comments or other text containing `#`
+
+#### Escape Examples
+
+```bash
+declare -a STEPS=(
+  # URL with fragment identifier - escape the # in the URL
+  "@curl -fsSL https://example.com\#anchor -o file.php # 0"
+
+  # Git clone with branch fragment
+  "@git clone https://github.com/user/repo.git\#stable # 0 # Cloning repo"
+
+  # Multiple escaped hashes in arguments
+  "@deploy --url1=https://site.com\#tag1 --url2=https://site.com\#tag2 # 0"
+
+  # Escaped hash in output
+  "@somebin # 0 # Output with \# hash character"
+
+  # Escaped hash in side effect
+  "@backup # 0 # Backup done # echo 'Comment \# note' > \${BATS_TEST_TMPDIR}/log"
+
+  # Mix of escaped hashes and delimiters
+  "@installer --uri=https://example.com\#stable # 0 # Success \# completed"
+)
+```
+
+**Important**: Only escape `#` characters that are part of your data. Do not escape the `#` delimiters that separate status, output, and side effect parts.
 
 ### Wildcard Arguments
 
