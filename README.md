@@ -25,11 +25,11 @@
 
 ## Features
 
-- [Assertions](docs/assertions.md)
-- [Data provider](docs/data-provider.md)
-- [Helpers](docs/helpers.md)
-- [Mocking](docs/mocking.md)
-- [Step runner](docs/step-runner.md)
+- [Assertions](docs/content/mocking.mdx)
+- [Data provider](docs/content/data-provider.mdx)
+- [Helpers](docs/content/helpers.mdx)
+- [Mocking](docs/content/mocking.mdx)
+- [Step runner](docs/content/step-runner.mdx)
 
 ## Installation
 
