@@ -710,3 +710,135 @@ load _test_helper
 
   run_steps "assert" "${mocks[@]}"
 }
+
+@test "Escaped hash - URL with fragment in command arguments" {
+  declare -a STEPS=(
+    "@curl -fsSL https://example.com\#anchor -o file.php # 0"
+  )
+
+  mocks="$(run_steps "setup")"
+  run curl -fsSL "https://example.com#anchor" -o file.php
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Escaped hash - Git URL with branch fragment" {
+  declare -a STEPS=(
+    "@git clone https://github.com/user/repo.git\#stable # 0 # Cloning repo"
+  )
+
+  mocks="$(run_steps "setup")"
+  run git clone "https://github.com/user/repo.git#stable"
+  assert_output_contains "Cloning repo"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Escaped hash - Multiple escaped hashes in arguments" {
+  declare -a STEPS=(
+    "@somebin --url1=https://a.com\#tag1 --url2=https://b.com\#tag2 # 0"
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin "--url1=https://a.com#tag1" "--url2=https://b.com#tag2"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Escaped hash - In output" {
+  declare -a STEPS=(
+    "@somebin # 0 # Output with \# hash"
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin
+  assert_output_contains "Output with # hash"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Escaped hash - In side effect" {
+  declare -a STEPS=(
+    '@somebin # 0 # success # echo "Comment \# starts here" > ${BATS_TEST_TMPDIR}/escaped_hash'
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin
+  assert_output_contains "success"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify side effect contains unescaped hash
+  assert_file_exists "${BATS_TEST_TMPDIR}/escaped_hash"
+  run cat "${BATS_TEST_TMPDIR}/escaped_hash"
+  assert_output_contains "Comment # starts here"
+}
+
+@test "Escaped hash - Complex URL with query and fragment" {
+  declare -a STEPS=(
+    "@curl -fsSL https://example.com/install?key=123\#section -o installer.php # 0 # Downloaded"
+  )
+
+  mocks="$(run_steps "setup")"
+  run curl -fsSL "https://example.com/install?key=123#section" -o installer.php
+  assert_output_contains "Downloaded"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Escaped hash - Mix of escaped and delimiter hashes" {
+  declare -a STEPS=(
+    "@php installer.php --uri=https://github.com/repo.git\#stable # 0 # Success \# done"
+  )
+
+  mocks="$(run_steps "setup")"
+  run php installer.php "--uri=https://github.com/repo.git#stable"
+  assert_output_contains "Success # done"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}
+
+@test "Escaped hash - All three parts with escaped hashes" {
+  declare -a STEPS=(
+    '@somebin --url=https://site.com\#tag # 0 # Message with \# hash # echo "Comment \# here" > ${BATS_TEST_TMPDIR}/all_escaped'
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin "--url=https://site.com#tag"
+  assert_output_contains "Message with # hash"
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+
+  # Verify side effect
+  assert_file_exists "${BATS_TEST_TMPDIR}/all_escaped"
+  run cat "${BATS_TEST_TMPDIR}/all_escaped"
+  assert_output_contains "Comment # here"
+}
+
+@test "Escaped hash - Real-world example from user" {
+  declare -a STEPS=(
+    "@curl -fsSL https://www.vortextemplate.com/install?1234567890 -o installer.php # 0"
+    "@php installer.php --no-interaction --uri=https://github.com/drevops/vortex.git\#stable # 0"
+    "Using installer script from URL: https://www.vortextemplate.com/install"
+    "Downloading installer to installer.php"
+  )
+
+  mocks="$(run_steps "setup")"
+
+  run bash -c "curl -fsSL https://www.vortextemplate.com/install?1234567890 -o installer.php && \
+               php installer.php --no-interaction --uri=https://github.com/drevops/vortex.git#stable && \
+               echo 'Using installer script from URL: https://www.vortextemplate.com/install' && \
+               echo 'Downloading installer to installer.php'"
+
+  assert_success
+
+  run_steps "assert" "${mocks[@]}"
+}

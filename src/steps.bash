@@ -36,6 +36,8 @@ set -eu
 #   Side effect is Bash code that will be executed when the mock is called.
 #   Different commands can be mocked multiple times.
 #   Call to the same command will be using the same mock.
+#   If <args> contains literal '#' characters (e.g., in URLs like https://example.com#anchor),
+#   escape them as '\#' to prevent them from being treated as delimiters.
 #
 # <substring>
 #   Check that the output contains the given substring.
@@ -54,6 +56,9 @@ set -eu
 #   "@drush -y status --fields=bootstrap # 1 # failure"
 #   # Mock `drush` binary with side effect that creates a file.
 #   "@drush cache-rebuild # 0 # Cache rebuilt # touch /tmp/cache-cleared"
+#   # Mock command with URL containing hash fragment (escaped as \#).
+#   "@curl -fsSL https://example.com\#anchor -o file.php # 0"
+#   "@git clone https://github.com/user/repo.git\#stable # 0 # Cloning repo"
 #   # Assert presence of the partial string in the output "Hello world"
 #   "Hello world"
 #   # Assert absence of the partial string in the output "Goodbye world"
@@ -117,14 +122,18 @@ run_steps() {
 
       substepdebug "PARSE: STARTED"
 
-      if [[ ${item} =~ (##) || $(echo "${item}" | grep -o "#" | wc -l) -gt 3 ]]; then
+      # Replace escaped hashes with a placeholder before parsing
+      local ESCAPED_HASH_PLACEHOLDER="__ESCAPED_HASH__"
+      local item_with_placeholders="${item//\\#/${ESCAPED_HASH_PLACEHOLDER}}"
+
+      if [[ ${item_with_placeholders} =~ (##) || $(echo "${item_with_placeholders}" | grep -o "#" | wc -l) -gt 3 ]]; then
         echo "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
         exit 1
       fi
 
       # Split command, status, and optional output.
       local command_parts
-      IFS='#' read -ra command_parts <<<"${item}"
+      IFS='#' read -ra command_parts <<<"${item_with_placeholders}"
       command_parts=("${command_parts[@]/# /}") # Remove leading spaces.
       command_parts=("${command_parts[@]/% /}") # Remove trailing spaces.
 
@@ -137,6 +146,12 @@ run_steps() {
       local mock_status="${command_parts[1]-}"
       local mock_output="${command_parts[2]-}"
       local mock_side_effect="${command_parts[3]-}"
+
+      # Restore escaped hashes in all parsed components
+      command_args="${command_args//${ESCAPED_HASH_PLACEHOLDER}/#}"
+      mock_status="${mock_status//${ESCAPED_HASH_PLACEHOLDER}/#}"
+      mock_output="${mock_output//${ESCAPED_HASH_PLACEHOLDER}/#}"
+      mock_side_effect="${mock_side_effect//${ESCAPED_HASH_PLACEHOLDER}/#}"
 
       if ! [[ ${mock_status} =~ ^[0-9]+$ ]]; then
         substepdebug "PARSE: Converting output to '${mock_status}' output."
