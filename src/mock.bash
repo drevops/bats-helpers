@@ -10,9 +10,17 @@
 # Globals:
 #   BATS_TMPDIR
 #   BATS_MOCK_TMPDIR
+# Arguments:
+#   1: Command to mock, optional
+# Returns:
+#   1: If the mock command already exists
+#   1: If the command provided with an absolute path already exists
 # Outputs:
-#   STDOUT: Path to the mock
+#   STDOUT: Path to the mock or the mocked command
+#   STDERR: Corresponding error message
+# shellcheck disable=SC2120
 mock_create() {
+  local cmd="${1-}"
   local index
 
   # @note: Modification to the original file: allow to provide custom temp
@@ -22,6 +30,12 @@ mock_create() {
   index="$(find "${BATS_MOCK_TMPDIR}" -name bats-mock.$$.* | wc -l | tr -d ' ')"
   local mock
   mock="${BATS_MOCK_TMPDIR}/bats-mock.$$.${index}"
+
+  # Don't create the mock if the command already exists
+  if [[ -n ${cmd} ]]; then
+    cmd=$(mock_set_command "${mock}" "${cmd}") || exit $?
+  fi
+
   echo -n 0 >"${mock}.call_num"
   echo -n 0 >"${mock}.status"
   echo -n '' >"${mock}.output"
@@ -65,7 +79,41 @@ fi
 EOF
   chmod +x "${mock}"
 
-  echo "${mock}"
+  if [[ -n ${cmd} ]]; then
+    echo "${cmd}"
+  else
+    echo "${mock}"
+  fi
+}
+
+# Creates a symbolic link with given name to a mock program
+# Globals:
+#   BATS_MOCK_TMPDIR
+# Arguments:
+#   1: Path to the mock
+#   2: Command name
+# Outputs:
+#   STDOUT: Path to the mocked command
+mock_set_command() {
+  local mock="${1?'Mocked command must be specified'}"
+  local cmd="${2?'Command must be specified'}"
+
+  # @note: Modification to the original file: use BATS_MOCK_TMPDIR.
+  BATS_MOCK_TMPDIR="${BATS_MOCK_TMPDIR:-$BATS_TMPDIR}"
+
+  # Parameter expansion to get the folder portion of the mock's path
+  local mock_path="${mock%/*}/bats-mock.$$.bin"
+
+  if [[ ${cmd} == /* ]]; then
+    # Parameter expansion to get the folder portion of the command's path
+    mock_path="${cmd%/*}"
+  else
+    cmd="${mock_path}/${cmd}"
+  fi
+
+  # Create command stub by linking it to the mock
+  mkdir -p "${mock_path}"
+  ln -s "${mock}" "${cmd}" && echo "${cmd}"
 }
 
 # Sets the exit status of the mock
@@ -242,6 +290,15 @@ mock_default_n() {
   echo "${n}"
 }
 
+# Performs cleanup of mock objects
+# Globals:
+#   BATS_MOCK_TMPDIR
+mock_teardown() {
+  # @note: Modification to the original file: use BATS_MOCK_TMPDIR.
+  BATS_MOCK_TMPDIR="${BATS_MOCK_TMPDIR:-$BATS_TMPDIR}"
+  rm -rf "${BATS_MOCK_TMPDIR}"/bats-mock.$$.*
+}
+
 # Setup mock support.
 # Call this function from your test's setup() method.
 setup_mock() {
@@ -269,6 +326,95 @@ mock_prepare_tmp() {
   echo "${BATS_MOCK_TMPDIR}/bats-mock-tmp"
 }
 
+# Returns a path to directory populated with symbolic links to basic commands
+# Globals:
+#   BATS_MOCK_TMPDIR
+# Arguments:
+#   1: List of commands to be added to the directory, optional
+# Returns:
+#   1: If one of the commands provided in the argument can't be found
+# Outputs:
+#   STDOUT: Path to the directory
+#   STDERR: Corresponding error message
+mock_chroot() {
+  local commands=("$@")
+  # @note: Modification to the original file: use BATS_MOCK_TMPDIR.
+  BATS_MOCK_TMPDIR="${BATS_MOCK_TMPDIR:-$BATS_TMPDIR}"
+  local chroot_path="${BATS_MOCK_TMPDIR}/bats-mock.$$.bin"
+  local customized_chroot=true
+
+  # Use absolute paths for mkdir and ln, since '/bin' may be not in $PATH anymore.
+  command -p mkdir -p "${chroot_path}" || {
+    echo "Failed to create chroot directory: ${chroot_path}" >&2
+    exit 1
+  }
+  if [[ ${#commands[@]} -eq 0 ]]; then
+    customized_chroot=false
+    commands=(awk basename bash cat chmod chown cp cut date env dirname getopt grep head id find hostname ln ls mkdir mktemp mv pidof readlink rm rmdir sed sh sleep sort split tail tee tempfile touch tr tty uname uniq unlink wc which xargs)
+  fi
+  for c in "${commands[@]}"; do
+    if ! target=$(command -v "$c" 2>&1); then
+      if ${customized_chroot}; then
+        echo "$c: command not found" && exit 1
+      fi
+    else
+      if ! error_msg=$(command -p ln -s "${target}" "${chroot_path}/${c}" 2>&1); then
+        if ${customized_chroot}; then
+          echo "${error_msg}" && exit 1
+        fi
+      fi
+    fi
+  done
+  echo "${chroot_path}"
+}
+
+# Returns a path prefixed with the mock's directory
+# Arguments:
+#   1: Path to the mock which may be a file, directory or link
+#   2: Path to be prefixed by the path from the 1st argument. Defaults to $PATH if not provided.
+# Outputs:
+#   STDOUT: the path prefixed with the mock's directory
+path_override() {
+  local mock="${1?'Mock must be specified'}"
+  local path=${2:-${PATH}}
+  local mock_path="${mock}"
+
+  if [[ -f ${mock} ]]; then
+    # Parameter expansion to get the folder portion of the mock's path
+    local mock_path="${mock%/*}"
+  fi
+
+  # Putting the directory with the mocked commands at the beginning of the PATH
+  # so it gets picked up first
+  if [[ :${path}: == *:${mock_path}:* ]]; then
+    echo "${path}"
+  else
+    echo "${mock_path}:${path}"
+  fi
+}
+
+# Returns $PATH without a provided path
+# Arguments:
+#   1: Path to be removed
+#   2: Path from which the 1st argument is removed. Defaults to $PATH if not provided.
+# Outputs:
+#   STDOUT: a path without the path provided in ${1}
+path_rm() {
+  local path_to_remove=${1?'Path or command to remove must be specified'}
+  local path=${2:-${PATH}}
+  if [[ -f ${path_to_remove} ]]; then
+    # Parameter expansion to get the folder portion of the temp mock's path
+    path_to_remove=${path_to_remove%/*}
+  fi
+  path=":$path:"
+  path=${path//":"/"::"}
+  path=${path//":${path_to_remove}:"/}
+  path=${path//"::"/":"}
+  path=${path#:}
+  path=${path%:}
+  echo "${path}"
+}
+
 # Mock provided command.
 # Arguments:
 #  1. Mocked command name,
@@ -276,6 +422,7 @@ mock_prepare_tmp() {
 #   STDOUT: path to created mock file.
 mock_command() {
   mocked_command="${1?'Mocked command must be specified'}"
+  # shellcheck disable=SC2119
   mock="$(mock_create)"
   mock_path="${mock%/*}"
   mock_file="${mock##*/}"
