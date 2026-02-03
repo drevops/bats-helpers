@@ -2,7 +2,6 @@
 #
 # Tests for mock.
 #
-# shellcheck disable=SC2129
 
 load _test_helper
 
@@ -79,12 +78,290 @@ load _test_helper
 }
 
 @test "Mock: BATS_MOCK_TMPDIR with spaces" {
+  # shellcheck disable=SC2030
   export BATS_MOCK_TMPDIR="/tmp/bats mock with spaces"
   mkdir -p "${BATS_MOCK_TMPDIR}"
   mock_curl=$(mock_command "curl")
 
-  PATH="${BATS_MOCK_TMPDIR}":$PATH run curl example.com
+  # We have to modify the PATH since the setup_mock uses a different BATS_MOCK_TMPDIR
+  PATH="$(path_prefix "${mock_curl}")" curl example.com
+  assert_equal 1 "$(mock_get_call_num "${mock_curl}")"
 
-  assert_success
   rm -rf "${BATS_MOCK_TMPDIR}"
+}
+
+# Tests for enhanced mock_create with command parameter
+@test "Mock: mock_create with command name" {
+  # Returns the newly created mock for 'wget' command
+  mock_wget=$(mock_create wget)
+
+  # Use the mocked 'wget'
+  # @note: setup_mock will have already prepended the mock directory to PATH
+  wget http://example.com/some-file
+  assert_equal 1 "$(mock_get_call_num "${mock_wget}")"
+}
+
+@test "Mock: mock_create without command (backward compatibility)" {
+  mock=$(mock_create)
+
+  ${mock} foo
+  assert_equal 1 "$(mock_get_call_num "${mock}")"
+  assert_equal "foo" "$(mock_get_call_args "${mock}")"
+}
+
+@test "Mock: mock_create names programs uniquely" {
+  mock1=$(mock_create)
+  mock2=$(mock_create)
+
+  test "${mock1}" != "${mock2}"
+}
+
+@test "Mock: mock_create command uses a directory unique to the test run" {
+  mock_wget=$(mock_create wget)
+
+  run dirname "${mock_wget}"
+  assert_success
+  # The directory should include the PID to avoid collisions with tests running
+  # in parallel.
+  assert_output_contains "bats-mock.$$.bin"
+}
+
+@test "Mock: mock_create creates program in BATS_MOCK_TMPDIR" {
+  mock=$(mock_create)
+  # shellcheck disable=SC2031
+  expected_dir="${BATS_MOCK_TMPDIR}"
+
+  run dirname "${mock}"
+  assert_success
+  assert_equal "${expected_dir}" "${output}"
+}
+
+@test "Mock: mock_create command with absolute path" {
+  absolute_path="${BATS_TMPDIR}/custom-path"
+  mkdir -p "${absolute_path}"
+
+  mock_foo=$(mock_create "${absolute_path}/foo")
+  assert_equal "${absolute_path}/foo" "${mock_foo}"
+
+  # Adjust PATH, otherwise foo is not found
+  PATH="$(path_prefix "${mock_foo}")" foo
+  assert_equal 1 "$(mock_get_call_num "${mock_foo}")"
+}
+
+@test "Mock: mock_create command twice with same name fails" {
+  mock_wget=$(mock_create wget)
+
+  run mock_create wget
+  assert_failure
+  # Error message may vary by OS. The most likely reason is that someone tried
+  # to mock an existing command.
+  # TODO: Improve error message to be more specific.
+  assert_output_contains "File exists"
+}
+
+@test "Mock: mock_create with absolute path to existing command fails" {
+  # Try to create a mock at an existing system command location
+  run mock_create /bin/ls
+  assert_failure
+  # Error message varies by OS: "File exists" on Linux, "Operation not permitted" on macOS
+}
+
+# Tests for teardown_mock
+@test "Mock: teardown_mock removes all mock files" {
+  mock1=$(mock_create)
+  mock2=$(mock_create curl)
+
+  teardown_mock
+
+  assert_file_not_exists "${mock1}"
+  assert_file_not_exists "${mock2}"
+}
+
+@test "Mock: teardown_mock removes mock_chroot directory" {
+  chroot_path=$(mock_chroot ls cat)
+
+  teardown_mock
+
+  assert_dir_not_exists "${chroot_path}"
+}
+
+# Tests for path_prefix
+@test "Mock: path_prefix returns PATH prefixed with mock directory" {
+  mock=$(mock_create)
+  mock_dir=$(dirname "${mock}")
+
+  run path_prefix "${mock}"
+  assert_success
+  assert_output_contains "${mock_dir}:"
+}
+
+@test "Mock: path_prefix requires mock to be specified" {
+  run path_prefix
+  assert_failure
+  assert_output_contains "Mock must be specified"
+}
+
+@test "Mock: path_prefix works with directory" {
+  mock=$(mock_create)
+  mock_dir=$(dirname "${mock}")
+
+  run path_prefix "${mock_dir}"
+  assert_success
+  assert_output_contains "${mock_dir}:"
+}
+
+@test "Mock: path_prefix with custom path" {
+  run path_prefix "/x/y" "/a/b:/c/d"
+  assert_success
+  assert_equal "/x/y:/a/b:/c/d" "${output}"
+}
+
+@test "Mock: path_prefix is idempotent" {
+  mock=$(mock_create)
+
+  path1=$(path_prefix "${mock}")
+  path2=$(path_prefix "${mock}" "${path1}")
+
+  assert_equal "${path1}" "${path2}"
+}
+
+# Tests for path_rm
+@test "Mock: path_rm removes directory from PATH" {
+  run path_rm "/usr/bin"
+  assert_success
+  assert_output_not_contains ":/usr/bin:"
+}
+
+@test "Mock: path_rm requires path or command to be specified" {
+  run path_rm
+  assert_failure
+  assert_output_contains "Path or command to remove must be specified"
+}
+
+@test "Mock: path_rm removes directory from custom path" {
+  run path_rm "/a/b" "/c/d:/a/b:/e/f"
+  assert_success
+  assert_equal "/c/d:/e/f" "${output}"
+}
+
+@test "Mock: path_rm returns path unchanged if not contained" {
+  run path_rm "/a/x" "/c/d:/a/b:/e/f"
+  assert_success
+  assert_equal "/c/d:/a/b:/e/f" "${output}"
+}
+
+@test "Mock: path_rm removes directory of command" {
+  cmd=$(command -v bash)
+  path_to_cmd=$(dirname "${cmd}")
+
+  result=$(path_rm "${cmd}")
+
+  run echo ":${result}:"
+  assert_output_not_contains ":${path_to_cmd}:"
+}
+
+# Tests for mock_chroot
+@test "Mock: mock_chroot creates directory with default commands" {
+  chroot_path=$(mock_chroot)
+
+  # Test subset of created links
+  run test -x "${chroot_path}/bash"
+  assert_success
+  run test -x "${chroot_path}/ls"
+  assert_success
+  run test -x "${chroot_path}/cat"
+  assert_success
+}
+
+@test "Mock: mock_chroot is idempotent" {
+  chroot1=$(mock_chroot)
+  chroot2=$(mock_chroot)
+
+  assert_equal "${chroot1}" "${chroot2}"
+}
+
+@test "Mock: mock_chroot shares directory with mock_create command" {
+  mock_wget=$(mock_create wget)
+  chroot_path=$(mock_chroot)
+
+  assert_equal "$(dirname "${mock_wget}")" "${chroot_path}"
+}
+
+@test "Mock: mock_chroot with custom command list" {
+  chroot_path=$(mock_chroot cat ls grep)
+
+  run test -x "${chroot_path}/cat"
+  assert_success
+  run test -x "${chroot_path}/ls"
+  assert_success
+  run test -x "${chroot_path}/grep"
+  assert_success
+}
+
+@test "Mock: mock_chroot custom list fails if command not found" {
+  run mock_chroot cat nonexistent_command_12345 ls
+  assert_failure
+  assert_output_contains "command not found"
+}
+
+@test "Mock: mock_chroot does not overwrite existing mock" {
+  # Create a mock ls command first, then call mock_chroot
+  mock_ls=$(mock_create ls)
+  chroot_path=$(mock_chroot)
+
+  # Use the mocked 'ls' inside the chroot
+  ls -l
+  assert_equal 1 "$(mock_get_call_num "${mock_ls}")"
+  assert_equal "-l" "$(mock_get_call_args "${mock_ls}")"
+}
+
+@test "Mock: mock_chroot custom list fails if mock already exists" {
+  # Create a mock cat command first
+  mock_create cat >/dev/null
+
+  run mock_chroot ls cat head
+  assert_failure
+  assert_output_contains "File exists"
+}
+
+@test "Mock: mock_chroot skips missing commands in default mode" {
+  # mock_chroot should succeed even if some commands don't exist
+  # This is tested implicitly since some commands in the default list
+  # (like tempfile, pidof) don't exist on all systems
+  chroot_path=$(mock_chroot)
+
+  # Should succeed
+  assert_file_exists "${chroot_path}"
+
+  # At least some commands should be linked (bash, ls, cat should exist everywhere)
+  run test -L "${chroot_path}/bash"
+  assert_success
+}
+
+# Integration test
+@test "Mock: integration - combine path_prefix, path_rm and mock_chroot" {
+  # Create mock command
+  mock_wget=$(mock_create wget)
+
+  # Create chroot with basic commands
+  chroot_path=$(mock_chroot cat echo bash)
+
+  # Verify mock and chroot share same directory
+  assert_equal "$(dirname "${mock_wget}")" "${chroot_path}"
+
+  # Build PATH with chroot and without /usr/bin
+  test_path=$(path_prefix "${chroot_path}" "$(path_rm /usr/bin)")
+
+  # Verify PATH contains chroot directory
+  run echo "${test_path}"
+  assert_output_contains "${chroot_path}"
+
+  # Verify PATH doesn't contain /usr/bin
+  run echo ":${test_path}:"
+  assert_output_not_contains ":/usr/bin:"
+
+  # Verify mock is accessible via PATH
+  PATH="${test_path}" run command -v wget
+  assert_success
+  assert_output_contains "${mock_wget}"
 }
