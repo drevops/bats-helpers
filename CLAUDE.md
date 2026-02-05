@@ -57,15 +57,6 @@ npm run lint-fix
 npm run test
 ```
 
-### Documentation
-The project uses Docusaurus for documentation in the `docs/` directory:
-```bash
-# From docs/ directory:
-npm ci          # Install doc dependencies
-npm start       # Start development server
-npm run build   # Build static documentation
-```
-
 ## Key Patterns
 
 ### Library Loading

@@ -1,7 +1,9 @@
+/.editorconfig        export-ignore
 /.gitattributes       export-ignore
-/.gitignore           export-ignore
 /.github              export-ignore
+/.gitignore           export-ignore
 /.npmignore           export-ignore
+/CLAUDE.md            export-ignore
 /lint.sh              export-ignore
-/docs                 export-ignore
+/renovate.json        export-ignore
 /tests                export-ignore
