@@ -37,18 +37,11 @@
 
 ### NPM
 
-1. Install the library:
-    ```shell
-    npm install -D bats-helpers@npm:@drevops/bats-helpers
-    ```
-   This will also install `bats-core`.
+```shell
+npm install -D bats-helpers@npm:@drevops/bats-helpers
+```
 
-2. Create a `_loader.bash` file next to your BATS tests with content:
-
-   ```bash
-   export BATS_LIB_PATH="${BATS_TEST_DIRNAME}/../node_modules"
-   bats_load_library bats-helpers
-   ```
+This will also install `bats-core`.
 
 ### From source
 
@@ -56,22 +49,28 @@
    the [GitHub UI](https://github.com/drevops/bats-helpers).
 2. Extract files to a desired location. Usually, next to where `bats-core` is
    located.
-3. Create a `_loader.bash` file next to your BATS tests with content:
-
-   ```bash
-   export BATS_LIB_PATH="<path/to/extracted/files>"
-   bats_load_library bats-helpers
-   ```
 
 ## Usage
 
 ### Load library
 
-Use `load _loader.bash` in every BATS file:
+Create a `_loader.bash` file next to your BATS tests with content:
+
+```bash
+# For NPM installation:
+export BATS_LIB_PATH="${BATS_TEST_DIRNAME}/../node_modules"
+
+# For source installation:
+# export BATS_LIB_PATH="<path/to/extracted/files>"
+
+bats_load_library bats-helpers
+```
+
+Then use `load _loader.bash` in every BATS test file:
 
 ```bats
 #!/usr/bin/env bats
-load _loader
+load _loader.bash
 
 @test "My test" {
  run ls
