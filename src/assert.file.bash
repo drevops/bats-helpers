@@ -9,7 +9,7 @@ assert_file_exists() {
   local file="${1}"
 
   for f in ${file}; do
-    if [ -e "$f" ]; then
+    if [ -e "${f}" ]; then
       return 0
     else
       format_error "File ${file} does not exist" | flunk
@@ -25,7 +25,7 @@ assert_file_not_exists() {
   local file="${1}"
 
   for f in ${file}; do
-    if [ -e "$f" ]; then
+    if [ -e "${f}" ]; then
       format_error "File ${file} exists, but should not" | flunk
     else
       return 0
@@ -266,9 +266,9 @@ trim_file() {
 
 read_env() {
   # shellcheck disable=SC1090,SC1091
-  [ -f "./.env" ] && t=$(mktemp) && export -p >"$t" && set -a && . "./.env" && set +a && . "$t" && rm "$t" && unset t
+  [ -f "./.env" ] && t=$(mktemp) && export -p >"${t}" && set -a && . "./.env" && set +a && . "${t}" && rm "${t}" && unset t
 
-  eval echo "${@}"
+  eval echo "$@"
 }
 
 add_var_to_file() {

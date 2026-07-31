@@ -12,7 +12,7 @@ load _test_helper
 
   status=1
   run assert_success
-  [ "$status" -eq 1 ]
+  [ "${status}" -eq 1 ]
 }
 
 @test "assert_failure" {
@@ -21,7 +21,7 @@ load _test_helper
 
   status=0
   run assert_failure
-  [ "$status" -eq 1 ]
+  [ "${status}" -eq 1 ]
 }
 
 @test "assert_output" {

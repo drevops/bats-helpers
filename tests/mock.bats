@@ -83,7 +83,7 @@ load _test_helper
   mkdir -p "${BATS_MOCK_TMPDIR}"
   mock_curl=$(mock_command "curl")
 
-  PATH="${BATS_MOCK_TMPDIR}":$PATH run curl example.com
+  PATH="${BATS_MOCK_TMPDIR}":${PATH} run curl example.com
 
   assert_success
   rm -rf "${BATS_MOCK_TMPDIR}"

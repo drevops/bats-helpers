@@ -4,7 +4,7 @@
 #
 
 tui_run() {
-  local answers=("${@}")
+  local answers=("$@")
   local input
 
   [ -z "${SCRIPT_FILE-}" ] && echo "SCRIPT_FILE is not set." && exit 1

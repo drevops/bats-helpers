@@ -21,7 +21,7 @@
 
 dataprovider_run() {
   local func_name="${1}"
-  local args_per_row=${2:-1}
+  local args_per_row="${2:-1}"
 
   ##
   ## Input validation.
@@ -59,7 +59,7 @@ dataprovider_run() {
 
   # Ensure that TEST_CASES has a multiple of args_per_row elements.
   if [ "$((${#TEST_CASES[@]} % args_per_row))" -ne 0 ]; then
-    flunk "Total elements in TEST_CASES must be a multiple of $args_per_row."
+    flunk "Total elements in TEST_CASES must be a multiple of ${args_per_row}."
     return
   fi
 
@@ -83,10 +83,10 @@ dataprovider_run() {
     expected="${TEST_CASES[i + args_per_row - 1]}"
     test_args=("${TEST_CASES[@]:i:args_per_row-1}")
 
-    run "$func_name" "${test_args[@]}"
+    run "${func_name}" "${test_args[@]}"
 
-    if ! assert_output_contains "$expected"; then
-      echo "Error: Failed for set $set_idx"
+    if ! assert_output_contains "${expected}"; then
+      echo "Error: Failed for set ${set_idx}"
       error_count=$((error_count + 1))
       failed_sets="${failed_sets}${set_idx}, "
     fi
@@ -101,7 +101,7 @@ dataprovider_run() {
   if [ "${error_count}" -ne 0 ]; then
     failed_sets=${failed_sets%, } # Remove trailing comma
     echo
-    echo "Failed Sets (0-based): $failed_sets"
-    flunk "Total failed test sets: $error_count"
+    echo "Failed Sets (0-based): ${failed_sets}"
+    flunk "Total failed test sets: ${error_count}"
   fi
 }

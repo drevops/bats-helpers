@@ -7,15 +7,15 @@
 load _test_helper
 
 fixture_add() {
-  local num1=$1
-  local num2=$2
+  local num1="${1}"
+  local num2="${2}"
   echo $((num1 + num2))
 }
 
 fixture_concat() {
-  local num1=$1
-  local num2=$2
-  echo "$num1$num2"
+  local num1="${1}"
+  local num2="${2}"
+  echo "${num1}${num2}"
 }
 
 @test "Test dataprovider runner, direct - success" {

@@ -256,7 +256,7 @@ setup_mock() {
   # PATH to lookup in mock directories first. This change lives only for the
   # duration of the test and will be reset after. It does not modify the PATH
   # outside of the running test.
-  PATH="${BATS_MOCK_TMPDIR}:$PATH"
+  PATH="${BATS_MOCK_TMPDIR}:${PATH}"
 }
 
 # Prepare temporary mock directory.
@@ -280,5 +280,5 @@ mock_command() {
   mock_path="${mock%/*}"
   mock_file="${mock##*/}"
   ln -sf "${mock_path}/${mock_file}" "${mock_path}/${mocked_command}"
-  echo "$mock"
+  echo "${mock}"
 }
