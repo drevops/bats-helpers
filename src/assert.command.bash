@@ -41,7 +41,7 @@ assert_output_contains() {
     expected="${1}"
   fi
   # shellcheck disable=SC2154
-  assert_contains "${expected}" "${output-}"
+  assert_string_contains "${output-}" "${expected}"
 }
 
 assert_output_not_contains() {
@@ -52,5 +52,5 @@ assert_output_not_contains() {
     expected="${1}"
   fi
   # shellcheck disable=SC2154
-  assert_not_contains "${expected}" "${output-}"
+  assert_string_not_contains "${output-}" "${expected}"
 }
