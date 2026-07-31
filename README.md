@@ -362,7 +362,7 @@ Starts with `- ` (minus followed by a space).
 
 `add_var_to_file` backs a file up before modifying it and `restore_file` puts that backup back. Backups are written below `${BATS_TEST_TMPDIR}/bats-helpers-backup`, mirroring the source path, so BATS removes them together with the rest of the test sandbox and concurrent runs cannot overwrite each other's backups.
 
-Set `BATS_HELPERS_BACKUP_DIR` to store them elsewhere:
+Set `BATS_HELPERS_BACKUP_DIR` to store them elsewhere. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
 
 ```bash
 export BATS_HELPERS_BACKUP_DIR="${BATS_TEST_TMPDIR}/backups"
