@@ -9,14 +9,17 @@
 #
 # Arguments:
 #   1. func_name: Name of the function to be tested.
-#   2. args_per_row: Number of arguments in each row of the TEST_CASES array.
-#      Optional, defaults to 1.
+#   2. args_per_row: Number of elements in each row of the TEST_CASES array,
+#      counting the trailing expected value. Optional, defaults to 1. The
+#      function under test receives one argument fewer.
 #
 # Globals:
 #   TEST_CASES: Array of test cases, each row ending with its expected value.
 #
 # Examples:
-#   dataprovider_run "test_func" 2
+#   Two inputs and one expected value per row:
+#     declare -a TEST_CASES=(1 2 3)
+#     dataprovider_run "add_numbers" 3
 ##
 dataprovider_run() {
   local func_name="${1}"

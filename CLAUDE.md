@@ -89,6 +89,7 @@ File headers and function docblocks follow one house style so the library reads 
 # @file
 # Assertions for files and directories.
 #
+# shellcheck disable=SC2119,SC2120
 ```
 
 ```bash

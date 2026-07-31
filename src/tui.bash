@@ -11,7 +11,8 @@
 # submits an empty line, so a prompt can be left at its default.
 #
 # Arguments:
-#   @. answers: Answers to submit, in the order the script prompts for them.
+#   1. answers: Answers to submit, one per argument, in the order the script
+#      prompts for them.
 #
 # Globals:
 #   SCRIPT_FILE: Path to the script to run, relative to the current directory.

@@ -20,9 +20,10 @@
 #
 #   @<command> [<args>] # <status> [ # <output> [ # <side_effect> ]]
 #     Mocks <command>. The status may be omitted and the output given in its
-#     place. The side effect is Bash code run when the mock is called. A command
-#     may be mocked by several steps; every call goes through the same mock.
-#     Literal '#' characters in <args> are escaped as '\#'.
+#     place, unless that output is all digits, which parses as a status. The
+#     side effect is Bash code run when the mock is called. A command may be
+#     mocked by several steps; every call goes through the same mock. Literal
+#     '#' characters in <args> are escaped as '\#'.
 #
 #   <substring>
 #     Asserts that the output contains <substring>.
