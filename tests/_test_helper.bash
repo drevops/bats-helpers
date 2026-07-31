@@ -9,7 +9,7 @@ load '../load.bash'
 
 setup() {
   # Setup command mocking.
-  mock_setup
+  setup_mock
 
   # Print debug information if "--verbose-run" is passed.
   # LCOV_EXCL_START

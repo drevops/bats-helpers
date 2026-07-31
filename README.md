@@ -192,7 +192,7 @@ tests.
 
 | Function               | Description                                | Arguments                        | Returns   |
 |------------------------|--------------------------------------------|----------------------------------|-----------|
-| `mock_setup`           | Setup mock support. Call from `setup()`    | None                             | None      |
+| `setup_mock`           | Setup mock support. Call from `setup()`    | None                             | None      |
 | `mock_create`          | Creates a mock program that can be tracked | None                             | Mock path |
 | `mock_command`         | Mock provided command                      | `command_name`                   | Mock path |
 | `mock_set_output`      | Sets the output of the mock                | `mock`, `output`, `[call_index]` | None      |
@@ -212,7 +212,7 @@ tests.
 
 ```bash
 setup() {
-  mock_setup
+  setup_mock
 }
 
 # Example to test the notify.sh script that uses curl to send a notification to external system.
@@ -366,12 +366,11 @@ These names still work, but print a notice on every call and are removed in the 
 | `assert_not_git_repo`            | `assert_git_not_repo`         |
 | `assert_git_file_is_tracked`     | `assert_git_file_tracked`     |
 | `assert_git_file_is_not_tracked` | `assert_git_file_not_tracked` |
-| `setup_mock`                     | `mock_setup`                  |
 
 The notice is written to file descriptor 3, so it shows up in the BATS output without being captured by `run` or by command substitution:
 
 ```text
-Deprecated: 'setup_mock' will be removed in the next version. Use 'mock_setup' instead.
+Deprecated: 'assert_not_git_repo' will be removed in the next version. Use 'assert_git_not_repo' instead.
 ```
 
 Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence every notice:

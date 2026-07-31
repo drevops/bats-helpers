@@ -43,19 +43,12 @@ load _test_helper
   assert_file_contains "${notice}" "Deprecated: 'assert_git_file_is_not_tracked' will be removed in the next version. Use 'assert_git_file_not_tracked' instead."
 }
 
-@test "setup_mock" {
-  notice="${BATS_TEST_TMPDIR}/notice.txt"
-
-  setup_mock 3>"${notice}"
-
-  assert_file_contains "${notice}" "Deprecated: 'setup_mock' will be removed in the next version. Use 'mock_setup' instead."
-}
-
 @test "Notices are silenced" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export BATS_HELPERS_DEPRECATION_QUIET=1
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
 
-  setup_mock 3>"${notice}"
+  assert_not_git_repo "${BATS_TEST_TMPDIR}/fixture/not_git_repo" 3>"${notice}"
 
   assert_file_exists "${notice}"
   assert_empty "$(cat "${notice}")"
