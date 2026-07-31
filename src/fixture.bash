@@ -14,14 +14,14 @@ fixture_export_codebase() {
   local dst="${1?Destination directory is required}"
   local src="${2:-"$(pwd)"}"
 
-  assert_dir_exists "${dst}"
-  assert_git_repo "${src}"
+  assert_dir_exists "${dst}" || return 1
+  assert_git_repo "${src}" || return 1
 
-  pushd "${src}" >/dev/null || exit 1
+  pushd "${src}" >/dev/null || return 1
 
   git archive --format=tar HEAD | (cd "${dst}" && tar -xf -)
 
-  popd >/dev/null || exit 1
+  popd >/dev/null || return 1
 }
 
 #
