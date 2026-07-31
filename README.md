@@ -362,7 +362,7 @@ Starts with `- ` (minus followed by a space).
 
 A renamed function keeps working under its old name and announces its replacement:
 
-```
+```text
 # Deprecated: 'old_name' will be removed in the next version of bats-helpers. Use 'new_name' instead.
 ```
 
