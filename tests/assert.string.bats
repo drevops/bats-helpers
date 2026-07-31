@@ -55,8 +55,6 @@ load _test_helper
 ##
 
 @test "assert_contains" {
-  export BATS_HELPERS_DEPRECATION_QUIET=1
-
   assert_contains "needle" "some needle in a haystack"
   assert_contains "n[ee]dle" "some n[ee]dle in a haystack"
 
@@ -65,8 +63,6 @@ load _test_helper
 }
 
 @test "assert_not_contains" {
-  export BATS_HELPERS_DEPRECATION_QUIET=1
-
   assert_not_contains "otherneedle" "some needle in a haystack"
   assert_not_contains "othern[ee]dle" "some n[ee]dle in a haystack"
 
