@@ -68,7 +68,7 @@ assert_dir_empty() {
 
 assert_dir_not_empty() {
   local dir="${1:-$(pwd)}"
-  assert_dir_exists "${dir}"
+  assert_dir_exists "${dir}" || return 1
 
   if [ "$(ls -A "${dir}")" ]; then
     return 0
@@ -105,7 +105,7 @@ assert_file_mode() {
   local file="${1}"
   local perm="${2}"
   local parsed
-  assert_file_exists "${file}"
+  assert_file_exists "${file}" || return 1
 
   if [ "$(uname)" = "Darwin" ]; then
     parsed=$(printf "%.3o\n" $(($(stat -f '0%Lp' "$file") & ~0022)))
@@ -123,7 +123,7 @@ assert_file_mode() {
 assert_file_contains() {
   local file="${1}"
   local string="${2}"
-  assert_file_exists "${file}"
+  assert_file_exists "${file}" || return 1
 
   local contents
   contents="$(cat "${file}")"

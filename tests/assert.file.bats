@@ -120,6 +120,11 @@ load _test_helper
   chmod 777 "${BATS_TEST_TMPDIR}/fixture_mode/1.txt"
   assert_file_mode "${BATS_TEST_TMPDIR}/fixture_mode/1.txt" "755"
 
+  run assert_file_mode "${BATS_TEST_TMPDIR}/fixture_mode/non_existing.txt" "644"
+  assert_failure
+  assert_output_contains "does not exist"
+  assert_output_not_contains "File permissions for file"
+
   run assert_file_mode "${BATS_TEST_TMPDIR}/fixture_mode/1.txt" "644"
   assert_failure
 }
@@ -131,6 +136,11 @@ load _test_helper
   echo "one more line of existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
 
   assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some existing text"
+
+  run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/non_existing.txt" "some existing text"
+  assert_failure
+  assert_output_contains "does not exist"
+  assert_output_not_contains "does not contain"
 
   run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "other non-existing text"
   assert_failure
@@ -172,10 +182,12 @@ load _test_helper
 
   assert_dir_not_empty "${BATS_TEST_TMPDIR}/fixture/dir2"
 
-  run assert_dir_not_empty "${BATS_TEST_TMPDIR}/fixture/dir1"
-  assert_failure
-
   run assert_dir_not_empty "${BATS_TEST_TMPDIR}/non_existing"
+  assert_failure
+  assert_output_contains "does not exist"
+  assert_output_not_contains "is empty, but should not be"
+
+  run assert_dir_not_empty "${BATS_TEST_TMPDIR}/fixture/dir1"
   assert_failure
 }
 
