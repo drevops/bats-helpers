@@ -24,7 +24,7 @@ assert_failure() {
 
 assert_output() {
   local expected
-  if [ $# -eq 0 ]; then
+  if [ "$#" -eq 0 ]; then
     expected="$(cat -)"
   else
     expected="${1}"
@@ -35,7 +35,7 @@ assert_output() {
 
 assert_output_contains() {
   local expected
-  if [ $# -eq 0 ]; then
+  if [ "$#" -eq 0 ]; then
     expected="$(cat -)"
   else
     expected="${1}"
@@ -46,7 +46,7 @@ assert_output_contains() {
 
 assert_output_not_contains() {
   local expected
-  if [ $# -eq 0 ]; then
+  if [ "$#" -eq 0 ]; then
     expected="$(cat -)"
   else
     expected="${1}"

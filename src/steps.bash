@@ -7,7 +7,7 @@ set -eu
 #
 # Global variables:
 # - STEPS: An array holding the steps to be processed.
-# - RUN_STEPS_DEBUG: A boolean flag to enable debug output.
+# - RUN_STEPS_DEBUG: Set to '1' to enable debug output.
 #
 # Parameters:
 # 1. Phase: Either "setup" or "assert". Defaults to "assert".
@@ -25,9 +25,9 @@ set -eu
 # When used with strings, just call it once for the 'assert' phase.
 #
 # STEPS=(...)
-# mocks="$(process_steps "setup")" # $mocks will hold created mocks
+# mocks="$(run_steps "setup")" # $mocks will hold created mocks
 # # ... code to be tested ...
-# process_steps "assert" "$mocks"
+# run_steps "assert" "$mocks"
 #
 # Every step is a string that can be one of the following:
 # @<command> [<args>] # <mock_status> [ # <mock_output> [ # <mock_side_effect> ]]
@@ -65,9 +65,9 @@ set -eu
 #   "- Goodbye world"
 # )
 #
-# mocks="$(process_steps "setup")" # $mocks will hold created mocks
+# mocks="$(run_steps "setup")" # $mocks will hold created mocks
 # # ... code to be tested ...
-# process_steps "assert" "$mocks" # Assertions will be processed.
+# run_steps "assert" "$mocks" # Assertions will be processed.
 #
 ################################################################################
 run_steps() {
@@ -81,10 +81,10 @@ run_steps() {
 
   # Run bats with `--tap` option to debug the output.
   stepdebug() {
-    if [ "${RUN_STEPS_DEBUG}" = "1" ]; then echo "  > ${1-}" >&3; fi
+    if [[ ${RUN_STEPS_DEBUG} == "1" ]]; then echo "  > ${1-}" >&3; fi
   }
   substepdebug() {
-    if [ "${RUN_STEPS_DEBUG}" = "1" ]; then echo "  >   ${1-}" >&3; fi
+    if [[ ${RUN_STEPS_DEBUG} == "1" ]]; then echo "  >   ${1-}" >&3; fi
   }
 
   declare -A command_indexes
@@ -96,6 +96,7 @@ run_steps() {
 
   # Create associative array for mocked commands
   if [[ -n ${mocked_commands_var} ]]; then
+    local line
     while IFS= read -r line; do
       local key="${line%%=*}"
       local value="${line#*=}"
@@ -104,6 +105,8 @@ run_steps() {
   fi
 
   local mock_cmd
+  local mock_cmd_index
+  local i
   for ((i = 0; i < ${#STEPS[@]}; i++)); do
     local item="${STEPS[${i}]}"
 
@@ -265,6 +268,7 @@ run_steps() {
   # Return mocked commands as a string to pass it to the next phase.
   if [[ ${phase} == "${PHASE_SETUP}" ]]; then
     local mc_string=""
+    local key
     for key in "${!mocked_commands[@]}"; do
       mc_string+="${key}=${mocked_commands[${key}]}"$'\n'
     done

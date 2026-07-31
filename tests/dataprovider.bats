@@ -7,15 +7,15 @@
 load _test_helper
 
 fixture_add() {
-  local num1=$1
-  local num2=$2
+  local num1="${1}"
+  local num2="${2}"
   echo $((num1 + num2))
 }
 
 fixture_concat() {
-  local num1=$1
-  local num2=$2
-  echo "$num1$num2"
+  local num1="${1}"
+  local num2="${2}"
+  echo "${num1}${num2}"
 }
 
 @test "Test dataprovider runner, direct - success" {
@@ -40,7 +40,6 @@ fixture_concat() {
 }
 
 @test "Test dataprovider runner - success" {
-  run fixture_add 1 2
   TEST_CASES=(
     1 2 3
     1 2 3
@@ -71,10 +70,6 @@ fixture_concat() {
   run dataprovider_run "" 3
   assert_failure
   assert_output_contains "Function name must not be empty."
-
-  run dataprovider_run "non_existing_func" 3
-  assert_failure
-  assert_output_contains "Function non_existing_func is not a valid function."
 
   run dataprovider_run "non_existing_func" 3
   assert_failure

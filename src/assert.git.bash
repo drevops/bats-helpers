@@ -10,9 +10,10 @@ assert_git_repo() {
   assert_dir_exists "${dir}" || return 1
 
   if [ -d "${dir}/.git" ]; then
-    log=$(git --work-tree="${dir}" --git-dir="${dir}/.git" status 2>&1)
+    local message
+    message=$(git --work-tree="${dir}" --git-dir="${dir}/.git" status 2>&1)
 
-    if echo "${log}" | $(type -p grep | head -1) -i -F -- "not a git repository" >/dev/null; then
+    if echo "${message}" | $(type -p grep | head -1) -i -F -- "not a git repository" >/dev/null; then
       format_error "Directory ${dir} exists, but it is not a git repository" | flunk
       return 1
     fi

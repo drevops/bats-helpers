@@ -76,7 +76,7 @@ load _test_helper
   run_steps "assert" "${mocks[@]}"
 }
 
-@test "Wrapped execution through Bat's 'run'" {
+@test "Wrapped execution through Bats' 'run'" {
   declare -a STEPS=(
     "@somebin # 0 # someval"
   )
@@ -225,7 +225,6 @@ load _test_helper
   assert_success
 
   run run_steps "assert" "${mocks[@]}"
-
 }
 
 @test "Command, multiple commands, different - negative: incorrect call order" {
@@ -407,7 +406,6 @@ load _test_helper
     "}"
   run run_steps "assert" "${mocks[@]}"
   assert_success
-
 }
 
 @test "Command with side effect - basic file creation" {
@@ -736,7 +734,7 @@ load _test_helper
   run_steps "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - Multiple escaped hashes in arguments" {
+@test "Escaped hash - multiple escaped hashes in arguments" {
   declare -a STEPS=(
     "@somebin --url1=https://a.com\#tag1 --url2=https://b.com\#tag2 # 0"
   )
@@ -748,7 +746,7 @@ load _test_helper
   run_steps "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - In output" {
+@test "Escaped hash - in output" {
   declare -a STEPS=(
     "@somebin # 0 # Output with \# hash"
   )
@@ -761,7 +759,7 @@ load _test_helper
   run_steps "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - In side effect" {
+@test "Escaped hash - in side effect" {
   declare -a STEPS=(
     '@somebin # 0 # success # echo "Comment \# starts here" > ${BATS_TEST_TMPDIR}/escaped_hash'
   )
@@ -779,7 +777,7 @@ load _test_helper
   assert_output_contains "Comment # starts here"
 }
 
-@test "Escaped hash - Complex URL with query and fragment" {
+@test "Escaped hash - complex URL with query and fragment" {
   declare -a STEPS=(
     "@curl -fsSL https://example.com/install?key=123\#section -o installer.php # 0 # Downloaded"
   )
@@ -792,7 +790,7 @@ load _test_helper
   run_steps "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - Mix of escaped and delimiter hashes" {
+@test "Escaped hash - mix of escaped and delimiter hashes" {
   declare -a STEPS=(
     "@php installer.php --uri=https://github.com/repo.git\#stable # 0 # Success \# done"
   )
@@ -805,7 +803,7 @@ load _test_helper
   run_steps "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - All three parts with escaped hashes" {
+@test "Escaped hash - all three parts with escaped hashes" {
   declare -a STEPS=(
     '@somebin --url=https://site.com\#tag # 0 # Message with \# hash # echo "Comment \# here" > ${BATS_TEST_TMPDIR}/all_escaped'
   )
@@ -823,7 +821,7 @@ load _test_helper
   assert_output_contains "Comment # here"
 }
 
-@test "Escaped hash - Real-world example from user" {
+@test "Escaped hash - real-world example from user" {
   declare -a STEPS=(
     "@curl -fsSL https://www.vortextemplate.com/install?1234567890 -o installer.php # 0"
     "@php installer.php --no-interaction --uri=https://github.com/drevops/vortex.git\#stable # 0"

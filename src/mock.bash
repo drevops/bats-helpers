@@ -256,7 +256,7 @@ setup_mock() {
   # PATH to lookup in mock directories first. This change lives only for the
   # duration of the test and will be reset after. It does not modify the PATH
   # outside of the running test.
-  PATH="${BATS_MOCK_TMPDIR}:$PATH"
+  PATH="${BATS_MOCK_TMPDIR}:${PATH}"
 }
 
 # Prepare temporary mock directory.
@@ -275,10 +275,11 @@ mock_prepare_tmp() {
 # Outputs:
 #   STDOUT: path to created mock file.
 mock_command() {
-  mocked_command="${1?'Mocked command must be specified'}"
+  local mocked_command="${1?'Mocked command must be specified'}"
+  local mock
   mock="$(mock_create)"
-  mock_path="${mock%/*}"
-  mock_file="${mock##*/}"
+  local mock_path="${mock%/*}"
+  local mock_file="${mock##*/}"
   ln -sf "${mock_path}/${mock_file}" "${mock_path}/${mocked_command}"
-  echo "$mock"
+  echo "${mock}"
 }

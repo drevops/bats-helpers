@@ -15,19 +15,19 @@
 #
 # Examples:
 #   To run a function `test_func` with TEST_CASES containing two arguments per row,
-#   you can call run_test_cases like so:
-#     run_test_cases "test_func" 2
+#   you can call dataprovider_run like so:
+#     dataprovider_run "test_func" 2
 ##
 
 dataprovider_run() {
   local func_name="${1}"
-  local args_per_row=${2:-1}
+  local args_per_row="${2:-1}"
 
   ##
   ## Input validation.
   ##
 
-  if [[ -z $func_name ]]; then
+  if [ -z "${func_name}" ]; then
     flunk "Function name must not be empty."
     return
   fi
@@ -40,7 +40,7 @@ dataprovider_run() {
 
   # Using the normal run() function is sufficient for testing functions with no
   # arguments.
-  if [[ $args_per_row -le 0 ]]; then
+  if [ "${args_per_row}" -le 0 ]; then
     flunk "Number of arguments per test case must be greater than zero."
     return
   fi
@@ -58,12 +58,14 @@ dataprovider_run() {
   fi
 
   # Ensure that TEST_CASES has a multiple of args_per_row elements.
-  if [[ $((${#TEST_CASES[@]} % args_per_row)) -ne 0 ]]; then
-    flunk "Total elements in TEST_CASES must be a multiple of $args_per_row."
+  if [ "$((${#TEST_CASES[@]} % args_per_row))" -ne 0 ]; then
+    flunk "Total elements in TEST_CASES must be a multiple of ${args_per_row}."
     return
   fi
 
   # Ensure that the last argument in each row (i.e., "expected" value) is not empty.
+  local i
+  local data_set_idx
   for ((i = args_per_row - 1, data_set_idx = 0; i < ${#TEST_CASES[@]}; i += args_per_row, data_set_idx++)); do
     if [ -z "${TEST_CASES[i]}" ]; then
       flunk "Expected value (last element) in the data set ${data_set_idx} is empty."
@@ -78,15 +80,17 @@ dataprovider_run() {
   local set_idx=0
   local error_count=0
   local failed_sets=""
+  local expected
+  local test_args
 
   for ((i = 0; i < ${#TEST_CASES[@]}; i += args_per_row)); do
     expected="${TEST_CASES[i + args_per_row - 1]}"
     test_args=("${TEST_CASES[@]:i:args_per_row-1}")
 
-    run "$func_name" "${test_args[@]}"
+    run "${func_name}" "${test_args[@]}"
 
-    if ! assert_output_contains "$expected"; then
-      echo "Error: Failed for set $set_idx"
+    if ! assert_output_contains "${expected}"; then
+      echo "Error: Failed for set ${set_idx}"
       error_count=$((error_count + 1))
       failed_sets="${failed_sets}${set_idx}, "
     fi
@@ -98,10 +102,10 @@ dataprovider_run() {
   ## Error reporting.
   ##
 
-  if [[ $error_count -ne 0 ]]; then
+  if [ "${error_count}" -ne 0 ]; then
     failed_sets=${failed_sets%, } # Remove trailing comma
     echo
-    echo "Failed Sets (0-based): $failed_sets"
-    flunk "Total failed test sets: $error_count"
+    echo "Failed Sets (0-based): ${failed_sets}"
+    flunk "Total failed test sets: ${error_count}"
   fi
 }

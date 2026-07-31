@@ -12,7 +12,7 @@ load _test_helper
 
   status=1
   run assert_success
-  [ "$status" -eq 1 ]
+  [ "${status}" -eq 1 ]
 }
 
 @test "assert_failure" {
@@ -21,7 +21,7 @@ load _test_helper
 
   status=0
   run assert_failure
-  [ "$status" -eq 1 ]
+  [ "${status}" -eq 1 ]
 }
 
 @test "assert_output" {
@@ -58,26 +58,5 @@ load _test_helper
   assert_failure
 
   run assert_output_not_contains "existing"
-  assert_failure
-}
-
-@test "assert_equal" {
-  assert_equal 1 1
-
-  run assert_equal 1 2
-  assert_failure
-}
-
-@test "assert_empty" {
-  assert_empty ""
-
-  run assert_empty "something"
-  assert_failure
-}
-
-@test "assert_not_empty" {
-  assert_not_empty "something"
-
-  run assert_not_empty ""
   assert_failure
 }

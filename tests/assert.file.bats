@@ -304,8 +304,6 @@ load _test_helper
 
   run assert_files_not_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture3.txt"
   assert_failure
-
-  # Same as above, but ignoring whitespace.
 }
 
 @test "assert_binary_files_equal" {
