@@ -31,7 +31,7 @@
   - [Mocking](#mocking) - Command mocking
   - [Step Runner](#step-runner) - Sequential test assertions
   - [Helpers](#helpers) - Utility functions
-  - [Deprecations](#deprecations) - Renamed functions
+  - [Deprecations](#deprecations) - Renamed and reordered functions
 - [Maintenance](#maintenance)
 
 ## Installation
@@ -97,13 +97,21 @@ Use these after running a command with `run`.
 
 #### String assertions
 
-| Function Name         | Description                                        |
-|-----------------------|----------------------------------------------------|
-| `assert_empty`        | Asserts that a string is empty                     |
-| `assert_not_empty`    | Asserts that a string is not empty                 |
-| `assert_equal`        | Asserts that two strings are equal                 |
-| `assert_contains`     | Asserts that a string contains a given substring   |
-| `assert_not_contains` | Asserts that a string does not contain a substring |
+| Function Name                | Description                                        |
+|------------------------------|----------------------------------------------------|
+| `assert_empty`               | Asserts that a string is empty                     |
+| `assert_not_empty`           | Asserts that a string is not empty                 |
+| `assert_equal`               | Asserts that two strings are equal                 |
+| `assert_string_contains`     | Asserts that a string contains a given substring   |
+| `assert_string_not_contains` | Asserts that a string does not contain a substring |
+
+Every `contains` assertion takes the container first and the string to look for second:
+
+```bash
+assert_string_contains "some needle in a haystack" "needle"
+assert_file_contains "${file}" "needle"
+assert_dir_contains_string "${dir}" "needle"
+```
 
 #### File assertions
 
@@ -394,11 +402,21 @@ assert_file_exists "$(file_backup_path "${BATS_TEST_TMPDIR}/.env")"
 
 These names still work, but print a notice on every call and are removed in the next version:
 
-| Deprecated                       | Use instead                   |
-|----------------------------------|-------------------------------|
-| `assert_not_git_repo`            | `assert_git_not_repo`         |
-| `assert_git_file_is_tracked`     | `assert_git_file_tracked`     |
-| `assert_git_file_is_not_tracked` | `assert_git_file_not_tracked` |
+| Deprecated                       | Use instead                    |
+|----------------------------------|--------------------------------|
+| `assert_not_git_repo`            | `assert_git_not_repo`          |
+| `assert_git_file_is_tracked`     | `assert_git_file_tracked`      |
+| `assert_git_file_is_not_tracked` | `assert_git_file_not_tracked`  |
+| `assert_contains`                | `assert_string_contains`       |
+| `assert_not_contains`            | `assert_string_not_contains`   |
+
+`assert_contains` and `assert_not_contains` take the needle first, while their replacements take the haystack first, so a call has to swap its arguments as well as change its name:
+
+```bash
+assert_contains "needle" "some needle in a haystack"
+
+assert_string_contains "some needle in a haystack" "needle"
+```
 
 The notice is written to file descriptor 3, so it shows up in the BATS output without being captured by `run` or by command substitution:
 
