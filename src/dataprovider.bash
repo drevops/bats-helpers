@@ -34,7 +34,7 @@ dataprovider_run() {
 
   # Verify that func_name is a valid function that can be called.
   if ! type -t "${func_name}" | grep -q 'function'; then
-    flunk "Function ${func_name} is not a valid function."
+    flunk "Function '${func_name}' is not a valid function."
     return
   fi
 
@@ -105,7 +105,7 @@ dataprovider_run() {
   if [ "${error_count}" -ne 0 ]; then
     failed_sets=${failed_sets%, } # Remove trailing comma
     echo
-    echo "Failed Sets (0-based): ${failed_sets}"
+    echo "Failed sets (0-based): ${failed_sets}"
     flunk "Total failed test sets: ${error_count}"
   fi
 }

@@ -48,7 +48,7 @@ fixture_concat() {
   run dataprovider_run "fixture_add" 3
   assert_success
 
-  assert_output_not_contains "Failed Sets (0-based)"
+  assert_output_not_contains "Failed sets (0-based)"
   assert_output_not_contains "Total failed test sets"
 }
 
@@ -62,7 +62,7 @@ fixture_concat() {
 
   run dataprovider_run "fixture_add" 3
   assert_failure
-  assert_output_contains "Failed Sets (0-based): 1, 3"
+  assert_output_contains "Failed sets (0-based): 1, 3"
   assert_output_contains "Total failed test sets: 2"
 }
 
@@ -73,7 +73,7 @@ fixture_concat() {
 
   run dataprovider_run "non_existing_func" 3
   assert_failure
-  assert_output_contains "Function non_existing_func is not a valid function."
+  assert_output_contains "Function 'non_existing_func' is not a valid function."
 
   run dataprovider_run "fixture_add" 0
   assert_failure

@@ -70,6 +70,14 @@ bats_load_library bats-helpers
 ### Assertion Functions
 All assertion functions follow the pattern of checking conditions and calling `flunk()` with formatted error messages on failure.
 
+### Failure Message Style
+Failure messages are what a consumer reads when their test breaks, so they follow one house style across `src/`. `src/mock.bash` is exempt: it is a vendored copy of grayhemp/bats-mock and restyling it would widen the divergence from upstream.
+
+- **Open with the capitalised subject noun** naming the thing under assertion: `File`, `Directory`, `Symlink`, `Regular file`, `String`, `Command`, `Function`. Summary labels use sentence case, not Title Case.
+- **Single-quote interpolated values** - paths, strings, names - so empty and whitespace-only values stay visible: `File '${file}' does not exist`. Numeric counts and indices stay bare: `exit status ${status}`, `data set ${data_set_idx}`.
+- **State the actual fact, and append an expectation clause only when the fact alone does not convey it.** A positive assertion states the negated fact with no clause (`Directory '${dir}' is not empty`); a negative assertion states the positive fact plus a clause (`Directory '${dir}' is empty, but should not be`). Use the terse `, but should not` after a plain verb and `, but should not be` after a copula when the expectation is simply the negation; name the expectation outright whenever that is clearer (`Regular file '${file}' exists, but should be a symlink`, `Command succeeded, but should have failed`).
+- **Punctuate by message kind**: assertion failures routed through `format_error` take no trailing full stop; validation and runtime errors raised by a direct `flunk` call read as sentences and end with one; `Key: value` summary labels take neither.
+
 ### Mocking System
 The mocking system creates temporary mock executables that record calls and can return configured outputs/exit codes.
 
