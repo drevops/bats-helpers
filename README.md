@@ -31,6 +31,7 @@
   - [Mocking](#mocking) - Command mocking
   - [Step Runner](#step-runner) - Sequential test assertions
   - [Helpers](#helpers) - Utility functions
+  - [Deprecations](#deprecations) - Renamed functions
 - [Maintenance](#maintenance)
 
 ## Installation
@@ -106,37 +107,37 @@ Use these after running a command with `run`.
 
 #### File assertions
 
-| Function Name                    | Description                                            |
-|----------------------------------|--------------------------------------------------------|
-| `assert_file_exists`             | Asserts that a file exists                             |
-| `assert_file_not_exists`         | Asserts that a file does not exist                     |
-| `assert_file_contains`           | Checks if a file contains a specific string            |
-| `assert_file_not_contains`       | Checks if a file does not contain a specific string    |
-| `assert_files_equal`             | Asserts that two files are equal                       |
-| `assert_files_not_equal`         | Asserts that two files are not equal                   |
-| `assert_file_mode`               | Checks the file permission mode                        |
-| `assert_binary_files_equal`      | Checks if two binary files are equal                   |
-| `assert_binary_files_not_equal`  | Checks if two binary files are not equal               |
-| `assert_dir_exists`              | Asserts that a directory exists                        |
-| `assert_dir_not_exists`          | Asserts that a directory does not exist                |
-| `assert_dir_empty`               | Asserts that a directory is empty                      |
-| `assert_dir_not_empty`           | Asserts that a directory is not empty                  |
-| `assert_dir_contains_string`     | Checks if directory contains a specific string         |
-| `assert_dir_not_contains_string` | Checks if directory does not contain a specific string |
-| `assert_dirs_equal`              | Asserts that two directories are equal                 |
-| `assert_symlink_exists`          | Asserts that a symbolic link exists                    |
-| `assert_symlink_not_exists`      | Asserts that a symbolic link does not exist            |
+| Function Name                   | Description                                            |
+|---------------------------------|--------------------------------------------------------|
+| `assert_file_exists`            | Asserts that a file exists                             |
+| `assert_file_not_exists`        | Asserts that a file does not exist                     |
+| `assert_file_contains`          | Checks if a file contains a specific string            |
+| `assert_file_not_contains`      | Checks if a file does not contain a specific string    |
+| `assert_files_equal`            | Asserts that two files are equal                       |
+| `assert_files_not_equal`        | Asserts that two files are not equal                   |
+| `assert_file_mode`              | Checks the file permission mode                        |
+| `assert_binary_files_equal`     | Checks if two binary files are equal                   |
+| `assert_binary_files_not_equal` | Checks if two binary files are not equal               |
+| `assert_dir_exists`             | Asserts that a directory exists                        |
+| `assert_dir_not_exists`         | Asserts that a directory does not exist                |
+| `assert_dir_empty`              | Asserts that a directory is empty                      |
+| `assert_dir_not_empty`          | Asserts that a directory is not empty                  |
+| `assert_dir_contains`           | Checks if directory contains a specific string         |
+| `assert_dir_not_contains`       | Checks if directory does not contain a specific string |
+| `assert_dirs_equal`             | Asserts that two directories are equal                 |
+| `assert_symlink_exists`         | Asserts that a symbolic link exists                    |
+| `assert_symlink_not_exists`     | Asserts that a symbolic link does not exist            |
 
 #### Git assertions
 
-| Function Name                    | Description                                      |
-|----------------------------------|--------------------------------------------------|
-| `assert_git_repo`                | Asserts that a directory is a git repository     |
-| `assert_not_git_repo`            | Asserts that a directory is not a git repository |
-| `assert_git_clean`               | Asserts that a git repository is clean           |
-| `assert_git_not_clean`           | Asserts that a git repository is not clean       |
-| `assert_git_file_is_tracked`     | Checks if a file is tracked in git               |
-| `assert_git_file_is_not_tracked` | Checks if a file is not tracked in git           |
+| Function Name                 | Description                                      |
+|-------------------------------|--------------------------------------------------|
+| `assert_git_repo`             | Asserts that a directory is a git repository     |
+| `assert_git_not_repo`         | Asserts that a directory is not a git repository |
+| `assert_git_clean`            | Asserts that a git repository is clean           |
+| `assert_git_not_clean`        | Asserts that a git repository is not clean       |
+| `assert_git_file_tracked`     | Checks if a file is tracked in git               |
+| `assert_git_file_not_tracked` | Checks if a file is not tracked in git           |
 
 ### Data Provider
 
@@ -191,7 +192,7 @@ tests.
 
 | Function               | Description                                | Arguments                        | Returns   |
 |------------------------|--------------------------------------------|----------------------------------|-----------|
-| `setup_mock`           | Setup mock support. Call from `setup()`    | None                             | None      |
+| `mock_setup`           | Setup mock support. Call from `setup()`    | None                             | None      |
 | `mock_create`          | Creates a mock program that can be tracked | None                             | Mock path |
 | `mock_command`         | Mock provided command                      | `command_name`                   | Mock path |
 | `mock_set_output`      | Sets the output of the mock                | `mock`, `output`, `[call_index]` | None      |
@@ -211,7 +212,7 @@ tests.
 
 ```bash
 setup() {
-  setup_mock
+  mock_setup
 }
 
 # Example to test the notify.sh script that uses curl to send a notification to external system.
@@ -355,6 +356,31 @@ Starts with `- ` (minus followed by a space).
 | `random_string`           | Generates a random alphanumeric string of specified length                    |
 | `trim_file`               | Removes the last line from a file                                             |
 | `tui_run`                 | Runs a TUI script with predefined answers, simulating user input              |
+
+### Deprecations
+
+These names still work, but print a notice on every call and are removed in the next version:
+
+| Deprecated                       | Use instead                   |
+|----------------------------------|-------------------------------|
+| `assert_not_git_repo`            | `assert_git_not_repo`         |
+| `assert_git_file_is_tracked`     | `assert_git_file_tracked`     |
+| `assert_git_file_is_not_tracked` | `assert_git_file_not_tracked` |
+| `assert_dir_contains_string`     | `assert_dir_contains`         |
+| `assert_dir_not_contains_string` | `assert_dir_not_contains`     |
+| `setup_mock`                     | `mock_setup`                  |
+
+The notice is written to file descriptor 3, so it shows up in the BATS output without being captured by `run` or by command substitution:
+
+```text
+Deprecated: 'setup_mock' will be removed in the next version. Use 'mock_setup' instead.
+```
+
+Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence every notice:
+
+```bash
+export BATS_HELPERS_DEPRECATION_QUIET=1
+```
 
 ## Acknowledgments
 

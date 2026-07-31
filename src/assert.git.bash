@@ -25,7 +25,7 @@ assert_git_repo() {
   fi
 }
 
-assert_not_git_repo() {
+assert_git_not_repo() {
   local dir="${1:-$(pwd)}"
 
   assert_dir_exists "${dir}" || return 1
@@ -37,7 +37,7 @@ assert_not_git_repo() {
   fi
 }
 
-assert_git_file_is_tracked() {
+assert_git_file_tracked() {
   local file="${1-}"
   local dir="${2:-$(pwd)}"
 
@@ -49,7 +49,7 @@ assert_git_file_is_tracked() {
   return $?
 }
 
-assert_git_file_is_not_tracked() {
+assert_git_file_not_tracked() {
   local file="${1-}"
   local dir="${2:-$(pwd)}"
 
@@ -82,4 +82,23 @@ assert_git_not_clean() {
 
   message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status)"
   assert_not_contains "nothing to commit" "${message}"
+}
+
+##
+# Deprecated aliases, removed in the next version.
+##
+
+assert_not_git_repo() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_not_git_repo' will be removed in the next version. Use 'assert_git_not_repo' instead." >&3
+  assert_git_not_repo "$@"
+}
+
+assert_git_file_is_tracked() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_git_file_is_tracked' will be removed in the next version. Use 'assert_git_file_tracked' instead." >&3
+  assert_git_file_tracked "$@"
+}
+
+assert_git_file_is_not_tracked() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_git_file_is_not_tracked' will be removed in the next version. Use 'assert_git_file_not_tracked' instead." >&3
+  assert_git_file_not_tracked "$@"
 }
