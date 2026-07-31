@@ -35,10 +35,11 @@ trim_file() {
 }
 
 ##
-# Evaluates an expression with the variables from the '.env' file in scope.
+# Evaluates an expression with the variables from the './.env' file in scope.
 #
-# The variables are visible only for the duration of the call: the caller's
-# environment is captured beforehand and restored afterwards.
+# Variables that were already exported are restored to their previous values
+# once the expression has been evaluated. Variables that './.env' introduces
+# stay exported.
 #
 # Arguments:
 #   1. expression: Expression to evaluate.
@@ -58,9 +59,10 @@ read_env() {
 ##
 # Resolves the backup location of a file.
 #
-# The source path is mirrored below the backup root so that backups of
-# different files do not collide. Paths with a parent directory reference are
-# rejected, as they resolve outside of that root.
+# The source path is mirrored below the backup root, so files in different
+# directories keep separate backups. A leading slash is stripped, so relative
+# and absolute paths to the same location share one backup. Paths with a parent
+# directory reference are rejected, as they resolve outside of that root.
 #
 # Arguments:
 #   1. file: File whose backup path to resolve.
