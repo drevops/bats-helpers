@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# Tests for Bats helpers.
+# Tests for base assertion helpers.
 #
 # shellcheck disable=SC2129,SC2016
 

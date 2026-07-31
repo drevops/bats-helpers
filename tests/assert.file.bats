@@ -1,8 +1,6 @@
 #!/usr/bin/env bats
 #
-# Tests for Bats helpers.
-#
-# Each assertion tests positive and negative behaviour.
+# Tests for file and directory assertions.
 #
 # shellcheck disable=SC2129,SC2030,SC2031
 

@@ -1,8 +1,6 @@
 #!/usr/bin/env bats
 #
-# Tests for Bats helpers.
-#
-# Each assertion tests positive and negative behaviour.
+# Tests for git assertions.
 #
 # shellcheck disable=SC2129
 
