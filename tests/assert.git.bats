@@ -45,10 +45,16 @@ load _test_helper
 
 @test "assert_git_clean" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
   assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
 
   assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
+
+  run assert_git_clean "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
+  assert_failure
+  assert_output_contains "not a git repository"
+  assert_output_not_contains "nothing to commit"
 
   mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/uncommitted_file"
   run assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
@@ -65,8 +71,13 @@ load _test_helper
 
 @test "assert_git_not_clean" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
   assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo"
+
+  run assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
+  assert_failure
+  assert_output_contains "not a git repository"
 
   run assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
   assert_failure
