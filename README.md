@@ -347,6 +347,7 @@ Starts with `- ` (minus followed by a space).
 |---------------------------|-------------------------------------------------------------------------------|
 | `add_var_to_file`         | Adds a variable assignment to a file and creates a backup                     |
 | `restore_file`            | Restores a file from its backup created by add_var_to_file                    |
+| `file_backup_path`        | Returns the sandbox path of a file's backup                                   |
 | `read_env`                | Reads .env file and evaluates variable expressions in that context            |
 | `format_error`            | Formats error messages with decorative borders and includes command output    |
 | `flunk`                   | Causes a test to fail with an optional error message                          |
@@ -356,6 +357,22 @@ Starts with `- ` (minus followed by a space).
 | `random_string`           | Generates a random alphanumeric string of specified length                    |
 | `trim_file`               | Removes the last line from a file                                             |
 | `tui_run`                 | Runs a TUI script with predefined answers, simulating user input              |
+
+#### File backups
+
+`add_var_to_file` backs a file up before modifying it and `restore_file` puts that backup back. Backups are written below `${BATS_TEST_TMPDIR}/bats-helpers-backup`, mirroring the source path, so BATS removes them together with the rest of the test sandbox and concurrent runs cannot overwrite each other's backups.
+
+Set `BATS_HELPERS_BACKUP_DIR` to store them elsewhere. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
+
+```bash
+export BATS_HELPERS_BACKUP_DIR="${BATS_TEST_TMPDIR}/backups"
+```
+
+Use `file_backup_path` to resolve where a given file's backup is stored:
+
+```bash
+assert_file_exists "$(file_backup_path "${BATS_TEST_TMPDIR}/.env")"
+```
 
 ### Deprecations
 

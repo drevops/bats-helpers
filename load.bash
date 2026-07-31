@@ -13,6 +13,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/src/assert.command.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/src/assert.file.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/src/assert.git.bash"
 
+source "$(dirname "${BASH_SOURCE[0]}")/src/file.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/src/fixture.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/src/dataprovider.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/src/mock.bash"

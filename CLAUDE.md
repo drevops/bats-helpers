@@ -13,6 +13,7 @@ This is a BATS (Bash Automated Testing System) helpers library that provides ass
 - **load.bash**: Central loading point that sources all helper modules
 - **src/**: Contains all helper modules:
   - `assert.*.bash`: Various assertion helpers (base, command, string, file, git)
+  - `file.bash`: File utilities for creating, trimming, backing up and restoring files
   - `mock.bash`: Command mocking functionality (based on bats-mock)
   - `steps.bash`: Step runner for sequential command and string assertions
   - `dataprovider.bash`: Data provider utilities for parameterized tests

@@ -3,7 +3,7 @@
 # @file
 # Bats test helpers.
 #
-# shellcheck disable=SC2119,SC2120,SC2044,SC2294,SC2086
+# shellcheck disable=SC2119,SC2120,SC2044,SC2086
 
 assert_file_exists() {
   local file="${1}"
@@ -262,46 +262,4 @@ assert_dirs_equal() {
   done
 
   return 0
-}
-
-# Trim the last line of the file.
-trim_file() {
-  local sed_opts
-  sed_opts=(-i) && [ "$(uname)" = "Darwin" ] && sed_opts=(-i '')
-  sed_opts+=(-e '$ d')
-  sed "${sed_opts[@]}" "${1}"
-}
-
-read_env() {
-  local t
-  # shellcheck disable=SC1090,SC1091
-  [ -f "./.env" ] && t=$(mktemp) && export -p >"${t}" && set -a && . "./.env" && set +a && . "${t}" && rm "${t}" && unset t
-
-  eval echo "$@"
-}
-
-add_var_to_file() {
-  local file="${1}"
-  local name="${2}"
-  local value="${3}"
-
-  local backup=/tmp/bkp/"${file}"
-  mkdir -p "$(dirname "${backup}")"
-
-  cp -f "${file}" "${backup}"
-
-  # shellcheck disable=SC2086
-  echo $name=$value >>"${file}"
-}
-
-restore_file() {
-  local file="${1}"
-  local backup=/tmp/bkp/"${file}"
-
-  cp -f "${backup}" "${file}"
-}
-
-mktouch() {
-  local file="${1}"
-  mkdir -p "$(dirname "${file}")" && touch "${file}"
 }
