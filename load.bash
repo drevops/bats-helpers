@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ##
-# Helpers and assertions for BATS testing.
+# @file
+# Central loading point for all helpers and assertions.
 #
-# Central loading point for all the helpers and assertions.
 # @see https://bats-core.readthedocs.io/en/stable/writing-tests.html#bats-load-library-load-system-wide-libraries
 #
 # shellcheck disable=SC1090
