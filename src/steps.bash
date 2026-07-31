@@ -7,7 +7,7 @@ set -eu
 #
 # Global variables:
 # - STEPS: An array holding the steps to be processed.
-# - RUN_STEPS_DEBUG: A boolean flag to enable debug output.
+# - RUN_STEPS_DEBUG: Set to '1' to enable debug output.
 #
 # Parameters:
 # 1. Phase: Either "setup" or "assert". Defaults to "assert".
