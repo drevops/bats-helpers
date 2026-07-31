@@ -78,6 +78,55 @@ Failure messages are what a consumer reads when their test breaks, so they follo
 - **State the actual fact, and append an expectation clause only when the fact alone does not convey it.** A positive assertion states the negated fact with no clause (`Directory '${dir}' is not empty`); a negative assertion states the positive fact plus a clause (`Directory '${dir}' is empty, but should not be`). Use the terse `, but should not` after a plain verb and `, but should not be` after a copula when the expectation is simply the negation; name the expectation outright whenever that is clearer (`Regular file '${file}' exists, but should be a symlink`, `Command succeeded, but should have failed`).
 - **Punctuate by message kind**: assertion failures routed through `format_error` take no trailing full stop; validation and runtime errors raised by a direct `flunk` call read as sentences and end with one; `Key: value` summary labels take neither.
 
+### Documentation Style
+File headers and function docblocks follow one house style so the library reads as one project. `src/mock.bash` is exempt from the function docblock rules for the same reason it is exempt from the failure message style: its docblocks are upstream grayhemp/bats-mock text, and restyling them widens the divergence from upstream. Its file header is not upstream text and does follow the rule below.
+
+- **File headers**: every `.bash` file opens with the `@file` shape. `.bats` files use the plain shape without `@file`. A file-level `shellcheck disable` follows the header, separated by a blank comment line.
+
+```bash
+#!/usr/bin/env bash
+##
+# @file
+# Assertions for files and directories.
+#
+```
+
+```bash
+#!/usr/bin/env bats
+#
+# Tests for file and directory assertions.
+#
+```
+
+- **Describe what the file holds**, specifically enough to tell it apart from its siblings. `Assertions for strings.` not `Bats test helpers.`
+- **Test file headers** read `Tests for <subject>.`, with the subject lowercase unless it is an acronym: `Tests for git assertions.`, `Tests for TUI helpers.`
+- **Function docblocks** are `##`-fenced, open with a third-person summary ending in a full stop, and carry only the sections that add something. `Arguments:` whenever the function takes any, `Globals:` whenever it reads or writes one, `Outputs:` when STDOUT is the result, and `Returns:` only where the return semantics differ from the library norm of "zero, or non-zero via `flunk`". Argument entries are numbered `1. name: Description.`
+
+```bash
+##
+# Asserts that a directory contains a string.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: String to search for.
+#
+# Globals:
+#   ASSERT_DIR_EXCLUDE: Additional directory names to exclude from the search.
+##
+```
+
+- **Deprecated aliases take no docblock.** The group banner above them and the notice each one prints already name the replacement.
+- **Section banners** inside a long function are three lines at the indent of the code they introduce, with a sentence-case title ending in a full stop:
+
+```bash
+  ##
+  ## Input validation.
+  ##
+```
+
+- **Punctuate comments as sentences.** A comment that is a sentence ends with a full stop; a `Key: value` label takes neither a capital nor a stop.
+- **Coverage markers** pair `# LCOV_EXCL_START` with `# LCOV_EXCL_STOP`. Those are the markers kcov recognises - `LCOV_EXCL_END` is silently ignored, leaving the region open to end of file.
+
 ### Mocking System
 The mocking system creates temporary mock executables that record calls and can return configured outputs/exit codes.
 
@@ -95,6 +144,7 @@ Side effects are Bash code executed when the mock is called, useful for file cre
 - Test files follow BATS naming convention (*.bats)
 - Coverage reports are generated in the `coverage/` directory
 - The library includes comprehensive test coverage for all helper functions
+- Every assertion is tested for both its positive and its negative behaviour, in one `@test` per assertion
 
 ### Assertion Call Style
 
