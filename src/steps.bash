@@ -97,8 +97,8 @@ run_steps() {
     done <<<"${mocked_commands_var}"
   fi
 
-  local mock_cmd
-  local mock_cmd_index
+  local mock
+  local command_index
   local i
   for ((i = 0; i < ${#STEPS[@]}; i++)); do
     local item="${STEPS[${i}]}"
@@ -157,7 +157,7 @@ run_steps() {
       fi
 
       steps_debug_sub "PARSE: FINISHED"
-      steps_debug_sub "       cmd         : '${command_binary}'"
+      steps_debug_sub "       command     : '${command_binary}'"
       steps_debug_sub "       args        : '${command_args}'"
       steps_debug_sub "       status      : '${mock_status}'"
       steps_debug_sub "       output      : '${mock_output}'"
@@ -168,31 +168,31 @@ run_steps() {
       #------------------------------------------------------------------------
 
       # Track the index of the command call per binary.
-      mock_cmd_index=${command_indexes[${command_binary}]:-1}
-      steps_debug_sub "Command index for '${command_binary}' is '${mock_cmd_index}'."
+      command_index=${command_indexes[${command_binary}]:-1}
+      steps_debug_sub "Command index for '${command_binary}' is '${command_index}'."
 
       if [[ ${phase} == "${PHASE_SETUP}" ]]; then
         # Get mock from passed array or create a new one.
         if [[ -z ${mocked_commands["${command_binary}"]-} ]]; then
-          mock_cmd=$(mock_command "${command_binary}")
-          mocked_commands["${command_binary}"]=${mock_cmd}
+          mock=$(mock_command "${command_binary}")
+          mocked_commands["${command_binary}"]=${mock}
           steps_debug_sub "SETUP: Created new mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'."
         else
-          mock_cmd="${mocked_commands["${command_binary}"]}"
+          mock="${mocked_commands["${command_binary}"]}"
           steps_debug_sub "SETUP: Using existing mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'."
         fi
 
         steps_debug_sub "SETUP: Setting mock status to '${mock_status}'."
-        mock_set_status "${mock_cmd}" "${mock_status}" "${mock_cmd_index}"
+        mock_set_status "${mock}" "${mock_status}" "${command_index}"
 
         if [[ -n ${mock_output} ]]; then
           steps_debug_sub "SETUP: Setting mock output to '${mock_output}'."
-          mock_set_output "${mock_cmd}" "${mock_output}" "${mock_cmd_index}"
+          mock_set_output "${mock}" "${mock_output}" "${command_index}"
         fi
 
         if [[ -n ${mock_side_effect} ]]; then
           steps_debug_sub "SETUP: Setting mock side effect to '${mock_side_effect}'."
-          mock_set_side_effect "${mock_cmd}" "${mock_side_effect}" "${mock_cmd_index}"
+          mock_set_side_effect "${mock}" "${mock_side_effect}" "${command_index}"
         fi
 
         steps_debug_sub "SETUP: Setup mock for binary '${command_binary}' complete."
@@ -206,25 +206,25 @@ run_steps() {
         steps_debug_sub "ASSERT: Found mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'"
 
         local mock_args_actual
-        mock_cmd="${mocked_commands[${command_binary}]}"
+        mock="${mocked_commands[${command_binary}]}"
         steps_debug_sub "        command     : ${command_binary}"
         steps_debug_sub "        args        : ${command_args}"
-        steps_debug_sub "        mock        : ${mock_cmd}"
-        steps_debug_sub "        index       : ${mock_cmd_index}"
-        if ! mock_args_actual="$(mock_get_call_args "${mock_cmd}" "${mock_cmd_index}" 2>/dev/null)"; then
-          flunk "ERROR: Mocked command '${command_binary}' was expected to be called at least ${mock_cmd_index} time(s), but was called fewer times."
+        steps_debug_sub "        mock        : ${mock}"
+        steps_debug_sub "        index       : ${command_index}"
+        if ! mock_args_actual="$(mock_get_call_args "${mock}" "${command_index}" 2>/dev/null)"; then
+          flunk "ERROR: Mocked command '${command_binary}' was expected to be called at least ${command_index} time(s), but was called fewer times."
           return 1
         fi
         steps_debug_sub "        actual args : ${mock_args_actual}"
 
         # Use wildcard-aware assertion
-        if ! mock_assert_call_args "${mock_cmd}" "${command_args}" "${mock_cmd_index}"; then
+        if ! mock_assert_call_args "${mock}" "${command_args}" "${command_index}"; then
           flunk "ERROR: Mocked command '${command_binary}' was called with arguments '${mock_args_actual}', but '${command_args}' was expected."
           return 1
         fi
       fi
 
-      command_indexes["${command_binary}"]=$((mock_cmd_index + 1))
+      command_indexes["${command_binary}"]=$((command_index + 1))
       steps_debug "Updated command index for '${command_binary}' to '${command_indexes[${command_binary}]}'"
 
     #########################################################################
