@@ -31,6 +31,7 @@
   - [Mocking](#mocking) - Command mocking
   - [Step Runner](#step-runner) - Sequential test assertions
   - [Helpers](#helpers) - Utility functions
+  - [Deprecations](#deprecations) - Notices for renamed functions
 - [Maintenance](#maintenance)
 
 ## Installation
@@ -349,12 +350,32 @@ Starts with `- ` (minus followed by a space).
 | `read_env`                | Reads .env file and evaluates variable expressions in that context            |
 | `format_error`            | Formats error messages with decorative borders and includes command output    |
 | `flunk`                   | Causes a test to fail with an optional error message                          |
+| `deprecated`              | Announces that a function was renamed, once per name per test run             |
 | `mktouch`                 | Creates a file and any necessary parent directories                           |
 | `fixture_export_codebase` | Export codebase source code at the latest commit to the destination directory |
 | `fixture_prepare_dir`     | Prepares a directory for fixture use by removing existing content             |
 | `random_string`           | Generates a random alphanumeric string of specified length                    |
 | `trim_file`               | Removes the last line from a file                                             |
 | `tui_run`                 | Runs a TUI script with predefined answers, simulating user input              |
+
+### Deprecations
+
+A renamed function keeps working under its old name and announces its replacement:
+
+```
+# Deprecated: 'old_name' will be removed in the next version of bats-helpers. Use 'new_name' instead.
+```
+
+The notice goes to file descriptor 3, which Bats leaves out of both `run` capture and command substitution, so it never appears in `${output}` and never corrupts a value returned through STDOUT. It is printed once per deprecated name per test run. Set `BATS_DEPRECATION_NOTICE_ENABLED=0` to silence it.
+
+Call `deprecated` to announce renames of your own helpers:
+
+```bash
+old_name() {
+  deprecated "old_name" "new_name"
+  new_name "$@"
+}
+```
 
 ## Acknowledgments
 
