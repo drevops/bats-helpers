@@ -31,6 +31,7 @@
   - [Mocking](#mocking) - Command mocking
   - [Step Runner](#step-runner) - Sequential test assertions
   - [Helpers](#helpers) - Utility functions
+  - [Deprecations](#deprecations) - Renamed functions
 - [Maintenance](#maintenance)
 
 ## Installation
@@ -129,14 +130,14 @@ Use these after running a command with `run`.
 
 #### Git assertions
 
-| Function Name                    | Description                                      |
-|----------------------------------|--------------------------------------------------|
-| `assert_git_repo`                | Asserts that a directory is a git repository     |
-| `assert_not_git_repo`            | Asserts that a directory is not a git repository |
-| `assert_git_clean`               | Asserts that a git repository is clean           |
-| `assert_git_not_clean`           | Asserts that a git repository is not clean       |
-| `assert_git_file_is_tracked`     | Checks if a file is tracked in git               |
-| `assert_git_file_is_not_tracked` | Checks if a file is not tracked in git           |
+| Function Name                 | Description                                      |
+|-------------------------------|--------------------------------------------------|
+| `assert_git_repo`             | Asserts that a directory is a git repository     |
+| `assert_git_not_repo`         | Asserts that a directory is not a git repository |
+| `assert_git_clean`            | Asserts that a git repository is clean           |
+| `assert_git_not_clean`        | Asserts that a git repository is not clean       |
+| `assert_git_file_tracked`     | Checks if a file is tracked in git               |
+| `assert_git_file_not_tracked` | Checks if a file is not tracked in git           |
 
 ### Data Provider
 
@@ -355,6 +356,28 @@ Starts with `- ` (minus followed by a space).
 | `random_string`           | Generates a random alphanumeric string of specified length                    |
 | `trim_file`               | Removes the last line from a file                                             |
 | `tui_run`                 | Runs a TUI script with predefined answers, simulating user input              |
+
+### Deprecations
+
+These names still work, but print a notice on every call and are removed in the next version:
+
+| Deprecated                       | Use instead                   |
+|----------------------------------|-------------------------------|
+| `assert_not_git_repo`            | `assert_git_not_repo`         |
+| `assert_git_file_is_tracked`     | `assert_git_file_tracked`     |
+| `assert_git_file_is_not_tracked` | `assert_git_file_not_tracked` |
+
+The notice is written to file descriptor 3, so it shows up in the BATS output without being captured by `run` or by command substitution:
+
+```text
+Deprecated: 'assert_not_git_repo' will be removed in the next version. Use 'assert_git_not_repo' instead.
+```
+
+Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence every notice:
+
+```bash
+export BATS_HELPERS_DEPRECATION_QUIET=1
+```
 
 ## Acknowledgments
 
