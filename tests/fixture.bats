@@ -2,6 +2,7 @@
 #
 # BATS tests for Fixture helpers.
 #
+# shellcheck disable=SC2030,SC2031,SC2016
 
 load _test_helper
 
