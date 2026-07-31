@@ -35,6 +35,8 @@ load _test_helper
 }
 
 @test "Missing SCRIPT_FILE" {
+  unset SCRIPT_FILE
+
   answers=(
     "nothing"
     "custom answer2"
@@ -45,6 +47,8 @@ load _test_helper
 }
 
 @test "Missing SCRIPT_FILE - caller recovers" {
+  unset SCRIPT_FILE
+
   answers=(
     "nothing"
     "custom answer2"
