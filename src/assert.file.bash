@@ -141,7 +141,7 @@ assert_file_not_contains() {
   assert_not_contains "${string}" "${contents}"
 }
 
-assert_dir_contains() {
+assert_dir_contains_string() {
   local dir="${1}"
   local string="${2}"
   local default_exclude_dirs=(".git" ".idea" "vendor" "node_modules")
@@ -161,7 +161,7 @@ assert_dir_contains() {
   fi
 }
 
-assert_dir_not_contains() {
+assert_dir_not_contains_string() {
   local dir="${1}"
   local string="${2}"
   local default_exclude_dirs=(".git" ".idea" "vendor" "node_modules")
@@ -304,18 +304,4 @@ restore_file() {
 mktouch() {
   local file="${1}"
   mkdir -p "$(dirname "${file}")" && touch "${file}"
-}
-
-##
-# Deprecated aliases, removed in the next version.
-##
-
-assert_dir_contains_string() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_dir_contains_string' will be removed in the next version. Use 'assert_dir_contains' instead." >&3
-  assert_dir_contains "$@"
-}
-
-assert_dir_not_contains_string() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_dir_not_contains_string' will be removed in the next version. Use 'assert_dir_not_contains' instead." >&3
-  assert_dir_not_contains "$@"
 }

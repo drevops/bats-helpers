@@ -179,16 +179,16 @@ load _test_helper
   assert_failure
 }
 
-@test "assert_dir_contains" {
+@test "assert_dir_contains_string" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
 
-  assert_dir_contains "${BATS_TEST_TMPDIR}/fixture" "existing"
+  assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
 
-  run assert_dir_contains "${BATS_TEST_TMPDIR}/fixture" "non-existing"
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "non-existing"
   assert_failure
 
-  run assert_dir_contains "${BATS_TEST_TMPDIR}/non_existing"
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/non_existing"
   assert_failure
 
   rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
@@ -196,33 +196,33 @@ load _test_helper
   # Excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
-  run assert_dir_contains "${BATS_TEST_TMPDIR}/fixture" "existing"
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
 
   # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
   export ASSERT_DIR_EXCLUDE=(vendor2)
-  run assert_dir_contains "${BATS_TEST_TMPDIR}/fixture" "existing"
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
 }
 
-@test "assert_dir_not_contains" {
+@test "assert_dir_not_contains_string" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
   echo "some other text" >"${BATS_TEST_TMPDIR}/fixture/2.txt"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/3.txt"
 
-  assert_dir_not_contains "${BATS_TEST_TMPDIR}/fixture" "non-existing"
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "non-existing"
 
-  run assert_dir_not_contains "${BATS_TEST_TMPDIR}/fixture" "existing"
+  run assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
   assert_output_contains "fixture/1.txt"
   assert_output_contains "fixture/3.txt"
   assert_output_not_contains "fixture/2.txt"
 
   # Non-existing dir.
-  assert_dir_not_contains "${BATS_TEST_TMPDIR}/non_existing" "existing"
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/non_existing" "existing"
 
   rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
   rm "${BATS_TEST_TMPDIR}/fixture/2.txt" >/dev/null
@@ -231,13 +231,13 @@ load _test_helper
   # Excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
-  assert_dir_not_contains "${BATS_TEST_TMPDIR}/fixture" "existing"
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
 
   # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
   export ASSERT_DIR_EXCLUDE=(vendor2)
-  assert_dir_not_contains "${BATS_TEST_TMPDIR}/fixture" "existing"
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
 }
 
 @test "assert_files_equal" {

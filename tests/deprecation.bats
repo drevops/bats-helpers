@@ -43,26 +43,6 @@ load _test_helper
   assert_file_contains "${notice}" "Deprecated: 'assert_git_file_is_not_tracked' will be removed in the next version. Use 'assert_git_file_not_tracked' instead."
 }
 
-@test "assert_dir_contains_string" {
-  notice="${BATS_TEST_TMPDIR}/notice.txt"
-  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
-  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
-
-  assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing" 3>"${notice}"
-
-  assert_file_contains "${notice}" "Deprecated: 'assert_dir_contains_string' will be removed in the next version. Use 'assert_dir_contains' instead."
-}
-
-@test "assert_dir_not_contains_string" {
-  notice="${BATS_TEST_TMPDIR}/notice.txt"
-  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
-  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
-
-  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "non-existing" 3>"${notice}"
-
-  assert_file_contains "${notice}" "Deprecated: 'assert_dir_not_contains_string' will be removed in the next version. Use 'assert_dir_not_contains' instead."
-}
-
 @test "setup_mock" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
 
