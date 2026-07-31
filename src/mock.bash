@@ -183,8 +183,10 @@ mock_assert_call_args() {
 mock_get_call_env() {
   local mock="${1?'Mock must be specified'}"
   local var="${2?'Variable name must be specified'}"
-  local n="${3-}"
-  n="$(mock_default_n "${mock}" "${3}")" || return "$?"
+  local n
+  # @note: Modification to the original file: the call index is optional, so it
+  # is expanded with a default to keep it usable under 'nounset'.
+  n="$(mock_default_n "${mock}" "${3-}")" || return "$?"
 
   source "${mock}.env.${n}"
   echo "${!var}"

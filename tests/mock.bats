@@ -130,3 +130,36 @@ load _test_helper
 
   assert_success
 }
+
+@test "Mock: call environment" {
+  mock_curl=$(mock_command "curl")
+
+  MOCK_TEST_VAR="testvalue1" curl example.com
+  MOCK_TEST_VAR="testvalue2" curl example.com
+
+  assert_equal "testvalue1" "$(mock_get_call_env "${mock_curl}" "MOCK_TEST_VAR" 1)"
+  assert_equal "testvalue2" "$(mock_get_call_env "${mock_curl}" "MOCK_TEST_VAR" 2)"
+}
+
+@test "Mock: call environment - default index" {
+  mock_curl=$(mock_command "curl")
+
+  MOCK_TEST_VAR="testvalue" curl example.com
+
+  set -u
+  actual="$(mock_get_call_env "${mock_curl}" "MOCK_TEST_VAR")"
+  set +u
+
+  assert_equal "testvalue" "${actual}"
+}
+
+@test "Mock: call environment when not called enough times - caller recovers" {
+  mock_curl=$(mock_command "curl")
+
+  curl example.com
+
+  recovered=0
+  mock_get_call_env "${mock_curl}" "MOCK_TEST_VAR" 2 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
