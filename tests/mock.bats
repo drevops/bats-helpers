@@ -78,6 +78,49 @@ load _test_helper
   assert_success
 }
 
+@test "Mock: not called enough times" {
+  mock_curl=$(mock_command "curl")
+
+  curl example.com
+
+  run mock_default_n "${mock_curl}" 2
+  assert_failure
+  assert_output_contains "Mock must be called at least 2 time(s)"
+}
+
+@test "Mock: not called enough times - caller recovers" {
+  mock_curl=$(mock_command "curl")
+
+  curl example.com
+
+  recovered=0
+  mock_default_n "${mock_curl}" 2 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
+@test "Mock: call args when not called enough times - caller recovers" {
+  mock_curl=$(mock_command "curl")
+
+  curl example.com
+
+  recovered=0
+  mock_get_call_args "${mock_curl}" 2 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
+@test "Mock: call user when not called enough times - caller recovers" {
+  mock_curl=$(mock_command "curl")
+
+  curl example.com
+
+  recovered=0
+  mock_get_call_user "${mock_curl}" 2 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
 @test "Mock: BATS_MOCK_TMPDIR with spaces" {
   export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/bats mock with spaces"
   mkdir -p "${BATS_MOCK_TMPDIR}"

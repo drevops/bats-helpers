@@ -14,14 +14,22 @@ fixture_export_codebase() {
   local dst="${1?Destination directory is required}"
   local src="${2:-"$(pwd)"}"
 
-  assert_dir_exists "${dst}"
-  assert_git_repo "${src}"
+  assert_dir_exists "${dst}" || return 1
+  assert_git_repo "${src}" || return 1
 
-  pushd "${src}" >/dev/null || exit 1
+  local export_status=0
 
-  git archive --format=tar HEAD | (cd "${dst}" && tar -xf -)
+  # The subshell scopes both the working directory and 'pipefail', so a failing
+  # 'git archive' surfaces instead of being masked by a successful 'tar'.
+  (
+    set -o pipefail
+    cd "${src}" && git archive --format=tar HEAD | (cd "${dst}" && tar -xf -)
+  ) || export_status=$?
 
-  popd >/dev/null || exit 1
+  if [ "${export_status}" -ne 0 ]; then
+    flunk "Failed to export codebase from ${src} to ${dst}."
+    return 1
+  fi
 }
 
 #

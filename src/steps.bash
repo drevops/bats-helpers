@@ -130,8 +130,8 @@ run_steps() {
       local item_with_placeholders="${item//\\#/${ESCAPED_HASH_PLACEHOLDER}}"
 
       if [[ ${item_with_placeholders} =~ (##) || $(echo "${item_with_placeholders}" | grep -o "#" | wc -l) -gt 3 ]]; then
-        echo "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
-        exit 1
+        flunk "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
+        return 1
       fi
 
       # Split command, status, and optional output.
@@ -205,9 +205,9 @@ run_steps() {
         substepdebug "SETUP: Setup mock for binary '${command_binary}' complete."
       else
         # Check if mock for the binary exists in the assert phase
-        if [[ -z ${mocked_commands["${command_binary}"]} ]]; then
-          echo "ERROR: Mock for the binary '${command_binary}' does not exist."
-          exit 1
+        if [[ -z ${mocked_commands["${command_binary}"]-} ]]; then
+          flunk "ERROR: Mock for the binary '${command_binary}' does not exist."
+          return 1
         fi
 
         substepdebug "ASSERT: Found mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'"
@@ -223,8 +223,8 @@ run_steps() {
 
         # Use wildcard-aware assertion
         if ! mock_assert_call_args "${mock_cmd}" "${command_args}" "${mock_cmd_index}"; then
-          substepdebug "ASSERT: Assertion failed. Expected '${command_args}', got '${mock_args_actual}'."
-          exit 1
+          flunk "ERROR: Mocked command '${command_binary}' was called with arguments '${mock_args_actual}', but '${command_args}' was expected."
+          return 1
         fi
       fi
 
@@ -238,12 +238,7 @@ run_steps() {
       stepdebug "Type: string absent"
 
       if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
-        assert_output_not_contains "${item:2}" # Assuming 2 chars to skip '-' and a space
-        # shellcheck disable=SC2181
-        if [[ $? -ne 0 ]]; then
-          substepdebug "ASSERT: Assertion failed. Returning error code."
-          exit 1
-        fi
+        assert_output_not_contains "${item:2}" || return 1 # Skip '-' and a space.
       fi
     #########################################################################
     #                            STRING PRESENT                             #
@@ -252,12 +247,7 @@ run_steps() {
       stepdebug "Type: string present"
 
       if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
-        assert_output_contains "${item}"
-        # shellcheck disable=SC2181
-        if [[ $? -ne 0 ]]; then
-          substepdebug "ASSERT: Assertion failed. Returning error code."
-          exit 1
-        fi
+        assert_output_contains "${item}" || return 1
       fi
     fi
 

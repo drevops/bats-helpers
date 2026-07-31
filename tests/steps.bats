@@ -31,6 +31,19 @@ load _test_helper
   assert_failure
 }
 
+@test "Substring presence - negative: caller recovers" {
+  declare -a STEPS=(
+    "Some Substring"
+  )
+
+  run echo "Some other"
+
+  recovered=0
+  run_steps "assert" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
 @test "Substring absence" {
   declare -a STEPS=(
     "- Some Substring"
@@ -54,6 +67,19 @@ load _test_helper
   run echo "Some Substring"
   run run_steps "assert"
   assert_failure
+}
+
+@test "Substring absence - negative: caller recovers" {
+  declare -a STEPS=(
+    "- Some Substring"
+  )
+
+  run echo "Some Substring"
+
+  recovered=0
+  run_steps "assert" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
 }
 
 @test "Direct command execution" {
@@ -109,6 +135,42 @@ load _test_helper
 
   run run_steps "assert" "${mocks[@]}"
   assert_failure
+  assert_output_contains "ERROR: Mocked command 'somebin' was called with arguments '--opt1 --opt2 --opt3', but '--opt1 --opt2' was expected."
+}
+
+@test "Command, args - negative: wrong args - caller recovers" {
+  declare -a STEPS=(
+    "@somebin --opt1 --opt2 # 0 # someval"
+  )
+
+  mocks="$(run_steps "setup")"
+  run somebin --opt1 --opt2 --opt3
+
+  recovered=0
+  run_steps "assert" "${mocks[@]}" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
+@test "Command - negative: mock does not exist" {
+  declare -a STEPS=(
+    "@somebin --opt1 --opt2 # 0 # someval"
+  )
+
+  run run_steps "assert" "otherbin=/some/mock/path"
+  assert_failure
+  assert_output_contains "ERROR: Mock for the binary 'somebin' does not exist."
+}
+
+@test "Command - negative: mock does not exist - caller recovers" {
+  declare -a STEPS=(
+    "@somebin --opt1 --opt2 # 0 # someval"
+  )
+
+  recovered=0
+  run_steps "assert" "otherbin=/some/mock/path" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
 }
 
 @test "Command, args, no exit code or output" {
@@ -158,6 +220,17 @@ load _test_helper
   run run_steps "setup" "${mocks[@]}"
   assert_failure
   assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
+}
+
+@test "Command, args - negative: incorrect input - delim - caller recovers" {
+  declare -a STEPS=(
+    "@somebin --opt1 --opt2 # 0 ## someval"
+  )
+
+  recovered=0
+  run_steps "setup" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
 }
 
 @test "Command, multiple commands, same, repeated call" {
