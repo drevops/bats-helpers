@@ -95,3 +95,11 @@ Side effects are Bash code executed when the mock is called, useful for file cre
 - Test files follow BATS naming convention (*.bats)
 - Coverage reports are generated in the `coverage/` directory
 - The library includes comprehensive test coverage for all helper functions
+
+### Assertion Call Style
+
+Both shapes below work for a positive case, so the split is settled here rather than left to each new test.
+
+- **Call the helper bare for a positive case**: `run_steps "assert" "${mocks[@]}"`. The helper's `flunk` returns non-zero, which fails the test under BATS errexit and reports the specific reason against the calling line. The `run` wrapper needs a follow-up `assert_success`, and omitting it discards the result without failing anything.
+- **Wrap the call for a negative case**: `run run_steps "assert" "${mocks[@]}"` followed by `assert_failure`. The bare form would abort the test at the `flunk` before reaching the assertion.
+- **Declare test data arrays with `declare -a`**: `declare -a STEPS=( ... )`, `declare -a TEST_CASES=( ... )`, `declare -a answers=( ... )`. Helpers read these arrays through BASH dynamic scoping, so the declaration marks the array as an input to the call that follows it.

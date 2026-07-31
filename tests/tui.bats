@@ -9,7 +9,7 @@ load _test_helper
 @test "Interactive" {
   export SCRIPT_FILE="tests/fixtures/fixture_tui.sh"
 
-  answers=(
+  declare -a answers=(
     "custom answer1"
     "custom answer2"
   )
@@ -23,7 +23,7 @@ load _test_helper
 @test "Defaults" {
   export SCRIPT_FILE="tests/fixtures/fixture_tui.sh"
 
-  answers=(
+  declare -a answers=(
     "nothing"
     "custom answer2"
   )
@@ -37,7 +37,7 @@ load _test_helper
 @test "Missing SCRIPT_FILE" {
   unset SCRIPT_FILE
 
-  answers=(
+  declare -a answers=(
     "nothing"
     "custom answer2"
   )
@@ -49,7 +49,7 @@ load _test_helper
 @test "Missing SCRIPT_FILE - caller recovers" {
   unset SCRIPT_FILE
 
-  answers=(
+  declare -a answers=(
     "nothing"
     "custom answer2"
   )
@@ -63,7 +63,7 @@ load _test_helper
 @test "Non-existing SCRIPT_FILE" {
   export SCRIPT_FILE="tests/fixtures/fixture_tui_nonexisting.sh"
 
-  answers=(
+  declare -a answers=(
     "nothing"
     "custom answer2"
   )
@@ -75,7 +75,7 @@ load _test_helper
 @test "Non-existing SCRIPT_FILE - caller recovers" {
   export SCRIPT_FILE="tests/fixtures/fixture_tui_nonexisting.sh"
 
-  answers=(
+  declare -a answers=(
     "nothing"
     "custom answer2"
   )

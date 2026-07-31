@@ -181,8 +181,7 @@ load _test_helper
   mocks="$(run_steps "setup")"
   run somebin --opt1 --opt2
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, args, output, no exit code" {
@@ -194,8 +193,7 @@ load _test_helper
   run somebin --opt1 --opt2
   assert_output_contains "someval with spaces"
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, args, error exit code" {
@@ -208,8 +206,7 @@ load _test_helper
   assert_failure
   assert_output_contains "someval with spaces"
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, args - negative: incorrect input - delim" {
@@ -248,8 +245,7 @@ load _test_helper
   assert_output_not_contains "someval1 with spaces"
   assert_output_contains "someval2 with spaces"
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, same, combined execution" {
@@ -264,8 +260,7 @@ load _test_helper
   assert_output_contains "someval1 with spaces"
   assert_output_contains "someval2 with spaces"
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, same, combined execution, and" {
@@ -280,8 +275,7 @@ load _test_helper
   assert_output_contains "someval1 with spaces"
   assert_output_contains "someval2 with spaces"
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, different" {
@@ -292,24 +286,24 @@ load _test_helper
 
   mocks="$(run_steps "setup")"
 
-  run somebin
+  run somebin --opt1 --opt2
   assert_success
-  run otherbin
+  run otherbin --opt1 --opt2
   assert_success
 
-  run run_steps "assert" "${mocks[@]}"
+  run_steps "assert" "${mocks[@]}"
 }
 
-@test "Command, multiple commands, different - negative: incorrect call order" {
+@test "Command, multiple commands, different - negative: incorrect arguments" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@otherbin --opt1 --opt2 # 0 # someval2 with spaces"
   )
 
   mocks="$(run_steps "setup")"
-  run otherbin
+  run somebin --opt3 --opt4
   assert_success
-  run somebin
+  run otherbin --opt1 --opt2
   assert_success
 
   run run_steps "assert" "${mocks[@]}"
@@ -338,8 +332,7 @@ load _test_helper
   assert_output_not_contains "someval2 with spaces"
   assert_output_contains "someval3 with spaces"
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, different, repeated call - negative" {
@@ -384,8 +377,7 @@ load _test_helper
   run otherbin --opt32 --opt42
   run otherbin --opt33 --opt43
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, different, repeated call, order - negative" {
@@ -431,8 +423,7 @@ load _test_helper
 
   run bash -c "somebin --opt1 --opt2; somebin --opt1 --opt2; somebin --opt1 --opt2 --opt3; otherbin --opt1 --opt2 --opt3; otherbin --opt1 --opt2 --opt3"
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, different, combined, repeated call, order, shorthand" {
@@ -455,8 +446,7 @@ load _test_helper
 
   run bash -c "somebin --opt1 --opt2; somebin --opt1 --opt2; somebin --opt1 --opt2 --opt3; otherbin --opt1 --opt2 --opt3; otherbin --opt1 --opt2 --opt3"
 
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command, multi-line argument" {
@@ -477,8 +467,7 @@ load _test_helper
     "{" \
     "test": 1 \
     "}"
-  run run_steps "assert" "${mocks[@]}"
-  assert_success
+  run_steps "assert" "${mocks[@]}"
 }
 
 @test "Command with side effect - basic file creation" {
