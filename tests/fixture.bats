@@ -43,6 +43,38 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
+@test "Codebase export - export fails" {
+  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+
+  build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
+  fixture_prepare_dir "${build_dir}"
+
+  # A repository without commits has no HEAD, so 'git archive' fails.
+  src_dir="${BATS_TEST_TMPDIR//\/\//\/}/src-no-commits"
+  fixture_prepare_dir "${src_dir}"
+  git -C "${src_dir}" init --quiet
+
+  run fixture_export_codebase "${build_dir}" "${src_dir}"
+  assert_failure
+  assert_output_contains "Failed to export codebase"
+}
+
+@test "Codebase export - export fails - caller recovers" {
+  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+
+  build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
+  fixture_prepare_dir "${build_dir}"
+
+  src_dir="${BATS_TEST_TMPDIR//\/\//\/}/src-no-commits"
+  fixture_prepare_dir "${src_dir}"
+  git -C "${src_dir}" init --quiet
+
+  recovered=0
+  fixture_export_codebase "${build_dir}" "${src_dir}" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
 @test "Codebase export - source is not a git repository" {
   export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
