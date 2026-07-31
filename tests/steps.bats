@@ -225,7 +225,6 @@ load _test_helper
   assert_success
 
   run run_steps "assert" "${mocks[@]}"
-
 }
 
 @test "Command, multiple commands, different - negative: incorrect call order" {
@@ -407,7 +406,6 @@ load _test_helper
     "}"
   run run_steps "assert" "${mocks[@]}"
   assert_success
-
 }
 
 @test "Command with side effect - basic file creation" {
