@@ -27,7 +27,7 @@ dataprovider_run() {
   ## Input validation.
   ##
 
-  if [[ -z $func_name ]]; then
+  if [ -z "${func_name}" ]; then
     flunk "Function name must not be empty."
     return
   fi
@@ -40,7 +40,7 @@ dataprovider_run() {
 
   # Using the normal run() function is sufficient for testing functions with no
   # arguments.
-  if [[ $args_per_row -le 0 ]]; then
+  if [ "${args_per_row}" -le 0 ]; then
     flunk "Number of arguments per test case must be greater than zero."
     return
   fi
@@ -58,7 +58,7 @@ dataprovider_run() {
   fi
 
   # Ensure that TEST_CASES has a multiple of args_per_row elements.
-  if [[ $((${#TEST_CASES[@]} % args_per_row)) -ne 0 ]]; then
+  if [ "$((${#TEST_CASES[@]} % args_per_row))" -ne 0 ]; then
     flunk "Total elements in TEST_CASES must be a multiple of $args_per_row."
     return
   fi
@@ -98,7 +98,7 @@ dataprovider_run() {
   ## Error reporting.
   ##
 
-  if [[ $error_count -ne 0 ]]; then
+  if [ "${error_count}" -ne 0 ]; then
     failed_sets=${failed_sets%, } # Remove trailing comma
     echo
     echo "Failed Sets (0-based): $failed_sets"

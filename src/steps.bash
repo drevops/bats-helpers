@@ -81,10 +81,10 @@ run_steps() {
 
   # Run bats with `--tap` option to debug the output.
   stepdebug() {
-    if [ "${RUN_STEPS_DEBUG}" = "1" ]; then echo "  > ${1-}" >&3; fi
+    if [[ ${RUN_STEPS_DEBUG} == "1" ]]; then echo "  > ${1-}" >&3; fi
   }
   substepdebug() {
-    if [ "${RUN_STEPS_DEBUG}" = "1" ]; then echo "  >   ${1-}" >&3; fi
+    if [[ ${RUN_STEPS_DEBUG} == "1" ]]; then echo "  >   ${1-}" >&3; fi
   }
 
   declare -A command_indexes
