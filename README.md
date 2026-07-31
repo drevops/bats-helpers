@@ -35,6 +35,8 @@
 
 ## Installation
 
+Requires [bats-core](https://github.com/bats-core/bats-core) `1.10` or newer.
+
 ### NPM
 
 ```shell
