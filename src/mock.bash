@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
+##
+# @file
+# Command mocking.
 #
-# A Bats helper library providing mocking functionality.
+# The function docblocks below are upstream text and are exempt from this
+# repository's docblock style, so that the diff against upstream stays narrow.
+# Local changes are marked with @note comments.
+#
 # @see https://github.com/grayhemp/bats-mock
 #
-# This file was modified - look for @note comments.
 # shellcheck disable=SC1090,SC2061
 
 # Creates a mock program

@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
-#
-# A Bats helper library for working with fixtures.
+##
+# @file
+# Utilities for preparing test fixtures.
 #
 
+##
+# Exports the codebase at the latest commit to a destination directory.
 #
-# Export codebase source code at the latest commit to the destination directory.
+# Arguments:
+#   1. dst: Destination directory. Required.
+#   2. src: Repository to export. Optional, defaults to the current directory.
 #
+# Globals:
+#   BATS_FIXTURE_EXPORT_CODEBASE_ENABLED: Set to '1' to enable the export.
+#     Anything else makes this function a no-op.
+##
 fixture_export_codebase() {
   if [ "${BATS_FIXTURE_EXPORT_CODEBASE_ENABLED-}" != "1" ]; then
     return
@@ -32,9 +41,12 @@ fixture_export_codebase() {
   fi
 }
 
+##
+# Creates an empty directory for a fixture, removing any existing content.
 #
-# Prepare a directory for a fixture.
-#
+# Arguments:
+#   1. dir: Directory to prepare. Optional, defaults to the current directory.
+##
 fixture_prepare_dir() {
   local dir="${1:-"$(pwd)"}"
   rm -Rf "${dir}" >/dev/null

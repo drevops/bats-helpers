@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
-#
-# A Bats helper library providing data providers support.
+##
+# @file
+# Data provider to run a function over multiple test cases.
 #
 
 ##
-# Run multiple test cases for a given function (aka Data Provider).
+# Runs multiple test cases for a given function (aka data provider).
 #
 # Arguments:
-#   1. func_name: The name of the function to be tested.
-#   2. args_per_row: (Optional) The number of arguments in each row of the TEST_CASES array, defaults to 1.
+#   1. func_name: Name of the function to be tested.
+#   2. args_per_row: Number of arguments in each row of the TEST_CASES array.
+#      Optional, defaults to 1.
 #
-# Global Variables:
-#   TEST_CASES: An array containing test cases with their expected values.
+# Globals:
+#   TEST_CASES: Array of test cases, each row ending with its expected value.
 #
 # Examples:
-#   To run a function `test_func` with TEST_CASES containing two arguments per row,
-#   you can call dataprovider_run like so:
-#     dataprovider_run "test_func" 2
+#   dataprovider_run "test_func" 2
 ##
-
 dataprovider_run() {
   local func_name="${1}"
   local args_per_row="${2:-1}"
@@ -103,7 +102,7 @@ dataprovider_run() {
   ##
 
   if [ "${error_count}" -ne 0 ]; then
-    failed_sets=${failed_sets%, } # Remove trailing comma
+    failed_sets=${failed_sets%, } # Remove the trailing comma.
     echo
     echo "Failed sets (0-based): ${failed_sets}"
     flunk "Total failed test sets: ${error_count}"
