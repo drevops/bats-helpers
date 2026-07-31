@@ -153,6 +153,16 @@ load _test_helper
   assert_equal "testvalue" "${actual}"
 }
 
+@test "Mock: call environment when not called enough times" {
+  mock_curl=$(mock_command "curl")
+
+  curl example.com
+
+  run mock_get_call_env "${mock_curl}" "MOCK_TEST_VAR" 2
+  assert_failure
+  assert_output_contains "Mock must be called at least 2 time(s)"
+}
+
 @test "Mock: call environment when not called enough times - caller recovers" {
   mock_curl=$(mock_command "curl")
 
