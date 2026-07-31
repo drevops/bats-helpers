@@ -53,12 +53,12 @@ deprecated() {
     marker_dir="${BATS_SUITE_TMPDIR}/bats-helpers-deprecated"
     marker="${marker_dir}/${old_name//[^a-zA-Z0-9_.-]/_}"
 
+    # Creating a directory is atomic, so parallel jobs racing on the same name
+    # produce exactly one notice between them.
     if mkdir -p "${marker_dir}" 2>/dev/null; then
-      if [ -f "${marker}" ]; then
+      if ! mkdir "${marker}" 2>/dev/null; then
         return 0
       fi
-
-      : >"${marker}" 2>/dev/null || true
     fi
   fi
 
