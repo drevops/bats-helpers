@@ -43,6 +43,42 @@ load _test_helper
   assert_file_contains "${notice}" "Deprecated: 'assert_git_file_is_not_tracked' will be removed in the next version. Use 'assert_git_file_not_tracked' instead."
 }
 
+@test "assert_contains" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+
+  assert_contains "needle" "some needle in a haystack" 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'assert_contains' will be removed in the next version. Use 'assert_string_contains' instead."
+}
+
+@test "assert_not_contains" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+
+  assert_not_contains "otherneedle" "some needle in a haystack" 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'assert_not_contains' will be removed in the next version. Use 'assert_string_not_contains' instead."
+}
+
+@test "Assertions calling other assertions emit no notices" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
+  echo "some needle in a haystack" >"${BATS_TEST_TMPDIR}/haystack.txt"
+
+  assert_file_contains "${BATS_TEST_TMPDIR}/haystack.txt" "needle" 3>"${notice}"
+  assert_file_not_contains "${BATS_TEST_TMPDIR}/haystack.txt" "otherneedle" 3>>"${notice}"
+  assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo" 3>>"${notice}"
+  mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/uncommitted_file"
+  assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo" 3>>"${notice}"
+
+  run echo "some needle in a haystack"
+  assert_output_contains "needle" 3>>"${notice}"
+  assert_output_not_contains "otherneedle" 3>>"${notice}"
+
+  assert_file_exists "${notice}"
+  assert_empty "$(cat "${notice}")"
+}
+
 @test "Notices are silenced" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export BATS_HELPERS_DEPRECATION_QUIET=1
