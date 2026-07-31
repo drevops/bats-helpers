@@ -18,6 +18,8 @@ on:
 
 env:
   BATS_LIB_PATH: "./node_modules"
+  # Oldest supported version, kept in sync with the "bats" range in package.json.
+  BATS_VERSION_LOWEST: "1.10.0"
 
 jobs:
   test-shell:
@@ -61,7 +63,7 @@ jobs:
 
       - name: Install lowest dependencies
         if: matrix.deps == 'lowest'
-        run: npm install --no-save bats@1.10.0
+        run: npm install --no-save "bats@${BATS_VERSION_LOWEST}"
 
       - name: Install Kcov
         if: matrix.os == 'ubuntu-latest' && matrix.deps == 'normal'
