@@ -13,21 +13,21 @@ load _test_helper
 
   # Shorthand.
   run echo "Some Substring"
-  run_steps
+  steps_run
 
   # Full.
-  run_steps "setup"
+  steps_run "setup"
   run echo "Some Substring"
-  run_steps "assert"
+  steps_run "assert"
 
   # Full with mocks
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run echo "Some Substring"
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Negative.
   run echo "Some other"
-  run run_steps "assert"
+  run steps_run "assert"
   assert_failure
 }
 
@@ -39,7 +39,7 @@ load _test_helper
   run echo "Some other"
 
   recovered=0
-  run_steps "assert" 2>/dev/null || recovered=1
+  steps_run "assert" 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }
@@ -51,21 +51,21 @@ load _test_helper
 
   # Shorthand.
   run echo "Some other"
-  run_steps
+  steps_run
 
   # Full.
-  run_steps "setup"
+  steps_run "setup"
   run echo "Some other"
-  run_steps "assert"
+  steps_run "assert"
 
   # Full with mocks
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run echo "Some other"
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Negative.
   run echo "Some Substring"
-  run run_steps "assert"
+  run steps_run "assert"
   assert_failure
 }
 
@@ -77,7 +77,7 @@ load _test_helper
   run echo "Some Substring"
 
   recovered=0
-  run_steps "assert" 2>/dev/null || recovered=1
+  steps_run "assert" 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }
@@ -87,9 +87,9 @@ load _test_helper
     "@somebin # 0 # someval"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   somebin
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Direct command execution, args" {
@@ -97,9 +97,9 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   somebin --opt1 --opt2
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Wrapped execution through Bats' 'run'" {
@@ -107,10 +107,10 @@ load _test_helper
     "@somebin # 0 # someval"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin
   assert_output_contains "someval"
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, args" {
@@ -118,10 +118,10 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1 --opt2
   assert_output_contains "someval"
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, args - negative: wrong args" {
@@ -129,11 +129,11 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1 --opt2 --opt3
   assert_output_contains "someval"
 
-  run run_steps "assert" "${mocks[@]}"
+  run steps_run "assert" "${mocks[@]}"
   assert_failure
   assert_output_contains "ERROR: Mocked command 'somebin' was called with arguments '--opt1 --opt2 --opt3', but '--opt1 --opt2' was expected."
 }
@@ -143,11 +143,11 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1 --opt2 --opt3
 
   recovered=0
-  run_steps "assert" "${mocks[@]}" 2>/dev/null || recovered=1
+  steps_run "assert" "${mocks[@]}" 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }
@@ -157,7 +157,7 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
-  run run_steps "assert" "otherbin=/some/mock/path"
+  run steps_run "assert" "otherbin=/some/mock/path"
   assert_failure
   assert_output_contains "ERROR: Mock for the binary 'somebin' does not exist."
 }
@@ -168,7 +168,7 @@ load _test_helper
   )
 
   recovered=0
-  run_steps "assert" "otherbin=/some/mock/path" 2>/dev/null || recovered=1
+  steps_run "assert" "otherbin=/some/mock/path" 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }
@@ -178,10 +178,10 @@ load _test_helper
     "@somebin --opt1 --opt2"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1 --opt2
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, args, output, no exit code" {
@@ -189,11 +189,11 @@ load _test_helper
     "@somebin --opt1 --opt2 # someval with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1 --opt2
   assert_output_contains "someval with spaces"
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, args, error exit code" {
@@ -201,12 +201,12 @@ load _test_helper
     "@somebin --opt1 --opt2 # 1 # someval with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1 --opt2
   assert_failure
   assert_output_contains "someval with spaces"
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, args - negative: incorrect input - delim" {
@@ -214,7 +214,7 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 ## someval"
   )
 
-  run run_steps "setup" "${mocks[@]}"
+  run steps_run "setup" "${mocks[@]}"
   assert_failure
   assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
@@ -225,7 +225,7 @@ load _test_helper
   )
 
   recovered=0
-  run_steps "setup" 2>/dev/null || recovered=1
+  steps_run "setup" 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }
@@ -236,7 +236,7 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin --opt1 --opt2
   assert_output_contains "someval1 with spaces"
@@ -245,7 +245,7 @@ load _test_helper
   assert_output_not_contains "someval1 with spaces"
   assert_output_contains "someval2 with spaces"
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, same, combined execution" {
@@ -254,13 +254,13 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run bash -c "somebin --opt1 --opt2; somebin --opt1 --opt2"
   assert_output_contains "someval1 with spaces"
   assert_output_contains "someval2 with spaces"
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, same, combined execution, and" {
@@ -269,13 +269,13 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run bash -c "somebin --opt1 --opt2 && somebin --opt1 --opt2"
   assert_output_contains "someval1 with spaces"
   assert_output_contains "someval2 with spaces"
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, different" {
@@ -284,14 +284,14 @@ load _test_helper
     "@otherbin --opt1 --opt2 # 0 # someval2 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin --opt1 --opt2
   assert_success
   run otherbin --opt1 --opt2
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, different - negative: incorrect arguments" {
@@ -300,13 +300,13 @@ load _test_helper
     "@otherbin --opt1 --opt2 # 0 # someval2 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt3 --opt4
   assert_success
   run otherbin --opt1 --opt2
   assert_success
 
-  run run_steps "assert" "${mocks[@]}"
+  run steps_run "assert" "${mocks[@]}"
   assert_failure
 }
 
@@ -317,7 +317,7 @@ load _test_helper
     "@otherbin --opt3 --opt4 # 0 # someval3 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin --opt1 --opt2
   assert_output_contains "someval1 with spaces"
@@ -332,7 +332,7 @@ load _test_helper
   assert_output_not_contains "someval2 with spaces"
   assert_output_contains "someval3 with spaces"
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, different, repeated call - negative" {
@@ -342,7 +342,7 @@ load _test_helper
     "@otherbin --opt3 --opt4 # 0 # someval3 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin --opt1 --opt2
   assert_output_contains "someval1 with spaces"
@@ -354,7 +354,7 @@ load _test_helper
   assert_output_not_contains "someval3 with spaces"
 
   # Asserting missing call to the 'otherbin'.
-  run run_steps "assert" "${mocks[@]}"
+  run steps_run "assert" "${mocks[@]}"
   assert_failure
 }
 
@@ -368,7 +368,7 @@ load _test_helper
     "@otherbin --opt33 --opt43 # 0 # someval6 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin --opt11 --opt21
   run somebin --opt11 --opt22
@@ -377,7 +377,7 @@ load _test_helper
   run otherbin --opt32 --opt42
   run otherbin --opt33 --opt43
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, different, repeated call, order - negative" {
@@ -390,7 +390,7 @@ load _test_helper
     "@otherbin --opt33 --opt43 # 0 # someval6 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin --opt11 --opt21
   run somebin --opt13 --opt23
@@ -399,7 +399,7 @@ load _test_helper
   run otherbin --opt31 --opt41
   run otherbin --opt33 --opt43
 
-  run run_steps "assert" "${mocks[@]}"
+  run steps_run "assert" "${mocks[@]}"
   assert_failure
 }
 
@@ -419,11 +419,11 @@ load _test_helper
     "- absent someval5 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run bash -c "somebin --opt1 --opt2; somebin --opt1 --opt2; somebin --opt1 --opt2 --opt3; otherbin --opt1 --opt2 --opt3; otherbin --opt1 --opt2 --opt3"
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, multiple commands, different, combined, repeated call, order, shorthand" {
@@ -442,11 +442,11 @@ load _test_helper
     "- absent someval5 with spaces"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run bash -c "somebin --opt1 --opt2; somebin --opt1 --opt2; somebin --opt1 --opt2 --opt3; otherbin --opt1 --opt2 --opt3; otherbin --opt1 --opt2 --opt3"
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command, multi-line argument" {
@@ -460,14 +460,14 @@ load _test_helper
     # 0 # multi-line arg"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1 \
     --opt2 \
     --opt3 \
     "{" \
     "test": 1 \
     "}"
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command with side effect - basic file creation" {
@@ -475,12 +475,12 @@ load _test_helper
     '@somebin --opt1 # 0 # success # touch ${BATS_TEST_TMPDIR}/side_effect_file'
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1
   assert_output_contains "success"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify side effect was executed
   assert_file_exists "${BATS_TEST_TMPDIR}/side_effect_file"
@@ -491,14 +491,14 @@ load _test_helper
     "@somebin --opt1 # 0 # success # export TEST_SIDE_EFFECT=executed"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   # Side effects are executed in the mock's context, not the test context
   run somebin --opt1
   assert_output_contains "success"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Command with side effect - echo to file" {
@@ -506,12 +506,12 @@ load _test_helper
     "@somebin --opt1 # 0 # success # echo 'side effect executed' > \${BATS_TEST_TMPDIR}/side_effect_output"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1
   assert_output_contains "success"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify side effect output
   assert_file_exists "${BATS_TEST_TMPDIR}/side_effect_output"
@@ -524,12 +524,12 @@ load _test_helper
     "@somebin --opt1 # 0 # success # touch \${BATS_TEST_TMPDIR}/file1; echo 'data' > \${BATS_TEST_TMPDIR}/file2"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1
   assert_output_contains "success"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify both side effects were executed
   assert_file_exists "${BATS_TEST_TMPDIR}/file1"
@@ -543,12 +543,12 @@ load _test_helper
     "@somebin --opt1 # 1 # error message # echo 'error logged' > \${BATS_TEST_TMPDIR}/error_log"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1
   assert_output_contains "error message"
   assert_failure
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify side effect was executed even with failure status
   assert_file_exists "${BATS_TEST_TMPDIR}/error_log"
@@ -561,11 +561,11 @@ load _test_helper
     '@somebin --opt1 # 0 # # touch ${BATS_TEST_TMPDIR}/no_output_side_effect'
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify side effect was executed
   assert_file_exists "${BATS_TEST_TMPDIR}/no_output_side_effect"
@@ -576,12 +576,12 @@ load _test_helper
     '@somebin --opt1 # success output # # touch ${BATS_TEST_TMPDIR}/shorthand_side_effect'
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin --opt1
   assert_output_contains "success output"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify side effect was executed
   assert_file_exists "${BATS_TEST_TMPDIR}/shorthand_side_effect"
@@ -593,7 +593,7 @@ load _test_helper
     "@cmd2 # 0 # output2 # echo 'cmd2 executed' > \${BATS_TEST_TMPDIR}/cmd2_file"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run cmd1
   assert_output_contains "output1"
@@ -603,7 +603,7 @@ load _test_helper
   assert_output_contains "output2"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify both side effects were executed
   assert_file_exists "${BATS_TEST_TMPDIR}/cmd1_file"
@@ -618,7 +618,7 @@ load _test_helper
     '@somebin # 0 # call2 # touch ${BATS_TEST_TMPDIR}/call2_file'
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin
   assert_output_contains "call1"
@@ -628,7 +628,7 @@ load _test_helper
   assert_output_contains "call2"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify both side effects were executed
   assert_file_exists "${BATS_TEST_TMPDIR}/call1_file"
@@ -640,7 +640,7 @@ load _test_helper
     "@somebin # 0 # output # side effect # extra"
   )
 
-  run run_steps "setup"
+  run steps_run "setup"
   assert_failure
   assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
@@ -650,7 +650,7 @@ load _test_helper
     "@somebin # 0 ## output # side effect"
   )
 
-  run run_steps "setup"
+  run steps_run "setup"
   assert_failure
   assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
@@ -662,7 +662,7 @@ load _test_helper
     "@somebin * # 0 # wildcard output 3"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   # Test with different arguments - all should work
   run somebin --opt1 --opt2
@@ -677,7 +677,7 @@ load _test_helper
   assert_output_contains "wildcard output 3"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Wildcard command - multiple calls with different args" {
@@ -686,7 +686,7 @@ load _test_helper
     "@git * # 0 # git output 2"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run git status
   assert_output_contains "git output 1"
@@ -696,7 +696,7 @@ load _test_helper
   assert_output_contains "git output 2"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Wildcard command - with side effects" {
@@ -704,13 +704,13 @@ load _test_helper
     '@somebin * # 0 # wildcard success # touch ${BATS_TEST_TMPDIR}/wildcard_file'
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin any args here
   assert_output_contains "wildcard success"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify side effect was executed
   assert_file_exists "${BATS_TEST_TMPDIR}/wildcard_file"
@@ -721,13 +721,13 @@ load _test_helper
     "@somebin * # 1 # wildcard error"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin any args
   assert_output_contains "wildcard error"
   assert_failure
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Mixed exact and wildcard commands" {
@@ -737,7 +737,7 @@ load _test_helper
     "@npm * # 1 # npm error"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   # This should match the exact command
   run git status
@@ -754,7 +754,7 @@ load _test_helper
   assert_output_contains "npm error"
   assert_failure
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Wildcard command - shorthand syntax" {
@@ -762,13 +762,13 @@ load _test_helper
     "@somebin * # wildcard shorthand output"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run somebin any arguments
   assert_output_contains "wildcard shorthand output"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Escaped hash - URL with fragment in command arguments" {
@@ -776,11 +776,11 @@ load _test_helper
     "@curl -fsSL https://example.com\#anchor -o file.php # 0"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run curl -fsSL "https://example.com#anchor" -o file.php
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Escaped hash - Git URL with branch fragment" {
@@ -788,12 +788,12 @@ load _test_helper
     "@git clone https://github.com/user/repo.git\#stable # 0 # Cloning repo"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run git clone "https://github.com/user/repo.git#stable"
   assert_output_contains "Cloning repo"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Escaped hash - multiple escaped hashes in arguments" {
@@ -801,11 +801,11 @@ load _test_helper
     "@somebin --url1=https://a.com\#tag1 --url2=https://b.com\#tag2 # 0"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin "--url1=https://a.com#tag1" "--url2=https://b.com#tag2"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Escaped hash - in output" {
@@ -813,12 +813,12 @@ load _test_helper
     "@somebin # 0 # Output with \# hash"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin
   assert_output_contains "Output with # hash"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Escaped hash - in side effect" {
@@ -826,12 +826,12 @@ load _test_helper
     '@somebin # 0 # success # echo "Comment \# starts here" > ${BATS_TEST_TMPDIR}/escaped_hash'
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin
   assert_output_contains "success"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify side effect contains unescaped hash
   assert_file_exists "${BATS_TEST_TMPDIR}/escaped_hash"
@@ -844,12 +844,12 @@ load _test_helper
     "@curl -fsSL https://example.com/install?key=123\#section -o installer.php # 0 # Downloaded"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run curl -fsSL "https://example.com/install?key=123#section" -o installer.php
   assert_output_contains "Downloaded"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Escaped hash - mix of escaped and delimiter hashes" {
@@ -857,12 +857,12 @@ load _test_helper
     "@php installer.php --uri=https://github.com/repo.git\#stable # 0 # Success \# done"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run php installer.php "--uri=https://github.com/repo.git#stable"
   assert_output_contains "Success # done"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Escaped hash - all three parts with escaped hashes" {
@@ -870,12 +870,12 @@ load _test_helper
     '@somebin --url=https://site.com\#tag # 0 # Message with \# hash # echo "Comment \# here" > ${BATS_TEST_TMPDIR}/all_escaped'
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run somebin "--url=https://site.com#tag"
   assert_output_contains "Message with # hash"
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 
   # Verify side effect
   assert_file_exists "${BATS_TEST_TMPDIR}/all_escaped"
@@ -891,7 +891,7 @@ load _test_helper
     "Downloading installer to installer.php"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
 
   run bash -c "curl -fsSL https://www.vortextemplate.com/install?1234567890 -o installer.php && \
                php installer.php --no-interaction --uri=https://github.com/drevops/vortex.git#stable && \
@@ -900,7 +900,7 @@ load _test_helper
 
   assert_success
 
-  run_steps "assert" "${mocks[@]}"
+  steps_run "assert" "${mocks[@]}"
 }
 
 @test "Debug output" {
@@ -912,9 +912,9 @@ load _test_helper
     "Some Substring"
   )
 
-  mocks="$(run_steps "setup" 3>"${debug}")"
+  mocks="$(steps_run "setup" 3>"${debug}")"
   run curl example.com
-  run_steps "assert" "${mocks[@]}" 3>>"${debug}"
+  steps_run "assert" "${mocks[@]}" 3>>"${debug}"
 
   assert_file_contains "${debug}" "  > Phase       : setup"
   assert_file_contains "${debug}" "  > Phase       : assert"
@@ -933,20 +933,20 @@ load _test_helper
   )
 
   run echo "Some Substring"
-  run_steps "assert" 3>"${debug}"
+  steps_run "assert" 3>"${debug}"
 
   assert_empty "$(cat "${debug}")"
 }
 
 @test "Missing STEPS" {
-  run run_steps "assert"
+  run steps_run "assert"
   assert_failure
   assert_output_contains "STEPS array is empty."
 }
 
 @test "Missing STEPS - caller recovers" {
   recovered=0
-  run_steps "assert" 2>/dev/null || recovered=1
+  steps_run "assert" 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }
@@ -957,10 +957,10 @@ load _test_helper
     "@curl example.org # 0"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run curl example.com
 
-  run run_steps "assert" "${mocks[@]}"
+  run steps_run "assert" "${mocks[@]}"
   assert_failure
   assert_output_contains "Mocked command 'curl' was expected to be called at least 2 time(s), but was called fewer times."
 }
@@ -971,11 +971,11 @@ load _test_helper
     "@curl example.org # 0"
   )
 
-  mocks="$(run_steps "setup")"
+  mocks="$(steps_run "setup")"
   run curl example.com
 
   recovered=0
-  run_steps "assert" "${mocks[@]}" 2>/dev/null || recovered=1
+  steps_run "assert" "${mocks[@]}" 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }

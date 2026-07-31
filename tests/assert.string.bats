@@ -45,6 +45,16 @@ load _test_helper
   assert_failure
 }
 
+@test "string_random" {
+  run string_random
+  assert_success
+  assert_equal 8 "${#output}"
+
+  run string_random 16
+  assert_success
+  assert_equal 16 "${#output}"
+}
+
 ##
 # Deprecated aliases.
 #

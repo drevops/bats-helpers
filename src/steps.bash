@@ -12,9 +12,9 @@
 # output need the 'assert' phase alone.
 #
 #   declare -a STEPS=( ... )
-#   mocks="$(run_steps "setup")"
+#   mocks="$(steps_run "setup")"
 #   # ... code to be tested ...
-#   run_steps "assert" "${mocks}"
+#   steps_run "assert" "${mocks}"
 #
 # Each step takes one of three forms:
 #
@@ -45,7 +45,7 @@
 # Outputs:
 #   STDOUT: The created mocks, in the 'setup' phase only.
 ##
-run_steps() {
+steps_run() {
   local PHASE_SETUP="setup"
   local PHASE_ASSERT="assert"
 
@@ -273,4 +273,13 @@ steps_debug_write() {
   if [ "${RUN_STEPS_DEBUG-}" = "1" ]; then
     echo "${1}${2}" >&3
   fi
+}
+
+##
+## Deprecated aliases, removed in the next version.
+##
+
+run_steps() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'run_steps' will be removed in the next version. Use 'steps_run' instead." >&3
+  steps_run "$@"
 }

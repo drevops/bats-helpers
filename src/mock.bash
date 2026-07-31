@@ -253,7 +253,7 @@ mock_default_n() {
 
 # Setup mock support.
 # Call this function from your test's setup() method.
-setup_mock() {
+mock_setup() {
   # Command and functions mocking support.
   # @see https://github.com/grayhemp/bats-mock
   #
@@ -291,4 +291,13 @@ mock_command() {
   local mock_file="${mock##*/}"
   ln -sf "${mock_path}/${mock_file}" "${mock_path}/${mocked_command}"
   echo "${mock}"
+}
+
+##
+## Deprecated aliases, removed in the next version.
+##
+
+setup_mock() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'setup_mock' will be removed in the next version. Use 'mock_setup' instead." >&3
+  mock_setup "$@"
 }

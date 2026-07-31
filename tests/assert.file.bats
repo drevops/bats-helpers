@@ -9,10 +9,10 @@ load _test_helper
 @test "assert_file_exists" {
   assert_file_exists "${BATS_TEST_FILENAME}"
 
-  mktouch "${BATS_TEST_TMPDIR}/file1.txt"
-  mktouch "${BATS_TEST_TMPDIR}/file2.txt"
-  mktouch "${BATS_TEST_TMPDIR}/file3.md"
-  mktouch "${BATS_TEST_TMPDIR}/a.b.c.d.doc"
+  file_mktouch "${BATS_TEST_TMPDIR}/file1.txt"
+  file_mktouch "${BATS_TEST_TMPDIR}/file2.txt"
+  file_mktouch "${BATS_TEST_TMPDIR}/file3.md"
+  file_mktouch "${BATS_TEST_TMPDIR}/a.b.c.d.doc"
 
   assert_file_exists "${BATS_TEST_TMPDIR}/file1.txt"
   assert_file_exists "${BATS_TEST_TMPDIR}/file2.txt"
@@ -35,9 +35,9 @@ load _test_helper
 @test "assert_file_not_exists" {
   assert_file_not_exists "some_file.txt"
 
-  mktouch "${BATS_TEST_TMPDIR}/file1.txt"
-  mktouch "${BATS_TEST_TMPDIR}/file2.txt"
-  mktouch "${BATS_TEST_TMPDIR}/file3.md"
+  file_mktouch "${BATS_TEST_TMPDIR}/file1.txt"
+  file_mktouch "${BATS_TEST_TMPDIR}/file2.txt"
+  file_mktouch "${BATS_TEST_TMPDIR}/file3.md"
 
   assert_file_not_exists "${BATS_TEST_TMPDIR}/otherfile1.txt"
   assert_file_not_exists "${BATS_TEST_TMPDIR}/otherfile*"

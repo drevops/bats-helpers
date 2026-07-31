@@ -200,7 +200,7 @@ tests.
 
 | Function               | Description                                | Arguments                        | Returns   |
 |------------------------|--------------------------------------------|----------------------------------|-----------|
-| `setup_mock`           | Setup mock support. Call from `setup()`    | None                             | None      |
+| `mock_setup`           | Setup mock support. Call from `setup()`    | None                             | None      |
 | `mock_create`          | Creates a mock program that can be tracked | None                             | Mock path |
 | `mock_command`         | Mock provided command                      | `command_name`                   | Mock path |
 | `mock_set_output`      | Sets the output of the mock                | `mock`, `output`, `[call_index]` | None      |
@@ -220,7 +220,7 @@ tests.
 
 ```bash
 setup() {
-  setup_mock
+  mock_setup
 }
 
 # Example to test the notify.sh script that uses curl to send a notification to external system.
@@ -264,7 +264,7 @@ assertions. It helps to make maintenance of complex tests easier.
 Consider this example:
 
 ```bash
-# Declare STEPS as a global variable, as `run_steps` needs to be called
+# Declare STEPS as a global variable, as `steps_run` needs to be called
 # twice and it does not store the steps internally.
 declare -a STEPS=(
   # Mock command with exit status only (status 1 = failure, no output).
@@ -295,13 +295,13 @@ declare -a STEPS=(
 )
 
 # Setup phase: creates mocks and returns references to them.
-mocks="$(run_steps "setup")"
+mocks="$(steps_run "setup")"
 
 # Run the code under test.
 run ./my-script.sh
 
 # Assert phase: verifies mocks were called correctly and output assertions pass.
-run_steps "assert" "$mocks"
+steps_run "assert" "$mocks"
 ```
 
 #### Step types
@@ -353,17 +353,17 @@ Starts with `- ` (minus followed by a space).
 
 | Function Name             | Description                                                                   |
 |---------------------------|-------------------------------------------------------------------------------|
-| `add_var_to_file`         | Adds a variable assignment to a file and creates a backup                     |
-| `restore_file`            | Restores a file from its backup created by add_var_to_file                    |
+| `file_add_var`            | Adds a variable assignment to a file and creates a backup                     |
+| `file_restore`            | Restores a file from its backup created by file_add_var                       |
 | `file_backup_path`        | Returns the sandbox path of a file's backup                                   |
-| `read_env`                | Reads .env file and evaluates variable expressions in that context            |
+| `file_read_env`           | Reads .env file and evaluates variable expressions in that context            |
 | `format_error`            | Formats error messages with decorative borders and includes command output    |
 | `flunk`                   | Causes a test to fail with an optional error message                          |
-| `mktouch`                 | Creates a file and any necessary parent directories                           |
+| `file_mktouch`            | Creates a file and any necessary parent directories                           |
 | `fixture_export_codebase` | Export codebase source code at the latest commit to the destination directory |
 | `fixture_prepare_dir`     | Prepares a directory for fixture use by removing existing content             |
-| `random_string`           | Generates a random alphanumeric string of specified length                    |
-| `trim_file`               | Removes the last line from a file                                             |
+| `string_random`           | Generates a random alphanumeric string of specified length                    |
+| `file_trim`               | Removes the last line from a file                                             |
 | `tui_run`                 | Runs a TUI script with predefined answers, simulating user input              |
 
 #### Failure reporting
@@ -384,7 +384,7 @@ A bare call still fails the test at that point, because BATS runs tests with `er
 
 #### File backups
 
-`add_var_to_file` backs a file up before modifying it and `restore_file` puts that backup back. Backups are written below `${BATS_TEST_TMPDIR}/bats-helpers-backup`, mirroring the source path, so BATS removes them together with the rest of the test sandbox and concurrent runs cannot overwrite each other's backups.
+`file_add_var` backs a file up before modifying it and `file_restore` puts that backup back. Backups are written below `${BATS_TEST_TMPDIR}/bats-helpers-backup`, mirroring the source path, so BATS removes them together with the rest of the test sandbox and concurrent runs cannot overwrite each other's backups.
 
 Set `BATS_HELPERS_BACKUP_DIR` to store them elsewhere. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
 
@@ -409,6 +409,16 @@ These names still work, but print a notice on every call and are removed in the 
 | `assert_git_file_is_not_tracked` | `assert_git_file_not_tracked`  |
 | `assert_contains`                | `assert_string_contains`       |
 | `assert_not_contains`            | `assert_string_not_contains`   |
+| `run_steps`                      | `steps_run`                    |
+| `setup_mock`                     | `mock_setup`                   |
+| `mktouch`                        | `file_mktouch`                 |
+| `trim_file`                      | `file_trim`                    |
+| `read_env`                       | `file_read_env`                |
+| `add_var_to_file`                | `file_add_var`                 |
+| `restore_file`                   | `file_restore`                 |
+| `random_string`                  | `string_random`                |
+
+The eight names below the assertion aliases were renamed to put the subject first, so every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. Only the name changed: arguments, output and return semantics are identical, so a call is updated by swapping the name alone.
 
 `assert_contains` and `assert_not_contains` take the needle first, while their replacements take the haystack first, so a call has to swap its arguments as well as change its name:
 
