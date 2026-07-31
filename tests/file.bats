@@ -160,6 +160,26 @@ load _test_helper
   assert_file_contains "${BATS_TEST_TMPDIR}/second.env" "VAR=2"
 }
 
+# The file assertions glob their argument, so a path with spaces is read back
+# with "cat" instead.
+@test "add_var_to_file and restore_file with spaces in the path" {
+  mkdir -p "${BATS_TEST_TMPDIR}/dir with spaces"
+  echo "line1" >>"${BATS_TEST_TMPDIR}/dir with spaces/.env"
+
+  add_var_to_file "${BATS_TEST_TMPDIR}/dir with spaces/.env" "VAR" "value"
+
+  run cat "${BATS_TEST_TMPDIR}/dir with spaces/.env"
+  assert_success
+  assert_output_contains "VAR=value"
+
+  restore_file "${BATS_TEST_TMPDIR}/dir with spaces/.env"
+
+  run cat "${BATS_TEST_TMPDIR}/dir with spaces/.env"
+  assert_success
+  assert_output_contains "line1"
+  assert_output_not_contains "VAR=value"
+}
+
 @test "add_var_to_file for a missing file" {
   run add_var_to_file "${BATS_TEST_TMPDIR}/missing.env" "VAR" "value"
   assert_failure

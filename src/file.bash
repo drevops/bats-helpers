@@ -58,7 +58,10 @@ add_var_to_file() {
   local name="${2}"
   local value="${3}"
 
-  assert_file_exists "${file}" || return 1
+  if [ ! -f "${file}" ]; then
+    format_error "File ${file} does not exist" | flunk
+    return 1
+  fi
 
   local backup
   backup="$(file_backup_path "${file}")" || return 1
