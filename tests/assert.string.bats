@@ -49,10 +49,12 @@ load _test_helper
   run string_random
   assert_success
   assert_equal 8 "${#output}"
+  assert_string_not_contains "${output}" " "
 
   run string_random 16
   assert_success
   assert_equal 16 "${#output}"
+  assert_string_not_contains "${output}" " "
 }
 
 ##

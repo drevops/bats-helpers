@@ -66,6 +66,7 @@ load _test_helper
 
   assert_success
   assert_equal 5 "${#output}"
+  assert_string_not_contains "${output}" " "
   assert_file_contains "${notice}" "Deprecated: 'random_string' will be removed in the next version. Use 'string_random' instead."
 }
 

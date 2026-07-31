@@ -100,8 +100,12 @@ assert_equal() {
 string_random() {
   local len="${1:-8}"
   local ret
-  # shellcheck disable=SC2002
-  ret=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w "${len}" | head -n 1)
+
+  # 'tr' reads the device directly and 'head' counts bytes, so neither a
+  # broken-pipe warning nor a locale complaint can reach the caller's STDERR,
+  # where Bats' 'run' would merge it into the returned string.
+  ret="$(LC_ALL=C tr -dc 'a-zA-Z0-9' </dev/urandom 2>/dev/null | head -c "${len}")"
+
   echo "${ret}"
 }
 
