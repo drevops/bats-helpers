@@ -100,4 +100,10 @@ load _test_helper
 
   run bash -c "source '${BATS_TEST_DIRNAME}/../load.bash'; deprecated 'old_incomplete'"
   assert_failure
+
+  run bash -c "source '${BATS_TEST_DIRNAME}/../load.bash'; deprecated '' 'new_incomplete'"
+  assert_failure
+
+  run bash -c "source '${BATS_TEST_DIRNAME}/../load.bash'; deprecated 'old_incomplete' ''"
+  assert_failure
 }

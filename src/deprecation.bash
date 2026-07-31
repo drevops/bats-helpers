@@ -29,8 +29,8 @@
 ##
 
 deprecated() {
-  local old_name="${1?'Deprecated name must be specified'}"
-  local new_name="${2?'Replacement name must be specified'}"
+  local old_name="${1:?'Deprecated name must be specified'}"
+  local new_name="${2:?'Replacement name must be specified'}"
 
   if [ "${BATS_DEPRECATION_NOTICE_ENABLED:-1}" != "1" ]; then
     return 0
