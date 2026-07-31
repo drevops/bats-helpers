@@ -2,7 +2,7 @@
 #
 # Tests for Bats helpers.
 #
-# shellcheck disable=SC2129
+# shellcheck disable=SC2129,SC2016
 
 load _test_helper
 
