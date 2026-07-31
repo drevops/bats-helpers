@@ -9,7 +9,7 @@ load _test_helper
 @test "Mock: calls and arguments" {
   mock_curl=$(mock_command "curl")
 
-  "${BATS_TEST_DIRNAME}/fixtures/fixture.sh"
+  "${BATS_TEST_DIRNAME}/fixtures/mock_script.sh"
 
   assert_equal 2 "$(mock_get_call_num "${mock_curl}")"
 
@@ -22,7 +22,7 @@ load _test_helper
   mock_set_output "${mock_curl}" "testoutput1" 1
   mock_set_output "${mock_curl}" "testoutput2" 2
 
-  run "${BATS_TEST_DIRNAME}/fixtures/fixture.sh"
+  run "${BATS_TEST_DIRNAME}/fixtures/mock_script.sh"
   assert_success
   assert_equal 2 "$(mock_get_call_num "${mock_curl}")"
   assert_output_contains "testoutput1"
@@ -33,7 +33,7 @@ load _test_helper
   mock_curl=$(mock_command "curl")
   mock_set_status "${mock_curl}" 1 1
 
-  run "${BATS_TEST_DIRNAME}/fixtures/fixture.sh"
+  run "${BATS_TEST_DIRNAME}/fixtures/mock_script.sh"
   assert_failure
   assert_equal 1 "$(mock_get_call_num "${mock_curl}")"
 }
