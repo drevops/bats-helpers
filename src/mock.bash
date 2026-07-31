@@ -4,7 +4,7 @@
 # @see https://github.com/grayhemp/bats-mock
 #
 # This file was modified - look for @note comments.
-# shellcheck disable=SC1090,SC2005,SC2061
+# shellcheck disable=SC1090,SC2061
 
 # Creates a mock program
 # Globals:
@@ -115,7 +115,7 @@ mock_set_side_effect() {
 mock_get_call_num() {
   local mock="${1?'Mock must be specified'}"
 
-  echo "$(cat "${mock}.call_num")"
+  cat "${mock}.call_num"
 }
 
 # Returns the user the mock was called with
@@ -129,7 +129,7 @@ mock_get_call_user() {
   local n
   n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
 
-  echo "$(cat "${mock}.user.${n}")"
+  cat "${mock}.user.${n}"
 }
 
 # Returns the arguments line the mock was called with
@@ -143,7 +143,7 @@ mock_get_call_args() {
   local n
   n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
 
-  echo "$(cat "${mock}.args.${n}")"
+  cat "${mock}.args.${n}"
 }
 
 # Checks if the mock was called with arguments matching the expected pattern
