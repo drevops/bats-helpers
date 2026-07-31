@@ -5,7 +5,7 @@
 # Each test asserts that the old name still works and still warns. File
 # descriptor 3 is redirected per call so the notice can be asserted on.
 #
-# shellcheck disable=SC2129
+# shellcheck disable=SC2034,SC2129
 
 load _test_helper
 
