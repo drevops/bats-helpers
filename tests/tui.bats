@@ -44,6 +44,18 @@ load _test_helper
   assert_output_contains "SCRIPT_FILE is not set."
 }
 
+@test "Missing SCRIPT_FILE - caller recovers" {
+  answers=(
+    "nothing"
+    "custom answer2"
+  )
+
+  recovered=0
+  tui_run "${answers[@]}" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
 @test "Non-existing SCRIPT_FILE" {
   export SCRIPT_FILE="tests/fixtures/fixture_tui_nonexisting.sh"
 
@@ -54,4 +66,18 @@ load _test_helper
   run tui_run "${answers[@]}"
   assert_failure
   assert_output_contains "SCRIPT_FILE does not exist."
+}
+
+@test "Non-existing SCRIPT_FILE - caller recovers" {
+  export SCRIPT_FILE="tests/fixtures/fixture_tui_nonexisting.sh"
+
+  answers=(
+    "nothing"
+    "custom answer2"
+  )
+
+  recovered=0
+  tui_run "${answers[@]}" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
 }

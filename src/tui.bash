@@ -4,13 +4,20 @@
 #
 
 tui_run() {
+  if [ -z "${SCRIPT_FILE-}" ]; then
+    flunk "SCRIPT_FILE is not set."
+    return 1
+  fi
+
+  if [ ! -f "${SCRIPT_FILE}" ]; then
+    flunk "SCRIPT_FILE does not exist."
+    return 1
+  fi
+
   local answers=("$@")
   local input
   local i
   local val
-
-  [ -z "${SCRIPT_FILE-}" ] && echo "SCRIPT_FILE is not set." && exit 1
-  [ ! -f "${SCRIPT_FILE}" ] && echo "SCRIPT_FILE does not exist." && exit 1
 
   for i in "${answers[@]}"; do
     val="${i}"
