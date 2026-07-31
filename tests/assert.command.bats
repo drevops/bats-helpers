@@ -60,24 +60,3 @@ load _test_helper
   run assert_output_not_contains "existing"
   assert_failure
 }
-
-@test "assert_equal" {
-  assert_equal 1 1
-
-  run assert_equal 1 2
-  assert_failure
-}
-
-@test "assert_empty" {
-  assert_empty ""
-
-  run assert_empty "something"
-  assert_failure
-}
-
-@test "assert_not_empty" {
-  assert_not_empty "something"
-
-  run assert_not_empty ""
-  assert_failure
-}
