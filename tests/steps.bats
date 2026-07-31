@@ -937,3 +937,49 @@ load _test_helper
 
   assert_empty "$(cat "${debug}")"
 }
+
+@test "Missing STEPS" {
+  run run_steps "assert"
+  assert_failure
+  assert_output_contains "STEPS array is empty."
+}
+
+@test "Missing STEPS - caller recovers" {
+  recovered=0
+  run_steps "assert" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
+@test "Mocked command called fewer times than expected" {
+  declare -a STEPS=(
+    "@curl example.com # 0"
+    "@curl example.org # 0"
+  )
+
+  mocks="$(run_steps "setup")"
+  run curl example.com
+
+  run run_steps "assert" "${mocks[@]}"
+  assert_failure
+  assert_output_contains "Mocked command 'curl' was expected to be called at least 2 time(s), but was called fewer times."
+}
+
+@test "Mocked command called fewer times than expected - caller recovers" {
+  declare -a STEPS=(
+    "@curl example.com # 0"
+    "@curl example.org # 0"
+  )
+
+  mocks="$(run_steps "setup")"
+  run curl example.com
+
+  recovered=0
+  run_steps "assert" "${mocks[@]}" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
+@test "Loading the library leaves the consumer shell options alone" {
+  assert_string_not_contains "$-" "u"
+}

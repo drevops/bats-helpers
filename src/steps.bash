@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -eu
-
 ################################################################################
 # Setup and process a sequence of string and mocked command assertions.
 #
@@ -76,6 +74,11 @@ run_steps() {
 
   local phase="${1:-${PHASE_ASSERT}}"
   local mocked_commands_var="${2-}"
+
+  if [ -z "${STEPS+x}" ]; then
+    flunk "STEPS array is empty."
+    return 1
+  fi
 
   declare -A command_indexes
   declare -A mocked_commands
@@ -208,7 +211,10 @@ run_steps() {
         steps_debug_sub "        args        : ${command_args}"
         steps_debug_sub "        mock        : ${mock_cmd}"
         steps_debug_sub "        index       : ${mock_cmd_index}"
-        mock_args_actual="$(mock_get_call_args "${mock_cmd}" "${mock_cmd_index}")"
+        if ! mock_args_actual="$(mock_get_call_args "${mock_cmd}" "${mock_cmd_index}" 2>/dev/null)"; then
+          flunk "ERROR: Mocked command '${command_binary}' was expected to be called at least ${mock_cmd_index} time(s), but was called fewer times."
+          return 1
+        fi
         steps_debug_sub "        actual args : ${mock_args_actual}"
 
         # Use wildcard-aware assertion
