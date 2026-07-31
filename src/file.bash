@@ -31,9 +31,18 @@ read_env() {
 # Backups are stored under BATS_HELPERS_BACKUP_DIR, which defaults to a
 # directory within the per-test temporary directory so that BATS removes them
 # with the rest of the test sandbox. The source path is mirrored below the root
-# so that backups of different files do not collide.
+# so that backups of different files do not collide. Paths with a parent
+# directory reference are rejected, as they resolve outside of that root.
 file_backup_path() {
   local file="${1}"
+
+  case "/${file}/" in
+    */../*)
+      format_error "Unable to resolve the backup path: file ${file} contains a parent directory reference" | flunk
+      return 1
+      ;;
+  esac
+
   local root="${BATS_HELPERS_BACKUP_DIR:-${BATS_TEST_TMPDIR:+${BATS_TEST_TMPDIR}/bats-helpers-backup}}"
 
   if [ -z "${root}" ]; then
@@ -54,8 +63,8 @@ add_var_to_file() {
   local backup
   backup="$(file_backup_path "${file}")" || return 1
 
-  mkdir -p "$(dirname "${backup}")"
-  cp -f "${file}" "${backup}"
+  mkdir -p "$(dirname "${backup}")" || return 1
+  cp -f "${file}" "${backup}" || return 1
 
   echo "${name}=${value}" >>"${file}"
 }

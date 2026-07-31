@@ -72,6 +72,19 @@ load _test_helper
   assert_output "${BATS_TEST_TMPDIR}/custom/.env"
 }
 
+@test "file_backup_path with a parent directory reference" {
+  run file_backup_path "${BATS_TEST_TMPDIR}/../.env"
+  assert_failure
+  assert_output_contains "contains a parent directory reference"
+
+  run file_backup_path "../.env"
+  assert_failure
+
+  run file_backup_path "${BATS_TEST_TMPDIR}/..hidden.env"
+  assert_success
+  assert_output "${BATS_TEST_TMPDIR}/bats-helpers-backup/${BATS_TEST_TMPDIR#/}/..hidden.env"
+}
+
 @test "file_backup_path without a sandbox" {
   local original="${BATS_TEST_TMPDIR}"
 
