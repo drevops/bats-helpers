@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fixture script to test mocking.
+# Fixture script to test TUI.
 # LCOV_EXCL_START
 set -e
 

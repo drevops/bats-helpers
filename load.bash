@@ -1,5 +1,5 @@
 ##
-# Helpers and assertions for BATs testing.
+# Helpers and assertions for BATS testing.
 #
 # Central loading point for all the helpers and assertions.
 # @see https://bats-core.readthedocs.io/en/stable/writing-tests.html#bats-load-library-load-system-wide-libraries
