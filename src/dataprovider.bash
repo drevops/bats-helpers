@@ -15,8 +15,8 @@
 #
 # Examples:
 #   To run a function `test_func` with TEST_CASES containing two arguments per row,
-#   you can call run_test_cases like so:
-#     run_test_cases "test_func" 2
+#   you can call dataprovider_run like so:
+#     dataprovider_run "test_func" 2
 ##
 
 dataprovider_run() {

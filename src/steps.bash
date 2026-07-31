@@ -25,9 +25,9 @@ set -eu
 # When used with strings, just call it once for the 'assert' phase.
 #
 # STEPS=(...)
-# mocks="$(process_steps "setup")" # $mocks will hold created mocks
+# mocks="$(run_steps "setup")" # $mocks will hold created mocks
 # # ... code to be tested ...
-# process_steps "assert" "$mocks"
+# run_steps "assert" "$mocks"
 #
 # Every step is a string that can be one of the following:
 # @<command> [<args>] # <mock_status> [ # <mock_output> [ # <mock_side_effect> ]]
@@ -65,9 +65,9 @@ set -eu
 #   "- Goodbye world"
 # )
 #
-# mocks="$(process_steps "setup")" # $mocks will hold created mocks
+# mocks="$(run_steps "setup")" # $mocks will hold created mocks
 # # ... code to be tested ...
-# process_steps "assert" "$mocks" # Assertions will be processed.
+# run_steps "assert" "$mocks" # Assertions will be processed.
 #
 ################################################################################
 run_steps() {

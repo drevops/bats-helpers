@@ -255,7 +255,7 @@ assertions. It helps to make maintenance of complex tests easier.
 Consider this example:
 
 ```bash
-# Declare STEPS as a global variable, as `process_steps` needs to be called
+# Declare STEPS as a global variable, as `run_steps` needs to be called
 # twice and it does not store the steps internally.
 declare -a STEPS=(
   # Mock command with exit status only (status 1 = failure, no output).
@@ -286,13 +286,13 @@ declare -a STEPS=(
 )
 
 # Setup phase: creates mocks and returns references to them.
-mocks="$(process_steps "setup")"
+mocks="$(run_steps "setup")"
 
 # Run the code under test.
 run ./my-script.sh
 
 # Assert phase: verifies mocks were called correctly and output assertions pass.
-process_steps "assert" "$mocks"
+run_steps "assert" "$mocks"
 ```
 
 #### Step types
