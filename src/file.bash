@@ -4,12 +4,23 @@
 # Utilities for working with files.
 #
 
+##
+# Creates a file and any missing parent directories.
+#
+# Arguments:
+#   1. file: Path to create.
+##
 mktouch() {
   local file="${1}"
   mkdir -p "$(dirname "${file}")" && touch "${file}"
 }
 
-# Trim the last line of the file.
+##
+# Removes the last line of a file in place.
+#
+# Arguments:
+#   1. file: File to trim.
+##
 trim_file() {
   local sed_opts
 
@@ -23,6 +34,19 @@ trim_file() {
   sed "${sed_opts[@]}" "${1}"
 }
 
+##
+# Evaluates an expression with the variables from the './.env' file in scope.
+#
+# Variables that were already exported are restored to their previous values
+# once the expression has been evaluated. Variables that './.env' introduces
+# stay exported.
+#
+# Arguments:
+#   1. expression: Expression to evaluate.
+#
+# Outputs:
+#   STDOUT: The evaluated expression.
+##
 read_env() {
   local t
   # shellcheck disable=SC1090,SC1091
@@ -32,13 +56,25 @@ read_env() {
   eval echo "$@"
 }
 
-# Resolve the backup location of a file.
+##
+# Resolves the backup location of a file.
 #
-# Backups are stored under BATS_HELPERS_BACKUP_DIR, which defaults to a
-# directory within the per-test temporary directory so that BATS removes them
-# with the rest of the test sandbox. The source path is mirrored below the root
-# so that backups of different files do not collide. Paths with a parent
+# The source path is mirrored below the backup root, so files in different
+# directories keep separate backups. A leading slash is stripped, so relative
+# and absolute paths to the same location share one backup. Paths with a parent
 # directory reference are rejected, as they resolve outside of that root.
+#
+# Arguments:
+#   1. file: File whose backup path to resolve.
+#
+# Globals:
+#   BATS_HELPERS_BACKUP_DIR: Backup root. Defaults to a directory within the
+#     per-test temporary directory, so that BATS removes the backups with the
+#     rest of the test sandbox.
+#
+# Outputs:
+#   STDOUT: The backup path.
+##
 file_backup_path() {
   local file="${1}"
 
@@ -59,6 +95,14 @@ file_backup_path() {
   echo "${root%/}/${file#/}"
 }
 
+##
+# Appends a variable assignment to a file, backing the file up first.
+#
+# Arguments:
+#   1. file: File to append to.
+#   2. name: Variable name.
+#   3. value: Variable value.
+##
 add_var_to_file() {
   local file="${1}"
   local name="${2}"
@@ -78,6 +122,12 @@ add_var_to_file() {
   echo "${name}=${value}" >>"${file}"
 }
 
+##
+# Restores a file from the backup taken by 'add_var_to_file'.
+#
+# Arguments:
+#   1. file: File to restore.
+##
 restore_file() {
   local file="${1}"
 

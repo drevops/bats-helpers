@@ -1,73 +1,50 @@
 #!/usr/bin/env bash
+##
+# @file
+# Step runner for sequences of mocked command and output assertions.
+#
 
-################################################################################
-# Setup and process a sequence of string and mocked command assertions.
+##
+# Sets up and processes a sequence of string and mocked command assertions.
 #
-# Global variables:
-# - STEPS: An array holding the steps to be processed.
-# - RUN_STEPS_DEBUG: Set to '1' to enable debug output.
+# Steps that mock commands need two calls: the 'setup' phase creates the mocks,
+# and the 'assert' phase checks how they were called. Steps that only assert on
+# output need the 'assert' phase alone.
 #
-# Parameters:
-# 1. Phase: Either "setup" or "assert". Defaults to "assert".
-# 2. Mocked Commands (optional for 'setup', required for 'assert' phase):
-#    An array holding the mocked command details.
+#   declare -a STEPS=( ... )
+#   mocks="$(run_steps "setup")"
+#   # ... code to be tested ...
+#   run_steps "assert" "${mocks}"
 #
-# Return:
-#  The mocked commands array for the 'setup' phase.
+# Each step takes one of three forms:
 #
+#   @<command> [<args>] # <status> [ # <output> [ # <side_effect> ]]
+#     Mocks <command>. The status may be omitted and the output given in its
+#     place, unless that output is all digits, which parses as a status. The
+#     side effect is Bash code run when the mock is called. A command may be
+#     mocked by several steps; every call goes through the same mock. Literal
+#     '#' characters in <args> are escaped as '\#'.
 #
-# Usage:
-# When used with commands, this function needs to be called twice, once for
-# the 'setup' phase and once for the 'assert' phase. The 'setup' phase will mock
-# the commands and the 'assert' phase will assert the commands.
-# When used with strings, just call it once for the 'assert' phase.
+#   <substring>
+#     Asserts that the output contains <substring>.
 #
-# STEPS=(...)
-# mocks="$(run_steps "setup")" # $mocks will hold created mocks
-# # ... code to be tested ...
-# run_steps "assert" "$mocks"
+#   - <substring>
+#     Asserts that the output does not contain <substring>.
 #
-# Every step is a string that can be one of the following:
-# @<command> [<args>] # <mock_status> [ # <mock_output> [ # <mock_side_effect> ]]
-#   Mock the command <command> with the given status, optional output, and optional side effect.
-#   Status can be omitted and <mock_output> can be used instead.
-#   Side effect is Bash code that will be executed when the mock is called.
-#   Different commands can be mocked multiple times.
-#   Call to the same command will be using the same mock.
-#   If <args> contains literal '#' characters (e.g., in URLs like https://example.com#anchor),
-#   escape them as '\#' to prevent them from being treated as delimiters.
+# See README.md for worked examples.
 #
-# <substring>
-#   Check that the output contains the given substring.
+# Arguments:
+#   1. phase: Either 'setup' or 'assert'. Optional, defaults to 'assert'.
+#   2. mocked_commands: Mocks returned by the 'setup' phase. Required for the
+#      'assert' phase.
 #
-# - <substring>
-#   Ensure the output does NOT contain the specified substring.
-#   Starts with '- ' (minus followed by space).
+# Globals:
+#   STEPS: Array of steps to process.
+#   RUN_STEPS_DEBUG: Set to '1' to enable debug output.
 #
-# Example:
-# declare -a STEPS=(
-#   # Mock `drush` binary with an exit status of 1 and not output.
-#   "@drush -y status --field=drupal-version # 1"
-#   # Mock `drush` binary with an exit status of 0 and output "success".
-#   "@drush -y status --fields=bootstrap # success"
-#   # Mock `drush` binary with an exit status of 1 and output "failure".
-#   "@drush -y status --fields=bootstrap # 1 # failure"
-#   # Mock `drush` binary with side effect that creates a file.
-#   "@drush cache-rebuild # 0 # Cache rebuilt # touch /tmp/cache-cleared"
-#   # Mock command with URL containing hash fragment (escaped as \#).
-#   "@curl -fsSL https://example.com\#anchor -o file.php # 0"
-#   "@git clone https://github.com/user/repo.git\#stable # 0 # Cloning repo"
-#   # Assert presence of the partial string in the output "Hello world"
-#   "Hello world"
-#   # Assert absence of the partial string in the output "Goodbye world"
-#   "- Goodbye world"
-# )
-#
-# mocks="$(run_steps "setup")" # $mocks will hold created mocks
-# # ... code to be tested ...
-# run_steps "assert" "$mocks" # Assertions will be processed.
-#
-################################################################################
+# Outputs:
+#   STDOUT: The created mocks, in the 'setup' phase only.
+##
 run_steps() {
   local PHASE_SETUP="setup"
   local PHASE_ASSERT="assert"
@@ -87,7 +64,7 @@ run_steps() {
   steps_debug "Total steps : ${#STEPS[@]}"
   steps_debug
 
-  # Create associative array for mocked commands
+  # Create associative array for mocked commands.
   if [[ -n ${mocked_commands_var} ]]; then
     local line
     while IFS= read -r line; do
@@ -105,20 +82,20 @@ run_steps() {
 
     steps_debug "STEP START: '${item}'"
 
-    #########################################################################
-    #                                COMMAND                                #
-    #########################################################################
+    ##
+    ## Command.
+    ##
     if [[ ${item} == "@"* ]]; then
       steps_debug "Type: command"
       steps_debug
 
-      #------------------------------------------------------------------------
-      # Parsing the command, status, and optional output.
-      #------------------------------------------------------------------------
+      ##
+      ## Parsing the command, status, and optional output.
+      ##
 
       steps_debug_sub "PARSE: STARTED"
 
-      # Replace escaped hashes with a placeholder before parsing
+      # Replace escaped hashes with a placeholder before parsing.
       local ESCAPED_HASH_PLACEHOLDER="__ESCAPED_HASH__"
       local item_with_placeholders="${item//\\#/${ESCAPED_HASH_PLACEHOLDER}}"
 
@@ -143,7 +120,7 @@ run_steps() {
       local mock_output="${command_parts[2]-}"
       local mock_side_effect="${command_parts[3]-}"
 
-      # Restore escaped hashes in all parsed components
+      # Restore escaped hashes in all parsed components.
       command_args="${command_args//${ESCAPED_HASH_PLACEHOLDER}/#}"
       mock_status="${mock_status//${ESCAPED_HASH_PLACEHOLDER}/#}"
       mock_output="${mock_output//${ESCAPED_HASH_PLACEHOLDER}/#}"
@@ -163,9 +140,9 @@ run_steps() {
       steps_debug_sub "       output      : '${mock_output}'"
       steps_debug_sub "       side_effect : '${mock_side_effect}'"
 
-      #------------------------------------------------------------------------
-      # Processing the command.
-      #------------------------------------------------------------------------
+      ##
+      ## Processing the command.
+      ##
 
       # Track the index of the command call per binary.
       command_index=${command_indexes[${command_binary}]:-1}
@@ -197,7 +174,7 @@ run_steps() {
 
         steps_debug_sub "SETUP: Setup mock for binary '${command_binary}' complete."
       else
-        # Check if mock for the binary exists in the assert phase
+        # Check if mock for the binary exists in the assert phase.
         if [[ -z ${mocked_commands["${command_binary}"]-} ]]; then
           flunk "ERROR: Mock for the binary '${command_binary}' does not exist."
           return 1
@@ -217,7 +194,7 @@ run_steps() {
         fi
         steps_debug_sub "        actual args : ${mock_args_actual}"
 
-        # Use wildcard-aware assertion
+        # Use wildcard-aware assertion.
         if ! mock_assert_call_args "${mock}" "${command_args}" "${command_index}"; then
           flunk "ERROR: Mocked command '${command_binary}' was called with arguments '${mock_args_actual}', but '${command_args}' was expected."
           return 1
@@ -227,18 +204,18 @@ run_steps() {
       command_indexes["${command_binary}"]=$((command_index + 1))
       steps_debug "Updated command index for '${command_binary}' to '${command_indexes[${command_binary}]}'"
 
-    #########################################################################
-    #                            STRING ABSENT                              #
-    #########################################################################
+    ##
+    ## String absent.
+    ##
     elif [[ ${item} == "-"* ]]; then
       steps_debug "Type: string absent"
 
       if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
         assert_output_not_contains "${item:2}" || return 1 # Skip '-' and a space.
       fi
-    #########################################################################
-    #                            STRING PRESENT                             #
-    #########################################################################
+    ##
+    ## String present.
+    ##
     else
       steps_debug "Type: string present"
 
@@ -263,34 +240,34 @@ run_steps() {
 }
 
 ##
-# Print a debug message for a step.
+# Prints a debug message for a step.
 #
-# Parameters:
-# 1. Message. Optional.
+# Arguments:
+#   1. message: Message to print. Optional.
 ##
 steps_debug() {
   steps_debug_write "  > " "${1-}"
 }
 
 ##
-# Print a debug message for a sub-step.
+# Prints a debug message for a sub-step.
 #
-# Parameters:
-# 1. Message. Optional.
+# Arguments:
+#   1. message: Message to print. Optional.
 ##
 steps_debug_sub() {
   steps_debug_write "  >   " "${1-}"
 }
 
 ##
-# Print a debug message to the file descriptor 3, shown by `bats --tap`.
+# Prints a debug message to file descriptor 3, shown by 'bats --tap'.
 #
-# Global variables:
-# - RUN_STEPS_DEBUG: Set to '1' to enable debug output.
+# Arguments:
+#   1. prefix: Prefix to print before the message.
+#   2. message: Message to print.
 #
-# Parameters:
-# 1. Prefix.
-# 2. Message.
+# Globals:
+#   RUN_STEPS_DEBUG: Set to '1' to enable debug output.
 ##
 steps_debug_write() {
   if [ "${RUN_STEPS_DEBUG-}" = "1" ]; then

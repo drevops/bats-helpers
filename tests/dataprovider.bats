@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# BATS tests for dataprovider runner.
+# Tests for the data provider runner.
 #
 # shellcheck disable=SC2034
 

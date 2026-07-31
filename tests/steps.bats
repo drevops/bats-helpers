@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# Tests for steps helper.
+# Tests for the step runner.
 #
 # shellcheck disable=SC2034,SC2030,SC2031,SC2016
 

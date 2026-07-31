@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ##
 # @file
-# Bats test helpers.
+# Common setup for the library's own tests.
 #
 
 # Load library.
@@ -16,5 +16,5 @@ setup() {
   if [ "${BATS_VERBOSE_RUN-}" = "1" ]; then
     echo "BATS_TEST_TMPDIR: ${BATS_TEST_TMPDIR}" >&3
   fi
-  # LCOV_EXCL_END
+  # LCOV_EXCL_STOP
 }

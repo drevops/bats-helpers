@@ -1,8 +1,22 @@
 #!/usr/bin/env bash
-#
-# A Bats helper library for working with Terminal User Interface (TUI).
+##
+# @file
+# Helpers for testing Terminal User Interface (TUI) scripts.
 #
 
+##
+# Runs a TUI script, feeding it a list of answers on STDIN.
+#
+# Each answer is submitted followed by a newline. The literal answer 'nothing'
+# submits an empty line, so a prompt can be left at its default.
+#
+# Arguments:
+#   1. answers: Answers to submit, one per argument, in the order the script
+#      prompts for them.
+#
+# Globals:
+#   SCRIPT_FILE: Path to the script to run, relative to the current directory.
+##
 tui_run() {
   if [ -z "${SCRIPT_FILE-}" ]; then
     flunk "SCRIPT_FILE is not set."

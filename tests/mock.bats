@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# Tests for mock.
+# Tests for mocking helpers.
 #
 # shellcheck disable=SC2129
 

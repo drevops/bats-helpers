@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 ##
 # @file
-# Bats test helpers.
+# Assertions for strings.
 #
 
+##
+# Asserts that a string is empty.
+#
+# Arguments:
+#   1. string: String to check.
+##
 assert_empty() {
   if [ "${1-}" = "" ]; then
     return 0
@@ -12,6 +18,12 @@ assert_empty() {
   fi
 }
 
+##
+# Asserts that a string is not empty.
+#
+# Arguments:
+#   1. string: String to check.
+##
 assert_not_empty() {
   if [ "${1-}" = "" ]; then
     format_error "String '${1}' is empty, but should not be" | flunk
@@ -20,6 +32,15 @@ assert_not_empty() {
   fi
 }
 
+##
+# Asserts that a string contains a substring.
+#
+# The match is case-insensitive and treats the needle as a literal string.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
 assert_string_contains() {
   local haystack="${1}"
   local needle="${2}"
@@ -31,6 +52,15 @@ assert_string_contains() {
   fi
 }
 
+##
+# Asserts that a string does not contain a substring.
+#
+# The match is case-insensitive and treats the needle as a literal string.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
 assert_string_not_contains() {
   local haystack="${1}"
   local needle="${2}"
@@ -42,6 +72,13 @@ assert_string_not_contains() {
   fi
 }
 
+##
+# Asserts that two strings are equal.
+#
+# Arguments:
+#   1. expected: Expected string.
+#   2. actual: Actual string.
+##
 assert_equal() {
   if [ "${1-}" != "${2-}" ]; then
     {
@@ -51,6 +88,15 @@ assert_equal() {
   fi
 }
 
+##
+# Generates a random alphanumeric string.
+#
+# Arguments:
+#   1. length: Number of characters to generate. Optional, defaults to 8.
+#
+# Outputs:
+#   STDOUT: The generated string.
+##
 random_string() {
   local len="${1:-8}"
   local ret
@@ -60,7 +106,7 @@ random_string() {
 }
 
 ##
-# Deprecated aliases, removed in the next version.
+## Deprecated aliases, removed in the next version.
 ##
 
 assert_contains() {

@@ -31,3 +31,4 @@ answer2="$(ask "Answer2" "default answer2")"
 
 echo "${answer1}"
 echo "${answer2}"
+# LCOV_EXCL_STOP

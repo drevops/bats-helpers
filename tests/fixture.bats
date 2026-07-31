@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# BATS tests for Fixture helpers.
+# Tests for fixture helpers.
 #
 # shellcheck disable=SC2030,SC2031,SC2016
 

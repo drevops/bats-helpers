@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# BATS tests for TUI helpers.
+# Tests for TUI helpers.
 #
 # shellcheck disable=SC2030,SC2031
 

@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 ##
 # @file
-# Bats test helpers.
+# Assertions for files and directories.
 #
 # shellcheck disable=SC2119,SC2120,SC2044,SC2086
 
+##
+# Asserts that a file exists.
+#
+# Arguments:
+#   1. file: Path to check. May be a glob, in which case the first match is
+#      taken.
+##
 assert_file_exists() {
   local file="${1}"
   local f
@@ -15,13 +22,20 @@ assert_file_exists() {
     else
       format_error "File '${file}' does not exist" | flunk
     fi
-    ## This is all we needed to know, so we can break after the first iteration.
+    # Only the first match decides the outcome.
     break
   done
 
   format_error "File '${file}' does not exist" | flunk
 }
 
+##
+# Asserts that a file does not exist.
+#
+# Arguments:
+#   1. file: Path to check. May be a glob, in which case the first match is
+#      taken.
+##
 assert_file_not_exists() {
   local file="${1}"
   local f
@@ -35,6 +49,12 @@ assert_file_not_exists() {
   done
 }
 
+##
+# Asserts that a directory exists.
+#
+# Arguments:
+#   1. dir: Path to check.
+##
 assert_dir_exists() {
   local dir="${1}"
 
@@ -45,6 +65,12 @@ assert_dir_exists() {
   fi
 }
 
+##
+# Asserts that a directory does not exist.
+#
+# Arguments:
+#   1. dir: Path to check. Optional, defaults to the current directory.
+##
 assert_dir_not_exists() {
   local dir="${1:-$(pwd)}"
 
@@ -55,6 +81,12 @@ assert_dir_not_exists() {
   fi
 }
 
+##
+# Asserts that a directory exists and is empty.
+#
+# Arguments:
+#   1. dir: Path to check. Optional, defaults to the current directory.
+##
 assert_dir_empty() {
   local dir="${1:-$(pwd)}"
   assert_dir_exists "${dir}" || return 1
@@ -66,6 +98,12 @@ assert_dir_empty() {
   fi
 }
 
+##
+# Asserts that a directory exists and is not empty.
+#
+# Arguments:
+#   1. dir: Path to check. Optional, defaults to the current directory.
+##
 assert_dir_not_empty() {
   local dir="${1:-$(pwd)}"
   assert_dir_exists "${dir}" || return 1
@@ -77,6 +115,12 @@ assert_dir_not_empty() {
   fi
 }
 
+##
+# Asserts that a symlink exists.
+#
+# Arguments:
+#   1. file: Path to check.
+##
 assert_symlink_exists() {
   local file="${1}"
 
@@ -89,6 +133,14 @@ assert_symlink_exists() {
   fi
 }
 
+##
+# Asserts that a symlink does not exist.
+#
+# A regular file at the same path satisfies this assertion.
+#
+# Arguments:
+#   1. file: Path to check.
+##
 assert_symlink_not_exists() {
   local file="${1}"
 
@@ -101,6 +153,16 @@ assert_symlink_not_exists() {
   fi
 }
 
+##
+# Asserts that a file has a permission mode.
+#
+# The actual mode is masked with the standard umask before comparison, so the
+# group and other write bits are ignored.
+#
+# Arguments:
+#   1. file: Path to check.
+#   2. perm: Expected three-digit octal mode, such as '644'.
+##
 assert_file_mode() {
   local file="${1}"
   local perm="${2}"
@@ -120,6 +182,13 @@ assert_file_mode() {
   fi
 }
 
+##
+# Asserts that a file exists and contains a string.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: String to search for.
+##
 assert_file_contains() {
   local file="${1}"
   local string="${2}"
@@ -130,6 +199,15 @@ assert_file_contains() {
   assert_string_contains "${contents}" "${string}"
 }
 
+##
+# Asserts that a file does not contain a string.
+#
+# A file that does not exist cannot contain the string, so it passes.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: String to search for.
+##
 assert_file_not_contains() {
   local file="${1}"
   local string="${2}"
@@ -141,6 +219,19 @@ assert_file_not_contains() {
   assert_string_not_contains "${contents}" "${string}"
 }
 
+##
+# Asserts that a directory exists and contains a string in one of its files.
+#
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: String to search for.
+#
+# Globals:
+#   ASSERT_DIR_EXCLUDE: Additional directory names to exclude from the search.
+##
 assert_dir_contains_string() {
   local dir="${1}"
   local string="${2}"
@@ -161,6 +252,20 @@ assert_dir_contains_string() {
   fi
 }
 
+##
+# Asserts that a directory does not contain a string in any of its files.
+#
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search. A directory that does not exist cannot
+# contain the string, so it passes.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: String to search for.
+#
+# Globals:
+#   ASSERT_DIR_EXCLUDE: Additional directory names to exclude from the search.
+##
 assert_dir_not_contains_string() {
   local dir="${1}"
   local string="${2}"
@@ -181,6 +286,15 @@ assert_dir_not_contains_string() {
   fi
 }
 
+##
+# Asserts that the contents of two text files are equal.
+#
+# Arguments:
+#   1. file1: First file.
+#   2. file2: Second file.
+#   3. ignore_spaces: Set to '1' to ignore blank lines and whitespace changes.
+#      Optional, defaults to '0'.
+##
 assert_files_equal() {
   local file1="${1}"
   local file2="${2}"
@@ -199,6 +313,15 @@ assert_files_equal() {
   fi
 }
 
+##
+# Asserts that the contents of two text files are not equal.
+#
+# Arguments:
+#   1. file1: First file.
+#   2. file2: Second file.
+#   3. ignore_spaces: Set to '1' to ignore blank lines and whitespace changes.
+#      Optional, defaults to '0'.
+##
 assert_files_not_equal() {
   local file1="${1}"
   local file2="${2}"
@@ -217,6 +340,13 @@ assert_files_not_equal() {
   fi
 }
 
+##
+# Asserts that the contents of two binary files are equal.
+#
+# Arguments:
+#   1. file1: First file.
+#   2. file2: Second file.
+##
 assert_binary_files_equal() {
   local file1="${1}"
   local file2="${2}"
@@ -231,6 +361,13 @@ assert_binary_files_equal() {
   fi
 }
 
+##
+# Asserts that the contents of two binary files are not equal.
+#
+# Arguments:
+#   1. file1: First file.
+#   2. file2: Second file.
+##
 assert_binary_files_not_equal() {
   local file1="${1}"
   local file2="${2}"
@@ -245,6 +382,16 @@ assert_binary_files_not_equal() {
   fi
 }
 
+##
+# Asserts that two directories hold the same files with the same contents.
+#
+# Both directories are walked, so a file present in only one of them fails the
+# assertion regardless of which one holds it.
+#
+# Arguments:
+#   1. dir1: First directory.
+#   2. dir2: Second directory.
+##
 assert_dirs_equal() {
   local dir1="${1}"
   local dir2="${2}"
