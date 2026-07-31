@@ -253,100 +253,100 @@ load _test_helper
 }
 
 @test "assert_files_equal" {
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1.txt"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture1_newline.txt" "${BATS_TEST_TMPDIR}/fixture1_newline.txt"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture2.txt" "${BATS_TEST_TMPDIR}/fixture2.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
 
-  assert_files_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1.txt"
+  assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
 
-  run assert_files_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture2.txt"
+  run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
   assert_failure
   assert_output_contains "< Third line"
   assert_output_contains "> Third line changed"
 
-  run assert_files_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1_newline.txt"
+  run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
   assert_failure
   assert_output_contains "<"
 
-  run assert_files_equal "${BATS_TEST_TMPDIR}/fixture3.txt" "${BATS_TEST_TMPDIR}/fixture4.txt"
+  run assert_files_equal "${BATS_TEST_TMPDIR}/missing.txt" "${BATS_TEST_TMPDIR}/missing_other.txt"
   assert_failure
 
-  run assert_files_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture3.txt"
+  run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/missing.txt"
   assert_failure
 
   # Same as above, but ignoring whitespace.
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1.txt"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture1_newline.txt" "${BATS_TEST_TMPDIR}/fixture1_newline.txt"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture2.txt" "${BATS_TEST_TMPDIR}/fixture2.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
 
-  assert_files_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1.txt"
-  assert_files_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1_newline.txt" 1
+  assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt" 1
 
-  run assert_files_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture2.txt"
+  run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
   assert_failure
   assert_output_contains "< Third line"
   assert_output_contains "> Third line changed"
 
-  run assert_files_equal "${BATS_TEST_TMPDIR}/fixture3.txt" "${BATS_TEST_TMPDIR}/fixture4.txt"
+  run assert_files_equal "${BATS_TEST_TMPDIR}/missing.txt" "${BATS_TEST_TMPDIR}/missing_other.txt"
   assert_failure
 
-  run assert_files_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture3.txt"
+  run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/missing.txt"
   assert_failure
 }
 
 @test "assert_files_not_equal" {
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1.txt"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture1_newline.txt" "${BATS_TEST_TMPDIR}/fixture1_newline.txt"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture2.txt" "${BATS_TEST_TMPDIR}/fixture2.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
 
-  assert_files_not_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture2.txt"
-  assert_files_not_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1_newline.txt"
+  assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+  assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
 
-  run assert_files_not_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1.txt"
+  run assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
   assert_failure
   assert_output_not_contains "< Third line"
   assert_output_not_contains "> Third line changed"
 
-  run assert_files_not_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture1_newline.txt" 1
+  run assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt" 1
   assert_failure
   assert_output_not_contains "<"
 
-  run assert_files_not_equal "${BATS_TEST_TMPDIR}/fixture3.txt" "${BATS_TEST_TMPDIR}/fixture1.txt"
+  run assert_files_not_equal "${BATS_TEST_TMPDIR}/missing.txt" "${BATS_TEST_TMPDIR}/text.txt"
   assert_failure
 
-  run assert_files_not_equal "${BATS_TEST_TMPDIR}/fixture1.txt" "${BATS_TEST_TMPDIR}/fixture3.txt"
+  run assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/missing.txt"
   assert_failure
 }
 
 @test "assert_binary_files_equal" {
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/fixture1.png"
-  echo "some other file" >"${BATS_TEST_TMPDIR}/fixture2.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/binary.png"
+  echo "some other file" >"${BATS_TEST_TMPDIR}/binary_changed.png"
 
-  assert_binary_files_equal "${BATS_TEST_TMPDIR}/fixture1.png" "${BATS_TEST_TMPDIR}/fixture1.png"
+  assert_binary_files_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/binary.png"
 
-  run assert_binary_files_equal "${BATS_TEST_TMPDIR}/fixture1.png" "${BATS_TEST_TMPDIR}/fixture2.png"
+  run assert_binary_files_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/binary_changed.png"
   assert_failure
 
-  run assert_binary_files_equal "${BATS_TEST_TMPDIR}/fixture3.png" "${BATS_TEST_TMPDIR}/fixture4.png"
+  run assert_binary_files_equal "${BATS_TEST_TMPDIR}/missing.png" "${BATS_TEST_TMPDIR}/missing_other.png"
   assert_failure
 
-  run assert_binary_files_equal "${BATS_TEST_TMPDIR}/fixture1.png" "${BATS_TEST_TMPDIR}/fixture3.png"
+  run assert_binary_files_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/missing.png"
   assert_failure
 }
 
 @test "assert_binary_files_not_equal" {
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/fixture1.png"
-  echo "some other file" >"${BATS_TEST_TMPDIR}/fixture2.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/binary.png"
+  echo "some other file" >"${BATS_TEST_TMPDIR}/binary_changed.png"
 
-  assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/fixture1.png" "${BATS_TEST_TMPDIR}/fixture2.png"
+  assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/binary_changed.png"
 
-  run assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/fixture1.png" "${BATS_TEST_TMPDIR}/fixture1.png"
+  run assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/binary.png"
   assert_failure
 
-  run assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/fixture3.png" "${BATS_TEST_TMPDIR}/fixture1.png"
+  run assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/missing.png" "${BATS_TEST_TMPDIR}/binary.png"
   assert_failure
 
-  run assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/fixture1.png" "${BATS_TEST_TMPDIR}/fixture3.png"
+  run assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/missing.png"
   assert_failure
 }
 
@@ -354,53 +354,53 @@ load _test_helper
   # Assert that files in the root are equal.
   mkdir -p "${BATS_TEST_TMPDIR}/t11"
   mkdir -p "${BATS_TEST_TMPDIR}/t12"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t11/fixture1.png"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t12/fixture1.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t11/binary.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t12/binary.png"
   assert_dirs_equal "${BATS_TEST_TMPDIR}/t11" "${BATS_TEST_TMPDIR}/t12"
 
   # Assert that files in the root are not equal.
-  echo "some other file" >"${BATS_TEST_TMPDIR}/t12/fixture1.png"
+  echo "some other file" >"${BATS_TEST_TMPDIR}/t12/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t11" "${BATS_TEST_TMPDIR}/t12"
   assert_failure
 
   # Assert that files in the subdirs are equal.
   mkdir -p "${BATS_TEST_TMPDIR}/t31/subdir"
   mkdir -p "${BATS_TEST_TMPDIR}/t32/subdir"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t31/subdir/fixture1.png"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t32/subdir/fixture1.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t31/subdir/binary.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t32/subdir/binary.png"
   assert_dirs_equal "${BATS_TEST_TMPDIR}/t31" "${BATS_TEST_TMPDIR}/t32"
 
   # Assert that files in the subdirs are not equal.
-  echo "some other file" >"${BATS_TEST_TMPDIR}/t32/subdir/fixture1.png"
+  echo "some other file" >"${BATS_TEST_TMPDIR}/t32/subdir/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t31" "${BATS_TEST_TMPDIR}/t32"
   assert_failure
 
   # Assert that files in the root and subdirs are equal.
   mkdir -p "${BATS_TEST_TMPDIR}/t41/subdir"
   mkdir -p "${BATS_TEST_TMPDIR}/t42/subdir"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t41/fixture1.png"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t41/.hidden"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t41/subdir/fixture1.png"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t42/fixture1.png"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t42/.hidden"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t42/subdir/fixture1.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t41/binary.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t41/.hidden"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t41/subdir/binary.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t42/binary.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t42/.hidden"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t42/subdir/binary.png"
   assert_dirs_equal "${BATS_TEST_TMPDIR}/t41" "${BATS_TEST_TMPDIR}/t42"
 
   # Assert that files in the root and subdirs are not equal.
-  echo "some other file" >"${BATS_TEST_TMPDIR}/t42/subdir/fixture1.png"
+  echo "some other file" >"${BATS_TEST_TMPDIR}/t42/subdir/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t41" "${BATS_TEST_TMPDIR}/t42"
   assert_failure
 
   # Assert that missing files trigger a failure.
   mkdir -p "${BATS_TEST_TMPDIR}/t51/subdir"
   mkdir -p "${BATS_TEST_TMPDIR}/t52/subdir"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t51/fixture1.png"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t51/.hidden"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t51/subdir/fixture1.png"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t51/subdir/fixture2.png"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t52/fixture1.png"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t52/.hidden"
-  cp "${BATS_TEST_DIRNAME}/fixtures/fixture.png" "${BATS_TEST_TMPDIR}/t52/subdir/fixture1.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t51/binary.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t51/.hidden"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t51/subdir/binary.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t51/subdir/binary_extra.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t52/binary.png"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t52/.hidden"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t52/subdir/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t51" "${BATS_TEST_TMPDIR}/t52"
   assert_failure
 

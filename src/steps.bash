@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -eu
-
 ################################################################################
 # Setup and process a sequence of string and mocked command assertions.
 #
@@ -77,22 +75,17 @@ run_steps() {
   local phase="${1:-${PHASE_ASSERT}}"
   local mocked_commands_var="${2-}"
 
-  RUN_STEPS_DEBUG="${RUN_STEPS_DEBUG:-false}"
-
-  # Run bats with `--tap` option to debug the output.
-  stepdebug() {
-    if [[ ${RUN_STEPS_DEBUG} == "1" ]]; then echo "  > ${1-}" >&3; fi
-  }
-  substepdebug() {
-    if [[ ${RUN_STEPS_DEBUG} == "1" ]]; then echo "  >   ${1-}" >&3; fi
-  }
+  if [ -z "${STEPS+x}" ]; then
+    flunk "STEPS array is empty."
+    return 1
+  fi
 
   declare -A command_indexes
   declare -A mocked_commands
 
-  stepdebug "Phase       : ${phase}"
-  stepdebug "Total steps : ${#STEPS[@]}"
-  stepdebug
+  steps_debug "Phase       : ${phase}"
+  steps_debug "Total steps : ${#STEPS[@]}"
+  steps_debug
 
   # Create associative array for mocked commands
   if [[ -n ${mocked_commands_var} ]]; then
@@ -104,26 +97,26 @@ run_steps() {
     done <<<"${mocked_commands_var}"
   fi
 
-  local mock_cmd
-  local mock_cmd_index
+  local mock
+  local command_index
   local i
   for ((i = 0; i < ${#STEPS[@]}; i++)); do
     local item="${STEPS[${i}]}"
 
-    stepdebug "STEP START: '${item}'"
+    steps_debug "STEP START: '${item}'"
 
     #########################################################################
     #                                COMMAND                                #
     #########################################################################
     if [[ ${item} == "@"* ]]; then
-      stepdebug "Type: command"
-      stepdebug
+      steps_debug "Type: command"
+      steps_debug
 
       #------------------------------------------------------------------------
       # Parsing the command, status, and optional output.
       #------------------------------------------------------------------------
 
-      substepdebug "PARSE: STARTED"
+      steps_debug_sub "PARSE: STARTED"
 
       # Replace escaped hashes with a placeholder before parsing
       local ESCAPED_HASH_PLACEHOLDER="__ESCAPED_HASH__"
@@ -157,52 +150,52 @@ run_steps() {
       mock_side_effect="${mock_side_effect//${ESCAPED_HASH_PLACEHOLDER}/#}"
 
       if ! [[ ${mock_status} =~ ^[0-9]+$ ]]; then
-        substepdebug "PARSE: Converting output to '${mock_status}' output."
-        substepdebug "PARSE: Setting status to '0'."
+        steps_debug_sub "PARSE: Converting output to '${mock_status}' output."
+        steps_debug_sub "PARSE: Setting status to '0'."
         mock_output="${mock_status}"
         mock_status=0
       fi
 
-      substepdebug "PARSE: FINISHED"
-      substepdebug "       cmd         : '${command_binary}'"
-      substepdebug "       args        : '${command_args}'"
-      substepdebug "       status      : '${mock_status}'"
-      substepdebug "       output      : '${mock_output}'"
-      substepdebug "       side_effect : '${mock_side_effect}'"
+      steps_debug_sub "PARSE: FINISHED"
+      steps_debug_sub "       command     : '${command_binary}'"
+      steps_debug_sub "       args        : '${command_args}'"
+      steps_debug_sub "       status      : '${mock_status}'"
+      steps_debug_sub "       output      : '${mock_output}'"
+      steps_debug_sub "       side_effect : '${mock_side_effect}'"
 
       #------------------------------------------------------------------------
       # Processing the command.
       #------------------------------------------------------------------------
 
       # Track the index of the command call per binary.
-      mock_cmd_index=${command_indexes[${command_binary}]:-1}
-      substepdebug "Command index for '${command_binary}' is '${mock_cmd_index}'."
+      command_index=${command_indexes[${command_binary}]:-1}
+      steps_debug_sub "Command index for '${command_binary}' is '${command_index}'."
 
       if [[ ${phase} == "${PHASE_SETUP}" ]]; then
         # Get mock from passed array or create a new one.
         if [[ -z ${mocked_commands["${command_binary}"]-} ]]; then
-          mock_cmd=$(mock_command "${command_binary}")
-          mocked_commands["${command_binary}"]=${mock_cmd}
-          substepdebug "SETUP: Created new mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'."
+          mock=$(mock_command "${command_binary}")
+          mocked_commands["${command_binary}"]=${mock}
+          steps_debug_sub "SETUP: Created new mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'."
         else
-          mock_cmd="${mocked_commands["${command_binary}"]}"
-          substepdebug "SETUP: Using existing mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'."
+          mock="${mocked_commands["${command_binary}"]}"
+          steps_debug_sub "SETUP: Using existing mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'."
         fi
 
-        substepdebug "SETUP: Setting mock status to '${mock_status}'."
-        mock_set_status "${mock_cmd}" "${mock_status}" "${mock_cmd_index}"
+        steps_debug_sub "SETUP: Setting mock status to '${mock_status}'."
+        mock_set_status "${mock}" "${mock_status}" "${command_index}"
 
         if [[ -n ${mock_output} ]]; then
-          substepdebug "SETUP: Setting mock output to '${mock_output}'."
-          mock_set_output "${mock_cmd}" "${mock_output}" "${mock_cmd_index}"
+          steps_debug_sub "SETUP: Setting mock output to '${mock_output}'."
+          mock_set_output "${mock}" "${mock_output}" "${command_index}"
         fi
 
         if [[ -n ${mock_side_effect} ]]; then
-          substepdebug "SETUP: Setting mock side effect to '${mock_side_effect}'."
-          mock_set_side_effect "${mock_cmd}" "${mock_side_effect}" "${mock_cmd_index}"
+          steps_debug_sub "SETUP: Setting mock side effect to '${mock_side_effect}'."
+          mock_set_side_effect "${mock}" "${mock_side_effect}" "${command_index}"
         fi
 
-        substepdebug "SETUP: Setup mock for binary '${command_binary}' complete."
+        steps_debug_sub "SETUP: Setup mock for binary '${command_binary}' complete."
       else
         # Check if mock for the binary exists in the assert phase
         if [[ -z ${mocked_commands["${command_binary}"]-} ]]; then
@@ -210,32 +203,35 @@ run_steps() {
           return 1
         fi
 
-        substepdebug "ASSERT: Found mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'"
+        steps_debug_sub "ASSERT: Found mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'"
 
         local mock_args_actual
-        mock_cmd="${mocked_commands[${command_binary}]}"
-        substepdebug "        command     : ${command_binary}"
-        substepdebug "        args        : ${command_args}"
-        substepdebug "        mock        : ${mock_cmd}"
-        substepdebug "        index       : ${mock_cmd_index}"
-        mock_args_actual="$(mock_get_call_args "${mock_cmd}" "${mock_cmd_index}")"
-        substepdebug "        actual args : ${mock_args_actual}"
+        mock="${mocked_commands[${command_binary}]}"
+        steps_debug_sub "        command     : ${command_binary}"
+        steps_debug_sub "        args        : ${command_args}"
+        steps_debug_sub "        mock        : ${mock}"
+        steps_debug_sub "        index       : ${command_index}"
+        if ! mock_args_actual="$(mock_get_call_args "${mock}" "${command_index}" 2>/dev/null)"; then
+          flunk "ERROR: Mocked command '${command_binary}' was expected to be called at least ${command_index} time(s), but was called fewer times."
+          return 1
+        fi
+        steps_debug_sub "        actual args : ${mock_args_actual}"
 
         # Use wildcard-aware assertion
-        if ! mock_assert_call_args "${mock_cmd}" "${command_args}" "${mock_cmd_index}"; then
+        if ! mock_assert_call_args "${mock}" "${command_args}" "${command_index}"; then
           flunk "ERROR: Mocked command '${command_binary}' was called with arguments '${mock_args_actual}', but '${command_args}' was expected."
           return 1
         fi
       fi
 
-      command_indexes["${command_binary}"]=$((mock_cmd_index + 1))
-      stepdebug "Updated command index for '${command_binary}' to '${command_indexes[${command_binary}]}'"
+      command_indexes["${command_binary}"]=$((command_index + 1))
+      steps_debug "Updated command index for '${command_binary}' to '${command_indexes[${command_binary}]}'"
 
     #########################################################################
     #                            STRING ABSENT                              #
     #########################################################################
     elif [[ ${item} == "-"* ]]; then
-      stepdebug "Type: string absent"
+      steps_debug "Type: string absent"
 
       if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
         assert_output_not_contains "${item:2}" || return 1 # Skip '-' and a space.
@@ -244,15 +240,15 @@ run_steps() {
     #                            STRING PRESENT                             #
     #########################################################################
     else
-      stepdebug "Type: string present"
+      steps_debug "Type: string present"
 
       if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
         assert_output_contains "${item}" || return 1
       fi
     fi
 
-    stepdebug "STEP FINISH: '${item}'"
-    stepdebug
+    steps_debug "STEP FINISH: '${item}'"
+    steps_debug
   done
 
   # Return mocked commands as a string to pass it to the next phase.
@@ -263,5 +259,41 @@ run_steps() {
       mc_string+="${key}=${mocked_commands[${key}]}"$'\n'
     done
     echo "${mc_string}"
+  fi
+}
+
+##
+# Print a debug message for a step.
+#
+# Parameters:
+# 1. Message. Optional.
+##
+steps_debug() {
+  steps_debug_write "  > " "${1-}"
+}
+
+##
+# Print a debug message for a sub-step.
+#
+# Parameters:
+# 1. Message. Optional.
+##
+steps_debug_sub() {
+  steps_debug_write "  >   " "${1-}"
+}
+
+##
+# Print a debug message to the file descriptor 3, shown by `bats --tap`.
+#
+# Global variables:
+# - RUN_STEPS_DEBUG: Set to '1' to enable debug output.
+#
+# Parameters:
+# 1. Prefix.
+# 2. Message.
+##
+steps_debug_write() {
+  if [ "${RUN_STEPS_DEBUG-}" = "1" ]; then
+    echo "${1}${2}" >&3
   fi
 }

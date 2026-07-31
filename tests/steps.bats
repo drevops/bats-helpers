@@ -902,3 +902,84 @@ load _test_helper
 
   run_steps "assert" "${mocks[@]}"
 }
+
+@test "Debug output" {
+  debug="${BATS_TEST_TMPDIR}/debug.txt"
+  export RUN_STEPS_DEBUG=1
+
+  declare -a STEPS=(
+    "@curl example.com # 0 # Some Substring"
+    "Some Substring"
+  )
+
+  mocks="$(run_steps "setup" 3>"${debug}")"
+  run curl example.com
+  run_steps "assert" "${mocks[@]}" 3>>"${debug}"
+
+  assert_file_contains "${debug}" "  > Phase       : setup"
+  assert_file_contains "${debug}" "  > Phase       : assert"
+  assert_file_contains "${debug}" "  > Total steps : 2"
+  assert_file_contains "${debug}" "  > Type: command"
+  assert_file_contains "${debug}" "  > Type: string present"
+  assert_file_contains "${debug}" "  >   PARSE: STARTED"
+  assert_file_contains "${debug}" "  >   PARSE: FINISHED"
+}
+
+@test "Debug output - disabled" {
+  debug="${BATS_TEST_TMPDIR}/debug.txt"
+
+  declare -a STEPS=(
+    "Some Substring"
+  )
+
+  run echo "Some Substring"
+  run_steps "assert" 3>"${debug}"
+
+  assert_empty "$(cat "${debug}")"
+}
+
+@test "Missing STEPS" {
+  run run_steps "assert"
+  assert_failure
+  assert_output_contains "STEPS array is empty."
+}
+
+@test "Missing STEPS - caller recovers" {
+  recovered=0
+  run_steps "assert" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
+@test "Mocked command called fewer times than expected" {
+  declare -a STEPS=(
+    "@curl example.com # 0"
+    "@curl example.org # 0"
+  )
+
+  mocks="$(run_steps "setup")"
+  run curl example.com
+
+  run run_steps "assert" "${mocks[@]}"
+  assert_failure
+  assert_output_contains "Mocked command 'curl' was expected to be called at least 2 time(s), but was called fewer times."
+}
+
+@test "Mocked command called fewer times than expected - caller recovers" {
+  declare -a STEPS=(
+    "@curl example.com # 0"
+    "@curl example.org # 0"
+  )
+
+  mocks="$(run_steps "setup")"
+  run curl example.com
+
+  recovered=0
+  run_steps "assert" "${mocks[@]}" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
+@test "Loading the library leaves the consumer shell options alone" {
+  assert_string_not_contains "$-" "u"
+}

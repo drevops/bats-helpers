@@ -12,7 +12,13 @@ mktouch() {
 # Trim the last line of the file.
 trim_file() {
   local sed_opts
-  sed_opts=(-i) && [ "$(uname)" = "Darwin" ] && sed_opts=(-i '')
+
+  if [ "$(uname)" = "Darwin" ]; then
+    sed_opts=(-i '')
+  else
+    sed_opts=(-i)
+  fi
+
   sed_opts+=(-e '$ d')
   sed "${sed_opts[@]}" "${1}"
 }
