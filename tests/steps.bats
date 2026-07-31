@@ -902,3 +902,38 @@ load _test_helper
 
   run_steps "assert" "${mocks[@]}"
 }
+
+@test "Debug output" {
+  debug="${BATS_TEST_TMPDIR}/debug.txt"
+  export RUN_STEPS_DEBUG=1
+
+  declare -a STEPS=(
+    "@curl example.com # 0 # Some Substring"
+    "Some Substring"
+  )
+
+  mocks="$(run_steps "setup" 3>"${debug}")"
+  run curl example.com
+  run_steps "assert" "${mocks[@]}" 3>>"${debug}"
+
+  assert_file_contains "${debug}" "  > Phase       : setup"
+  assert_file_contains "${debug}" "  > Phase       : assert"
+  assert_file_contains "${debug}" "  > Total steps : 2"
+  assert_file_contains "${debug}" "  > Type: command"
+  assert_file_contains "${debug}" "  > Type: string present"
+  assert_file_contains "${debug}" "  >   PARSE: STARTED"
+  assert_file_contains "${debug}" "  >   PARSE: FINISHED"
+}
+
+@test "Debug output - disabled" {
+  debug="${BATS_TEST_TMPDIR}/debug.txt"
+
+  declare -a STEPS=(
+    "Some Substring"
+  )
+
+  run echo "Some Substring"
+  run_steps "assert" 3>"${debug}"
+
+  assert_empty "$(cat "${debug}")"
+}
