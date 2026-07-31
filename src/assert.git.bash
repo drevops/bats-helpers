@@ -71,7 +71,7 @@ assert_git_clean() {
   assert_git_repo "${dir}" || return 1
 
   message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status)"
-  assert_contains "nothing to commit" "${message}"
+  assert_string_contains "${message}" "nothing to commit"
 }
 
 assert_git_not_clean() {
@@ -81,7 +81,7 @@ assert_git_not_clean() {
   assert_git_repo "${dir}" || return 1
 
   message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status)"
-  assert_not_contains "nothing to commit" "${message}"
+  assert_string_not_contains "${message}" "nothing to commit"
 }
 
 ##

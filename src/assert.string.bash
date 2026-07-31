@@ -20,9 +20,9 @@ assert_not_empty() {
   fi
 }
 
-assert_contains() {
-  local needle="${1}"
-  local haystack="${2}"
+assert_string_contains() {
+  local haystack="${1}"
+  local needle="${2}"
 
   if echo "${haystack}" | $(type -p grep | head -1) -i -F -- "${needle}" >/dev/null; then
     return 0
@@ -31,9 +31,9 @@ assert_contains() {
   fi
 }
 
-assert_not_contains() {
-  local needle="${1}"
-  local haystack="${2}"
+assert_string_not_contains() {
+  local haystack="${1}"
+  local needle="${2}"
 
   if echo "${haystack}" | $(type -p grep | head -1) -i -F -- "${needle}" >/dev/null; then
     format_error "String '${haystack}' contains '${needle}', but should not" | flunk
@@ -57,4 +57,18 @@ random_string() {
   # shellcheck disable=SC2002
   ret=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w "${len}" | head -n 1)
   echo "${ret}"
+}
+
+##
+# Deprecated aliases, removed in the next version.
+##
+
+assert_contains() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_contains' will be removed in the next version. Use 'assert_string_contains' instead." >&3
+  assert_string_contains "${2-}" "${1-}"
+}
+
+assert_not_contains() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_not_contains' will be removed in the next version. Use 'assert_string_not_contains' instead." >&3
+  assert_string_not_contains "${2-}" "${1-}"
 }

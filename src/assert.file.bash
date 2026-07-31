@@ -127,7 +127,7 @@ assert_file_contains() {
 
   local contents
   contents="$(cat "${file}")"
-  assert_contains "${string}" "${contents}"
+  assert_string_contains "${contents}" "${string}"
 }
 
 assert_file_not_contains() {
@@ -138,7 +138,7 @@ assert_file_not_contains() {
 
   local contents
   contents="$(cat "${file}")"
-  assert_not_contains "${string}" "${contents}"
+  assert_string_not_contains "${contents}" "${string}"
 }
 
 assert_dir_contains_string() {
