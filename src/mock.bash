@@ -127,7 +127,7 @@ mock_get_call_num() {
 mock_get_call_user() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_default_n "${mock}" "${2-}")" || exit "$?"
+  n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
 
   echo "$(cat "${mock}.user.${n}")"
 }
@@ -141,7 +141,7 @@ mock_get_call_user() {
 mock_get_call_args() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_default_n "${mock}" "${2-}")" || exit "$?"
+  n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
 
   echo "$(cat "${mock}.args.${n}")"
 }
@@ -184,7 +184,7 @@ mock_get_call_env() {
   local mock="${1?'Mock must be specified'}"
   local var="${2?'Variable name must be specified'}"
   local n="${3-}"
-  n="$(mock_default_n "${mock}" "${3}")" || exit "$?"
+  n="$(mock_default_n "${mock}" "${3}")" || return "$?"
 
   source "${mock}.env.${n}"
   echo "${!var}"
@@ -234,9 +234,11 @@ mock_default_n() {
     n=1
   fi
 
+  # @note: Modification to the original file: 'return' instead of 'exit' keeps
+  # the failure recoverable, as this function runs in the test's own shell.
   if [[ ${n} -gt ${call_num} ]]; then
     echo "$(basename "$0"): Mock must be called at least ${n} time(s)" >&2
-    exit 1
+    return 1
   fi
 
   echo "${n}"
