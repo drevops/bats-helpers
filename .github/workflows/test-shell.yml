@@ -61,7 +61,7 @@ jobs:
 
       - name: Install lowest dependencies
         if: matrix.deps == 'lowest'
-        run: npm install --no-save bats@1.11.0
+        run: npm install --no-save bats@1.10.0
 
       - name: Install Kcov
         if: matrix.os == 'ubuntu-latest' && matrix.deps == 'normal'
