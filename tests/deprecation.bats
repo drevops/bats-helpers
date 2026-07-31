@@ -49,20 +49,28 @@ load _test_helper
 
 @test "Notice is printed once across processes" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
-  script="export BATS_SUITE_TMPDIR='${BATS_SUITE_TMPDIR}'; source '${BATS_TEST_DIRNAME}/../load.bash'; deprecated 'old_shared' 'new_shared'"
+  script="${BATS_TEST_TMPDIR}/shared.sh"
 
-  bash -c "${script}" 3>"${notice}"
-  bash -c "${script}" 3>>"${notice}"
+  echo "export BATS_SUITE_TMPDIR='${BATS_SUITE_TMPDIR}'" >"${script}"
+  echo "source '${BATS_TEST_DIRNAME}/../load.bash'" >>"${script}"
+  echo "deprecated 'old_shared' 'new_shared'" >>"${script}"
+
+  bash "${script}" 3>"${notice}"
+  bash "${script}" 3>>"${notice}"
 
   assert_equal "1" "$(grep -c "old_shared" "${notice}")"
 }
 
 @test "Notice is printed without a suite temporary directory" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
-  script="unset BATS_SUITE_TMPDIR; source '${BATS_TEST_DIRNAME}/../load.bash'; deprecated 'old_unshared' 'new_unshared'"
+  script="${BATS_TEST_TMPDIR}/unshared.sh"
 
-  bash -c "${script}" 3>"${notice}"
-  bash -c "${script}" 3>>"${notice}"
+  echo "unset BATS_SUITE_TMPDIR" >"${script}"
+  echo "source '${BATS_TEST_DIRNAME}/../load.bash'" >>"${script}"
+  echo "deprecated 'old_unshared' 'new_unshared'" >>"${script}"
+
+  bash "${script}" 3>"${notice}"
+  bash "${script}" 3>>"${notice}"
 
   assert_equal "2" "$(grep -c "old_unshared" "${notice}")"
 }
@@ -95,15 +103,21 @@ load _test_helper
 }
 
 @test "Notice requires both names" {
-  run bash -c "source '${BATS_TEST_DIRNAME}/../load.bash'; deprecated"
+  script="${BATS_TEST_TMPDIR}/incomplete.sh"
+
+  echo "source '${BATS_TEST_DIRNAME}/../load.bash'" >"${script}"
+  # shellcheck disable=SC2016
+  echo 'deprecated "${@}"' >>"${script}"
+
+  run bash "${script}"
   assert_failure
 
-  run bash -c "source '${BATS_TEST_DIRNAME}/../load.bash'; deprecated 'old_incomplete'"
+  run bash "${script}" "old_incomplete"
   assert_failure
 
-  run bash -c "source '${BATS_TEST_DIRNAME}/../load.bash'; deprecated '' 'new_incomplete'"
+  run bash "${script}" "" "new_incomplete"
   assert_failure
 
-  run bash -c "source '${BATS_TEST_DIRNAME}/../load.bash'; deprecated 'old_incomplete' ''"
+  run bash "${script}" "old_incomplete" ""
   assert_failure
 }
