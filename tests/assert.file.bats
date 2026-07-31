@@ -123,7 +123,7 @@ load _test_helper
   run assert_file_mode "${BATS_TEST_TMPDIR}/fixture_mode/non_existing.txt" "644"
   assert_failure
   assert_output_contains "does not exist"
-  assert_output_not_contains "File permissions for file"
+  assert_output_not_contains "has permissions"
 
   run assert_file_mode "${BATS_TEST_TMPDIR}/fixture_mode/1.txt" "644"
   assert_failure

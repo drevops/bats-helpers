@@ -8,13 +8,13 @@ assert_empty() {
   if [ "${1-}" = "" ]; then
     return 0
   else
-    format_error "String ${1} is not empty, but should be" | flunk
+    format_error "String '${1}' is not empty" | flunk
   fi
 }
 
 assert_not_empty() {
   if [ "${1-}" = "" ]; then
-    format_error "String ${1} is empty, but should not be" | flunk
+    format_error "String '${1}' is empty, but should not be" | flunk
   else
     return 0
   fi

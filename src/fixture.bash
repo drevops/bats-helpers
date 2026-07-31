@@ -11,7 +11,7 @@ fixture_export_codebase() {
     return
   fi
 
-  local dst="${1?Destination directory is required}"
+  local dst="${1?Destination directory is required.}"
   local src="${2:-"$(pwd)"}"
 
   assert_dir_exists "${dst}" || return 1
@@ -27,7 +27,7 @@ fixture_export_codebase() {
   ) || export_status=$?
 
   if [ "${export_status}" -ne 0 ]; then
-    flunk "Failed to export codebase from ${src} to ${dst}."
+    flunk "Failed to export codebase from '${src}' to '${dst}'."
     return 1
   fi
 }

@@ -7,7 +7,7 @@
 assert_success() {
   # shellcheck disable=SC2154
   if [ "${status-}" -ne 0 ]; then
-    format_error "command failed with exit status ${status}" | flunk
+    format_error "Command failed with exit status ${status}" | flunk
   elif [ "$#" -gt 0 ]; then
     assert_output "${1}"
   fi
@@ -16,7 +16,7 @@ assert_success() {
 assert_failure() {
   # shellcheck disable=SC2154
   if [ "${status-}" -eq 0 ]; then
-    format_error "expected failed exit status" | flunk
+    format_error "Command succeeded, but should have failed" | flunk
   elif [ "$#" -gt 0 ]; then
     assert_output "${1}"
   fi

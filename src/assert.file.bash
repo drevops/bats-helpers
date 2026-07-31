@@ -13,13 +13,13 @@ assert_file_exists() {
     if [ -e "${f}" ]; then
       return 0
     else
-      format_error "File ${file} does not exist" | flunk
+      format_error "File '${file}' does not exist" | flunk
     fi
     ## This is all we needed to know, so we can break after the first iteration.
     break
   done
 
-  format_error "File ${file} does not exist" | flunk
+  format_error "File '${file}' does not exist" | flunk
 }
 
 assert_file_not_exists() {
@@ -28,7 +28,7 @@ assert_file_not_exists() {
 
   for f in ${file}; do
     if [ -e "${f}" ]; then
-      format_error "File ${file} exists, but should not" | flunk
+      format_error "File '${file}' exists, but should not" | flunk
     else
       return 0
     fi
@@ -41,7 +41,7 @@ assert_dir_exists() {
   if [ -d "${dir}" ]; then
     return 0
   else
-    format_error "Directory ${dir} does not exist" | flunk
+    format_error "Directory '${dir}' does not exist" | flunk
   fi
 }
 
@@ -49,7 +49,7 @@ assert_dir_not_exists() {
   local dir="${1:-$(pwd)}"
 
   if [ -d "${dir}" ]; then
-    format_error "Directory ${dir} exists, but should not" | flunk
+    format_error "Directory '${dir}' exists, but should not" | flunk
   else
     return 0
   fi
@@ -60,7 +60,7 @@ assert_dir_empty() {
   assert_dir_exists "${dir}" || return 1
 
   if [ "$(ls -A "${dir}")" ]; then
-    format_error "Directory ${dir} is not empty, but should be" | flunk
+    format_error "Directory '${dir}' is not empty" | flunk
   else
     return 0
   fi
@@ -73,7 +73,7 @@ assert_dir_not_empty() {
   if [ "$(ls -A "${dir}")" ]; then
     return 0
   else
-    format_error "Directory ${dir} is empty, but should not be" | flunk
+    format_error "Directory '${dir}' is empty, but should not be" | flunk
   fi
 }
 
@@ -81,9 +81,9 @@ assert_symlink_exists() {
   local file="${1}"
 
   if [ ! -h "${file}" ] && [ -f "${file}" ]; then
-    format_error "Regular file ${file} exists, but symlink is expected" | flunk
+    format_error "Regular file '${file}' exists, but should be a symlink" | flunk
   elif [ ! -h "${file}" ]; then
-    format_error "Symlink ${file} does not exist" | flunk
+    format_error "Symlink '${file}' does not exist" | flunk
   else
     return 0
   fi
@@ -97,7 +97,7 @@ assert_symlink_not_exists() {
   elif [ ! -h "${file}" ]; then
     return 0
   else
-    format_error "Symlink ${file} exists, but should not" | flunk
+    format_error "Symlink '${file}' exists, but should not" | flunk
   fi
 }
 
@@ -114,7 +114,7 @@ assert_file_mode() {
   fi
 
   if [ "${parsed}" != "${perm}" ]; then
-    format_error "File permissions for file ${file} is '${parsed}', but expected '${perm}'" | flunk
+    format_error "File '${file}' has permissions '${parsed}', but should have '${perm}'" | flunk
   else
     return 0
   fi
@@ -157,7 +157,7 @@ assert_dir_contains_string() {
   if grep -rI ${exclude_params} -l "${string}" "${dir}"; then
     return 0
   else
-    format_error "Directory ${dir} does not contain a string '${string}'" | flunk
+    format_error "Directory '${dir}' does not contain string '${string}'" | flunk
   fi
 }
 
@@ -175,7 +175,7 @@ assert_dir_not_contains_string() {
   done
 
   if grep -rI ${exclude_params} -l "${string}" "${dir}"; then
-    format_error "Directory ${dir} contains string '${string}', but should not" | flunk
+    format_error "Directory '${dir}' contains string '${string}', but should not" | flunk
   else
     return 0
   fi
@@ -195,7 +195,7 @@ assert_files_equal() {
   if diff "${diff_opts[@]}" "${file1}" "${file2}"; then
     return 0
   else
-    format_error "File ${file1} is not equal to file ${file2}" | flunk
+    format_error "File '${file1}' is not equal to file '${file2}'" | flunk
   fi
 }
 
@@ -211,7 +211,7 @@ assert_files_not_equal() {
   assert_file_exists "${file2}" || return 1
 
   if diff "${diff_opts[@]}" "${file1}" "${file2}"; then
-    format_error "File ${file1} is equal to file ${file2}, but it should not be" | flunk
+    format_error "File '${file1}' is equal to file '${file2}', but should not be" | flunk
   else
     return 0
   fi
@@ -227,7 +227,7 @@ assert_binary_files_equal() {
   if cmp "${file1}" "${file2}"; then
     return 0
   else
-    format_error "File ${file1} is not equal to file ${file2}" | flunk
+    format_error "File '${file1}' is not equal to file '${file2}'" | flunk
   fi
 }
 
@@ -239,7 +239,7 @@ assert_binary_files_not_equal() {
   assert_file_exists "${file2}" || return 1
 
   if cmp "${file1}" "${file2}"; then
-    format_error "File ${file1} is equal to file ${file2}, but it should not be" | flunk
+    format_error "File '${file1}' is equal to file '${file2}', but should not be" | flunk
   else
     return 0
   fi
