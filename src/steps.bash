@@ -96,6 +96,7 @@ run_steps() {
 
   # Create associative array for mocked commands
   if [[ -n ${mocked_commands_var} ]]; then
+    local line
     while IFS= read -r line; do
       local key="${line%%=*}"
       local value="${line#*=}"
@@ -104,6 +105,8 @@ run_steps() {
   fi
 
   local mock_cmd
+  local mock_cmd_index
+  local i
   for ((i = 0; i < ${#STEPS[@]}; i++)); do
     local item="${STEPS[${i}]}"
 
@@ -265,6 +268,7 @@ run_steps() {
   # Return mocked commands as a string to pass it to the next phase.
   if [[ ${phase} == "${PHASE_SETUP}" ]]; then
     local mc_string=""
+    local key
     for key in "${!mocked_commands[@]}"; do
       mc_string+="${key}=${mocked_commands[${key}]}"$'\n'
     done

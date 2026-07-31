@@ -7,6 +7,7 @@
 
 assert_file_exists() {
   local file="${1}"
+  local f
 
   for f in ${file}; do
     if [ -e "${f}" ]; then
@@ -23,6 +24,7 @@ assert_file_exists() {
 
 assert_file_not_exists() {
   local file="${1}"
+  local f
 
   for f in ${file}; do
     if [ -e "${f}" ]; then
@@ -102,6 +104,7 @@ assert_symlink_not_exists() {
 assert_file_mode() {
   local file="${1}"
   local perm="${2}"
+  local parsed
   assert_file_exists "${file}"
 
   if [ "$(uname)" = "Darwin" ]; then
@@ -122,6 +125,7 @@ assert_file_contains() {
   local string="${2}"
   assert_file_exists "${file}"
 
+  local contents
   contents="$(cat "${file}")"
   assert_contains "${string}" "${contents}"
 }
@@ -132,6 +136,7 @@ assert_file_not_contains() {
 
   [ ! -f "${file}" ] && return 0
 
+  local contents
   contents="$(cat "${file}")"
   assert_not_contains "${string}" "${contents}"
 }
@@ -144,6 +149,7 @@ assert_dir_contains_string() {
   assert_dir_exists "${dir}" || return 1
 
   local exclude_params=""
+  local exclude_dir
   for exclude_dir in "${default_exclude_dirs[@]}" "${ASSERT_DIR_EXCLUDE[@]-}"; do
     [ -n "${exclude_dir}" ] && exclude_params+="--exclude-dir=${exclude_dir} "
   done
@@ -163,6 +169,7 @@ assert_dir_not_contains_string() {
   [ ! -d "${dir}" ] && return 0
 
   local exclude_params=""
+  local exclude_dir
   for exclude_dir in "${default_exclude_dirs[@]}" "${ASSERT_DIR_EXCLUDE[@]-}"; do
     [ -n "${exclude_dir}" ] && exclude_params+="--exclude-dir=${exclude_dir} "
   done
@@ -179,7 +186,7 @@ assert_files_equal() {
   local file2="${2}"
   local ignore_spaces="${3:-0}"
 
-  diff_opts=(--normal)
+  local diff_opts=(--normal)
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
 
   assert_file_exists "${file1}" || return 1
@@ -197,7 +204,7 @@ assert_files_not_equal() {
   local file2="${2}"
   local ignore_spaces="${3:-0}"
 
-  diff_opts=(--normal)
+  local diff_opts=(--normal)
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
 
   assert_file_exists "${file1}" || return 1
@@ -241,6 +248,7 @@ assert_binary_files_not_equal() {
 assert_dirs_equal() {
   local dir1="${1}"
   local dir2="${2}"
+  local file
 
   assert_dir_exists "${dir1}" || return 1
   assert_dir_exists "${dir2}" || return 1
@@ -265,6 +273,7 @@ trim_file() {
 }
 
 read_env() {
+  local t
   # shellcheck disable=SC1090,SC1091
   [ -f "./.env" ] && t=$(mktemp) && export -p >"${t}" && set -a && . "./.env" && set +a && . "${t}" && rm "${t}" && unset t
 

@@ -64,6 +64,8 @@ dataprovider_run() {
   fi
 
   # Ensure that the last argument in each row (i.e., "expected" value) is not empty.
+  local i
+  local data_set_idx
   for ((i = args_per_row - 1, data_set_idx = 0; i < ${#TEST_CASES[@]}; i += args_per_row, data_set_idx++)); do
     if [ -z "${TEST_CASES[i]}" ]; then
       flunk "Expected value (last element) in the data set ${data_set_idx} is empty."
@@ -78,6 +80,8 @@ dataprovider_run() {
   local set_idx=0
   local error_count=0
   local failed_sets=""
+  local expected
+  local test_args
 
   for ((i = 0; i < ${#TEST_CASES[@]}; i += args_per_row)); do
     expected="${TEST_CASES[i + args_per_row - 1]}"

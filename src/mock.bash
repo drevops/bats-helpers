@@ -275,10 +275,11 @@ mock_prepare_tmp() {
 # Outputs:
 #   STDOUT: path to created mock file.
 mock_command() {
-  mocked_command="${1?'Mocked command must be specified'}"
+  local mocked_command="${1?'Mocked command must be specified'}"
+  local mock
   mock="$(mock_create)"
-  mock_path="${mock%/*}"
-  mock_file="${mock##*/}"
+  local mock_path="${mock%/*}"
+  local mock_file="${mock##*/}"
   ln -sf "${mock_path}/${mock_file}" "${mock_path}/${mocked_command}"
   echo "${mock}"
 }
