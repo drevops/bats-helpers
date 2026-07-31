@@ -292,24 +292,24 @@ load _test_helper
 
   mocks="$(run_steps "setup")"
 
-  run somebin
+  run somebin --opt1 --opt2
   assert_success
-  run otherbin
+  run otherbin --opt1 --opt2
   assert_success
 
-  run run_steps "assert" "${mocks[@]}"
+  run_steps "assert" "${mocks[@]}"
 }
 
-@test "Command, multiple commands, different - negative: incorrect call order" {
+@test "Command, multiple commands, different - negative: incorrect arguments" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@otherbin --opt1 --opt2 # 0 # someval2 with spaces"
   )
 
   mocks="$(run_steps "setup")"
-  run otherbin
+  run somebin --opt3 --opt4
   assert_success
-  run somebin
+  run otherbin --opt1 --opt2
   assert_success
 
   run run_steps "assert" "${mocks[@]}"
