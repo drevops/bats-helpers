@@ -358,6 +358,22 @@ Starts with `- ` (minus followed by a space).
 | `trim_file`               | Removes the last line from a file                                             |
 | `tui_run`                 | Runs a TUI script with predefined answers, simulating user input              |
 
+#### Failure reporting
+
+Helpers report a failure by writing a message to STDERR and returning a non-zero status. None of them call `exit`, so the caller stays in control and can compose them with `||`, branch on them with `if`, or capture the status with `run`:
+
+```bash
+# Recover from a failure and carry on.
+fixture_export_codebase "${build_dir}" || echo "Export failed - continuing with an empty codebase."
+
+# Capture the status and the message.
+run tui_run "${answers[@]}"
+assert_failure
+assert_output_contains "SCRIPT_FILE is not set."
+```
+
+A bare call still fails the test at that point, because BATS runs tests with `errexit` enabled.
+
 #### File backups
 
 `add_var_to_file` backs a file up before modifying it and `restore_file` puts that backup back. Backups are written below `${BATS_TEST_TMPDIR}/bats-helpers-backup`, mirroring the source path, so BATS removes them together with the rest of the test sandbox and concurrent runs cannot overwrite each other's backups.
