@@ -14,7 +14,10 @@ This is a BATS (Bash Automated Testing System) helpers library that provides ass
 - **src/**: Contains all helper modules:
   - `assert.*.bash`: Various assertion helpers (base, command, string, file, git)
   - `file.bash`: File utilities for creating, trimming, backing up and restoring files
-  - `mock.bash`: Command mocking functionality (based on bats-mock)
+  - `mock.bash`: Command mocking functionality
+  - `mock.log.bash`: Ordered log of every mocked call, and its assertions
+  - `mock.match.bash`: Argument specifications that select a mock's response
+  - `mock.strict.bash`: Verification of the expectations declared on a mock
   - `steps.bash`: Step runner for sequential command and string assertions
   - `dataprovider.bash`: Data provider utilities for parameterized tests
   - `fixture.bash`: Test fixture management
@@ -76,7 +79,7 @@ Two exceptions:
 - **`flunk` and `format_error`** are bare verbs, mirroring bats-support's `fail`.
 
 ### Variable Naming
-Every variable the library reads from the wider environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`. This holds in `src/mock.bash` too: a variable that reaches the consumer is the library's whichever upstream it came from, so it reads `BATS_HELPERS_MOCK_TMPDIR` and `BATS_HELPERS_MOCK_USER`.
+Every variable the library reads from the wider environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`. The mocking modules follow it like every other: `BATS_HELPERS_MOCK_TMPDIR`, `BATS_HELPERS_MOCK_USER` and `BATS_HELPERS_MOCK_STRICT`.
 
 `STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the three exceptions and stay unprefixed. They are not environment configuration but the test data itself, written on the lines directly above the call that reads them, so the declaration and its use are read together and a long prefix costs more in daily ergonomics than the collision risk costs in rare confusion. `STEPS` and `TEST_CASES` are arrays declared with `declare -a`; `SCRIPT_FILE` is a scalar path.
 
@@ -99,7 +102,7 @@ The cost of that trade is 56 near-identical wrappers, so none of them holds logi
 Matching is Bash-native rather than a `grep` pipeline, which is what lets one engine serve every mode and both anchors. The consequence worth knowing is that `^` and `$` anchor to the whole value rather than to each of its lines, matching how bats-assert reads `--regexp`.
 
 ### Failure Message Style
-Failure messages are what a consumer reads when their test breaks, so they follow one house style across `src/`. `src/mock.bash` is exempt: it is a vendored copy of grayhemp/bats-mock and restyling it would widen the divergence from upstream.
+Failure messages are what a consumer reads when their test breaks, so they follow one house style across `src/`, with no exceptions.
 
 - **Open with the capitalised subject noun** naming the thing under assertion: `File`, `Directory`, `Symlink`, `Regular file`, `String`, `Command`, `Function`. Summary labels use sentence case, not Title Case.
 - **Single-quote interpolated values** - paths, strings, names - so empty and whitespace-only values stay visible: `File '${file}' does not exist`. Numeric counts and indices stay bare: `exit status ${status}`, `data set ${data_set_idx}`.
@@ -107,7 +110,7 @@ Failure messages are what a consumer reads when their test breaks, so they follo
 - **Punctuate by message kind**: assertion failures routed through `format_error` take no trailing full stop; validation and runtime errors raised by a direct `flunk` call read as sentences and end with one; `Key: value` summary labels take neither.
 
 ### Documentation Style
-File headers and function docblocks follow one house style so the library reads as one project. `src/mock.bash` is exempt from the function docblock rules for the same reason it is exempt from the failure message style: its docblocks are upstream grayhemp/bats-mock text, and restyling them widens the divergence from upstream. Its file header is not upstream text and does follow the rule below.
+File headers and function docblocks follow one house style so the library reads as one project, with no exceptions.
 
 - **File headers**: every `.bash` file opens with the `@file` shape. `.bats` files use the plain shape without `@file`. A file-level `shellcheck disable` follows the header, separated by a blank comment line.
 

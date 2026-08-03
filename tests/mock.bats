@@ -29,6 +29,20 @@ load _test_helper
   assert_output_contains "testoutput2"
 }
 
+@test "Mock: output is written literally" {
+  mock_curl=$(mock_command "curl")
+  mock_set_output "${mock_curl}" "-n" 1
+  mock_set_output "${mock_curl}" 'first\nsecond' 2
+
+  run curl example.com
+  assert_success
+  assert_output "-n"
+
+  run curl example.com
+  assert_success
+  assert_output 'first\nsecond'
+}
+
 @test "Mock: exit status" {
   mock_curl=$(mock_command "curl")
   mock_set_status "${mock_curl}" 1 1
@@ -136,7 +150,7 @@ load _test_helper
 }
 
 @test "Mock: default temporary directory" {
-  assert_equal "${BATS_TEST_TMPDIR}/bats-mock-tmp" "${BATS_HELPERS_MOCK_TMPDIR}"
+  assert_equal "${BATS_TEST_TMPDIR}/bats-helpers-mock" "${BATS_HELPERS_MOCK_TMPDIR}"
 
   mock_curl=$(mock_command "curl")
 
@@ -149,14 +163,14 @@ load _test_helper
 
   run mock_prepare_tmp
   assert_success
-  assert_output "${BATS_TEST_TMPDIR}/custom/bats-mock-tmp"
+  assert_output "${BATS_TEST_TMPDIR}/custom/bats-helpers-mock"
 
   # A trailing slash does not produce a double separator.
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom/"
 
   run mock_prepare_tmp
   assert_success
-  assert_output "${BATS_TEST_TMPDIR}/custom/bats-mock-tmp"
+  assert_output "${BATS_TEST_TMPDIR}/custom/bats-helpers-mock"
 }
 
 @test "Mock: custom temporary directory with spaces" {
