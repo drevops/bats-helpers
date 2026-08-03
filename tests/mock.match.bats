@@ -333,6 +333,26 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Create it with 'mock_spec_add' first."
 }
 
+@test "mock_spec_set_property - the value is written literally" {
+  mock_git="$(mock_command "git")"
+
+  flag="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${flag}" 1 equals "status"
+  mock_spec_set_output "${flag}" "-n"
+
+  escape="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${escape}" 1 equals "log"
+  mock_spec_set_output "${escape}" 'first\nsecond'
+
+  run git status
+  assert_success
+  assert_output "-n"
+
+  run git log
+  assert_success
+  assert_output 'first\nsecond'
+}
+
 @test "Specification response falls back to the per-call and default responses" {
   mock_git="$(mock_command "git")"
   mock_set_output "${mock_git}" "default output"

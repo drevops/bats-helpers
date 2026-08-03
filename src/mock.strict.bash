@@ -179,6 +179,10 @@ mock_verify() {
 # Outputs:
 #   STDOUT: One line per unmet expectation, and nothing when all of them
 #           were met.
+#
+# Returns:
+#   0 always. An unmet expectation is reported on STDOUT rather than by the
+#   exit status.
 ##
 mock_verify_mock() {
   local mock="${1}"

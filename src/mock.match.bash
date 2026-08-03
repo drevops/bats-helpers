@@ -225,7 +225,9 @@ mock_spec_set_property() {
     property_value="$(cat -)"
   fi
 
-  echo -e "${property_value}" >"${spec}.${property_name}"
+  # The value is written with 'printf' because 'echo' would read a value of
+  # '-n', '-e' or '-E' as one of its own flags and swallow it.
+  printf '%s\n' "${property_value}" >"${spec}.${property_name}"
 }
 
 ##

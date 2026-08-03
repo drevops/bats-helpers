@@ -661,6 +661,8 @@ mock_spec_set_output "${push}" "rejected"
 
 Both forms coexist. A call is answered by the first specification that accepts it, in the order the specifications were added; a call that none of them accepts falls back to the response for that call index, and then to the response set without one.
 
+A specification's response is written literally, so a value such as `-n`, or one holding a backslash, reaches the caller unchanged. `mock_set_output` and its siblings pass their value through `echo -e`, so a backslash escape there is expanded instead.
+
 The first argument of `mock_spec_arg` after the specification is the position: a one-based argument index, or `*` for "some argument". The second is the matcher:
 
 | Matcher       | Accepts when the argument                     |
