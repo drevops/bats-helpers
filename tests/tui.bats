@@ -47,6 +47,19 @@ load _test_helper
   assert_output_contains "100% of %s answers"
 }
 
+@test "Script path containing a space" {
+  cp "${BATS_TEST_DIRNAME}/fixtures/tui_script.sh" "${BATS_TEST_TMPDIR}/tui script.sh"
+  export BATS_HELPERS_SCRIPT_FILE="tui script.sh"
+  pushd "${BATS_TEST_TMPDIR}"
+
+  tui_run "custom answer1" "custom answer2"
+
+  assert_output_contains "Static script output"
+  assert_output_contains "custom answer1"
+
+  popd
+}
+
 @test "Missing BATS_HELPERS_SCRIPT_FILE" {
   unset BATS_HELPERS_SCRIPT_FILE
   unset SCRIPT_FILE

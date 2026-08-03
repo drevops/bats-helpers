@@ -48,7 +48,7 @@
 
 ## 📦 Installation
 
-Requires [bats-core](https://github.com/bats-core/bats-core) `1.10` or newer.
+Requires [bats-core](https://github.com/bats-core/bats-core) `1.10` or newer, and Bash `4.0` or newer. macOS ships Bash `3.2`, so install a current one with `brew install bash`.
 
 ### NPM
 

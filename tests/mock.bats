@@ -2,7 +2,7 @@
 #
 # Tests for mocking helpers.
 #
-# shellcheck disable=SC2129,SC2030,SC2031
+# shellcheck disable=SC2129,SC2030,SC2031,SC2034
 
 load _test_helper
 
@@ -179,6 +179,7 @@ load _test_helper
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
+  BATS_MOCK_TMPDIR=""
   BATS_TEST_TMPDIR=""
   run mock_prepare_tmp
   BATS_TEST_TMPDIR="${original}"
@@ -191,6 +192,7 @@ load _test_helper
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
+  BATS_MOCK_TMPDIR=""
   BATS_TEST_TMPDIR=""
   run mock_create
   BATS_TEST_TMPDIR="${original}"
