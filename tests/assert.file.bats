@@ -56,6 +56,26 @@ load _test_helper
   assert_failure
 }
 
+@test "assert_file_exists reports a failure once" {
+  run assert_file_exists "${BATS_TEST_TMPDIR}/missing.txt"
+  assert_failure
+
+  banner_count="$(echo "${output}" | grep -c "BEGIN ERROR MESSAGE" || true)"
+  assert_equal "1" "${banner_count}"
+}
+
+@test "assert_file_not_exists reports a failure once for a glob" {
+  file_mktouch "${BATS_TEST_TMPDIR}/file1.txt"
+  file_mktouch "${BATS_TEST_TMPDIR}/file2.txt"
+  file_mktouch "${BATS_TEST_TMPDIR}/file3.txt"
+
+  run assert_file_not_exists "${BATS_TEST_TMPDIR}/*.txt"
+  assert_failure
+
+  banner_count="$(echo "${output}" | grep -c "BEGIN ERROR MESSAGE" || true)"
+  assert_equal "1" "${banner_count}"
+}
+
 @test "assert_dir_exists" {
   assert_dir_exists "${BATS_TEST_DIRNAME}"
 
