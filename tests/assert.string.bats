@@ -45,6 +45,27 @@ load _test_helper
   assert_failure
 }
 
+@test "string_random" {
+  run string_random
+  assert_success
+  assert_equal 8 "${#output}"
+  assert_empty "${output//[a-zA-Z0-9]/}"
+
+  run string_random 16
+  assert_success
+  assert_equal 16 "${#output}"
+  assert_empty "${output//[a-zA-Z0-9]/}"
+
+  # A zero-padded length would be read as octal by the arithmetic loop.
+  run string_random 08
+  assert_success
+  assert_equal 8 "${#output}"
+
+  run string_random "abc"
+  assert_failure
+  assert_output_contains "Length must be a non-negative integer."
+}
+
 ##
 # Deprecated aliases.
 #

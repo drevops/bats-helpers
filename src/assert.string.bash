@@ -97,11 +97,27 @@ assert_equal() {
 # Outputs:
 #   STDOUT: The generated string.
 ##
-random_string() {
+string_random() {
   local len="${1:-8}"
-  local ret
-  # shellcheck disable=SC2002
-  ret=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w "${len}" | head -n 1)
+  local alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  local ret=''
+  local i
+
+  if ! [[ ${len} =~ ^[0-9]+$ ]]; then
+    flunk "Length must be a non-negative integer."
+    return 1
+  fi
+
+  # Base 10 is explicit so that a zero-padded length is not read as octal.
+  len=$((10#${len}))
+
+  # A '/dev/urandom' pipeline is not usable here: its tools' STDERR reaches the
+  # caller, where Bats' 'run' merges it into the returned value, and its reader
+  # can outlive the writer and hang.
+  for ((i = 0; i < len; i++)); do
+    ret="${ret}${alphabet:RANDOM%${#alphabet}:1}"
+  done
+
   echo "${ret}"
 }
 
@@ -117,4 +133,9 @@ assert_contains() {
 assert_not_contains() {
   [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_not_contains' will be removed in the next version. Use 'assert_string_not_contains' instead." >&3
   assert_string_not_contains "${2-}" "${1-}"
+}
+
+random_string() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'random_string' will be removed in the next version. Use 'string_random' instead." >&3
+  string_random "$@"
 }

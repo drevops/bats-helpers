@@ -67,6 +67,14 @@ export BATS_LIB_PATH="${BATS_TEST_DIRNAME}/../node_modules"
 bats_load_library bats-helpers
 ```
 
+### Function Naming
+Bash has no namespaces: every sourced function lands in one global scope shared with the consumer's own helpers, with bats-assert and bats-file, and with every binary on `PATH`. The prefix is the namespace, so a helper is named `<subject>_<verb>` after the module that owns it - `steps_run`, `mock_setup`, `file_trim`, `fixture_prepare_dir`, `string_random`. This matches how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`.
+
+Two exceptions:
+
+- **The `assert_*` family** keeps the verb first, because there the verb is already the namespace and it matches bats-assert and bats-file exactly. Shape: `assert_<subject>_<predicate>`, e.g. `assert_file_not_exists`. An assertion a module owns still takes the module's prefix: `mock_assert_call_args`.
+- **`flunk` and `format_error`** are bare verbs, mirroring bats-support's `fail`.
+
 ### Assertion Functions
 All assertion functions follow the pattern of checking conditions and calling `flunk()` with formatted error messages on failure.
 
@@ -151,6 +159,6 @@ Side effects are Bash code executed when the mock is called, useful for file cre
 
 Both shapes below work for a positive case, so the split is settled here rather than left to each new test.
 
-- **Call the helper bare for a positive case**: `run_steps "assert" "${mocks[@]}"`. The helper's `flunk` returns non-zero, which fails the test under BATS errexit and reports the specific reason against the calling line. The `run` wrapper needs a follow-up `assert_success`, and omitting it discards the result without failing anything.
-- **Wrap the call for a negative case**: `run run_steps "assert" "${mocks[@]}"` followed by `assert_failure`. The bare form would abort the test at the `flunk` before reaching the assertion.
+- **Call the helper bare for a positive case**: `steps_run "assert" "${mocks[@]}"`. The helper's `flunk` returns non-zero, which fails the test under BATS errexit and reports the specific reason against the calling line. The `run` wrapper needs a follow-up `assert_success`, and omitting it discards the result without failing anything.
+- **Wrap the call for a negative case**: `run steps_run "assert" "${mocks[@]}"` followed by `assert_failure`. The bare form would abort the test at the `flunk` before reaching the assertion.
 - **Declare test data arrays with `declare -a`**: `declare -a STEPS=( ... )`, `declare -a TEST_CASES=( ... )`, `declare -a answers=( ... )`. Helpers read these arrays through BASH dynamic scoping, so the declaration marks the array as an input to the call that follows it.

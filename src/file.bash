@@ -10,7 +10,7 @@
 # Arguments:
 #   1. file: Path to create.
 ##
-mktouch() {
+file_mktouch() {
   local file="${1}"
   mkdir -p "$(dirname "${file}")" && touch "${file}"
 }
@@ -21,7 +21,7 @@ mktouch() {
 # Arguments:
 #   1. file: File to trim.
 ##
-trim_file() {
+file_trim() {
   local sed_opts
 
   if [ "$(uname)" = "Darwin" ]; then
@@ -47,7 +47,7 @@ trim_file() {
 # Outputs:
 #   STDOUT: The evaluated expression.
 ##
-read_env() {
+file_read_env() {
   local t
   # shellcheck disable=SC1090,SC1091
   [ -f "./.env" ] && t=$(mktemp) && export -p >"${t}" && set -a && . "./.env" && set +a && . "${t}" && rm "${t}" && unset t
@@ -103,7 +103,7 @@ file_backup_path() {
 #   2. name: Variable name.
 #   3. value: Variable value.
 ##
-add_var_to_file() {
+file_add_var() {
   local file="${1}"
   local name="${2}"
   local value="${3}"
@@ -123,12 +123,12 @@ add_var_to_file() {
 }
 
 ##
-# Restores a file from the backup taken by 'add_var_to_file'.
+# Restores a file from the backup taken by 'file_add_var'.
 #
 # Arguments:
 #   1. file: File to restore.
 ##
-restore_file() {
+file_restore() {
   local file="${1}"
 
   local backup
@@ -140,4 +140,33 @@ restore_file() {
   fi
 
   cp -f "${backup}" "${file}"
+}
+
+##
+## Deprecated aliases, removed in the next version.
+##
+
+mktouch() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'mktouch' will be removed in the next version. Use 'file_mktouch' instead." >&3
+  file_mktouch "$@"
+}
+
+trim_file() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'trim_file' will be removed in the next version. Use 'file_trim' instead." >&3
+  file_trim "$@"
+}
+
+read_env() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'read_env' will be removed in the next version. Use 'file_read_env' instead." >&3
+  file_read_env "$@"
+}
+
+add_var_to_file() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'add_var_to_file' will be removed in the next version. Use 'file_add_var' instead." >&3
+  file_add_var "$@"
+}
+
+restore_file() {
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'restore_file' will be removed in the next version. Use 'file_restore' instead." >&3
+  file_restore "$@"
 }
