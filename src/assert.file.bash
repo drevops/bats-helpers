@@ -243,7 +243,7 @@ assert_dir_exclude_params() {
 
   local exclude_dir
   for exclude_dir in "${exclude_dirs[@]}"; do
-    [ -n "${exclude_dir}" ] && echo "--exclude-dir=${exclude_dir}"
+    [ -n "${exclude_dir}" ] && printf '%s\n' "--exclude-dir=${exclude_dir}"
   done
 
   return 0

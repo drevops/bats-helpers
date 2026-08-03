@@ -122,6 +122,8 @@ load _test_helper
 }
 
 @test "Mock: call user" {
+  unset BATS_HELPERS_MOCK_USER
+  unset _USER
   mock_curl=$(mock_command "curl")
 
   curl example.com

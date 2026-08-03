@@ -150,11 +150,11 @@ fixture_add() {
 @test "RUN_STEPS_DEBUG" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export RUN_STEPS_DEBUG=1
+
+  run echo "Some Substring"
   declare -a STEPS=(
     "Some Substring"
   )
-
-  run echo "Some Substring"
   steps_run "assert" 3>"${notice}"
 
   assert_file_contains "${notice}" "Deprecated: 'RUN_STEPS_DEBUG' will be removed in the next version. Use 'BATS_HELPERS_STEPS_DEBUG' instead."
@@ -209,10 +209,10 @@ fixture_add() {
 @test "Prefixed variables take precedence and emit no notices" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
 
-  declare -a STEPS=("Some Substring")
   export RUN_STEPS_DEBUG=1
   export BATS_HELPERS_STEPS_DEBUG=0
   run echo "Some Substring"
+  declare -a STEPS=("Some Substring")
   steps_run "assert" 3>"${notice}"
 
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
