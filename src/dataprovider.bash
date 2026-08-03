@@ -9,18 +9,16 @@
 #
 # Arguments:
 #   1. func_name: Name of the function to be tested.
-#   2. args_per_row: Number of elements in each row of the
-#      BATS_HELPERS_TEST_CASES array, counting the trailing expected value.
-#      Optional, defaults to 1. The function under test receives one argument
-#      fewer.
+#   2. args_per_row: Number of elements in each row of the TEST_CASES array,
+#      counting the trailing expected value. Optional, defaults to 1. The
+#      function under test receives one argument fewer.
 #
 # Globals:
-#   BATS_HELPERS_TEST_CASES: Array of test cases, each row ending with its
-#     expected value.
+#   TEST_CASES: Array of test cases, each row ending with its expected value.
 #
 # Examples:
 #   Two inputs and one expected value per row:
-#     declare -a BATS_HELPERS_TEST_CASES=(1 2 3)
+#     declare -a TEST_CASES=(1 2 3)
 #     dataprovider_run "add_numbers" 3
 ##
 dataprovider_run() {
@@ -48,31 +46,25 @@ dataprovider_run() {
     return
   fi
 
-  local -a test_cases=()
-  if [ -n "${BATS_HELPERS_TEST_CASES+x}" ]; then
-    test_cases=("${BATS_HELPERS_TEST_CASES[@]}")
-  elif [ -n "${TEST_CASES+x}" ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'TEST_CASES' will be removed in the next version. Use 'BATS_HELPERS_TEST_CASES' instead." >&3
-    test_cases=("${TEST_CASES[@]}")
-  else
-    flunk "BATS_HELPERS_TEST_CASES array is empty."
+  if [ -z "${TEST_CASES+x}" ]; then
+    flunk "TEST_CASES array is empty."
     return
   fi
 
-  if [ "${args_per_row}" -gt ${#test_cases[@]} ]; then
-    flunk "Number of arguments per test case is greater than the total elements in BATS_HELPERS_TEST_CASES."
+  if [ "${args_per_row}" -gt ${#TEST_CASES[@]} ]; then
+    flunk "Number of arguments per test case is greater than the total elements in TEST_CASES."
     return
   fi
 
-  if [ "$((${#test_cases[@]} % args_per_row))" -ne 0 ]; then
-    flunk "Total elements in BATS_HELPERS_TEST_CASES must be a multiple of ${args_per_row}."
+  if [ "$((${#TEST_CASES[@]} % args_per_row))" -ne 0 ]; then
+    flunk "Total elements in TEST_CASES must be a multiple of ${args_per_row}."
     return
   fi
 
   local i
   local data_set_idx
-  for ((i = args_per_row - 1, data_set_idx = 0; i < ${#test_cases[@]}; i += args_per_row, data_set_idx++)); do
-    if [ -z "${test_cases[i]}" ]; then
+  for ((i = args_per_row - 1, data_set_idx = 0; i < ${#TEST_CASES[@]}; i += args_per_row, data_set_idx++)); do
+    if [ -z "${TEST_CASES[i]}" ]; then
       flunk "Expected value (last element) in the data set ${data_set_idx} is empty."
       return
     fi
@@ -88,9 +80,9 @@ dataprovider_run() {
   local expected
   local test_args
 
-  for ((i = 0; i < ${#test_cases[@]}; i += args_per_row)); do
-    expected="${test_cases[i + args_per_row - 1]}"
-    test_args=("${test_cases[@]:i:args_per_row-1}")
+  for ((i = 0; i < ${#TEST_CASES[@]}; i += args_per_row)); do
+    expected="${TEST_CASES[i + args_per_row - 1]}"
+    test_args=("${TEST_CASES[@]:i:args_per_row-1}")
 
     run "${func_name}" "${test_args[@]}"
 

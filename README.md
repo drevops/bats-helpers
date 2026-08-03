@@ -182,15 +182,15 @@ Run multiple test cases for a given function (aka "data provider").
 Arguments:
 
 1. `func_name`: The name of the function to be tested.
-2. `args_per_row`: (Optional) The number of arguments in each row of the `BATS_HELPERS_TEST_CASES` array, defaults to `1`. Last argument is always the expected value.
+2. `args_per_row`: (Optional) The number of arguments in each row of the `TEST_CASES` array, defaults to `1`. Last argument is always the expected value.
 
 Global Variables:
 
-- `BATS_HELPERS_TEST_CASES`: An array containing test cases with their expected values.
+- `TEST_CASES`: An array containing test cases with their expected values.
 
 **Examples:**
 
-To run a function `add_numbers` with `BATS_HELPERS_TEST_CASES` containing three arguments per row, you can call `dataprovider_run` like so:
+To run a function `add_numbers` with `TEST_CASES` containing three arguments per row, you can call `dataprovider_run` like so:
 
 ```bash
 # Function to test.
@@ -200,7 +200,7 @@ add_numbers() {
 
 @test "Test add_numbers" {
   # Numbers: first two are inputs, last is expected output.
-  declare -a BATS_HELPERS_TEST_CASES=(
+  declare -a TEST_CASES=(
     1 2 3
     4 5 9
   )
@@ -302,9 +302,9 @@ The step runner allows to setup and process a sequence of string and mocked comm
 Consider this example:
 
 ```bash
-# Declare BATS_HELPERS_STEPS as a global variable, as `steps_run` needs to be
-# called twice and it does not store the steps internally.
-declare -a BATS_HELPERS_STEPS=(
+# Declare STEPS as a global variable, as `steps_run` needs to be called
+# twice and it does not store the steps internally.
+declare -a STEPS=(
   # Mock command with exit status only (status 1 = failure, no output).
   "@drush -y status --field=drupal-version # 1"
 
@@ -409,7 +409,7 @@ export BATS_HELPERS_STEPS_DEBUG=1
 | `fixture_prepare_dir`     | Creates an empty directory for a fixture, removing any existing content       |
 | `fixture_export_codebase` | Exports the codebase at the latest commit to a destination directory          |
 | `string_random`           | Generates a random alphanumeric string, 8 characters long by default          |
-| `tui_run`                 | Runs the script named by `BATS_HELPERS_SCRIPT_FILE`, feeding it answers on STDIN |
+| `tui_run`                 | Runs the script named by `SCRIPT_FILE`, feeding it a list of answers on STDIN |
 | `flunk`                   | Fails the test with a message                                                 |
 | `format_error`            | Formats an error message with a border and the captured command output        |
 
@@ -431,7 +431,7 @@ fixture_export_codebase "${build_dir}" \
 # Capture the status and the message.
 run tui_run "${answers[@]}"
 assert_failure
-assert_output_contains "BATS_HELPERS_SCRIPT_FILE is not set."
+assert_output_contains "SCRIPT_FILE is not set."
 ```
 
 A bare call still fails the test at that point, because BATS runs tests with `errexit` enabled.
@@ -456,12 +456,14 @@ assert_file_exists "$(file_backup_path "${BATS_TEST_TMPDIR}/.env")"
 
 Every variable the library defines, in one place. Each is also covered by the section of the feature that uses it. Variables that belong to bats-core - `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME`, `BATS_VERBOSE_RUN` - are read but not owned here, and are documented by [bats-core](https://bats-core.readthedocs.io/).
 
+`STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the test data a consumer declares right above the call that reads it, so they stay short and unprefixed. Everything the library reads from the wider environment carries the `BATS_HELPERS_` prefix.
+
 | Variable                                       | Read by                                                       | Description                                                                                 |
 |------------------------------------------------|---------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| `BATS_HELPERS_STEPS`                           | `steps_run`                                                   | Array of steps to process                                                                   |
+| `STEPS`                                        | `steps_run`                                                   | Array of steps to process                                                                   |
+| `TEST_CASES`                                   | `dataprovider_run`                                            | Array of test cases, each row ending with its expected value                                |
+| `SCRIPT_FILE`                                  | `tui_run`                                                     | Path to the script to run, relative to the current directory                                |
 | `BATS_HELPERS_STEPS_DEBUG`                     | `steps_run`                                                   | Set to `1` to print every parsing and matching decision to file descriptor 3                |
-| `BATS_HELPERS_TEST_CASES`                      | `dataprovider_run`                                            | Array of test cases, each row ending with its expected value                                |
-| `BATS_HELPERS_SCRIPT_FILE`                     | `tui_run`                                                     | Path to the script to run, relative to the current directory                                |
 | `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              | `assert_dir_contains_string`, `assert_dir_not_contains_string` | Array of directory names to exclude from the search, on top of the always-excluded four     |
 | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `fixture_export_codebase`                                     | Set to `1` to enable the export; anything else makes the function a no-op                   |
 | `BATS_HELPERS_BACKUP_DIR`                      | `file_add_var`, `file_restore`, `file_backup_path`            | Backup root. Defaults to `${BATS_TEST_TMPDIR}/bats-helpers-backup`                          |
@@ -493,20 +495,15 @@ The variables follow the same pattern. The old name is read only when the new on
 
 | Deprecated                             | Use instead                                    |
 |----------------------------------------|------------------------------------------------|
-| `STEPS`                                | `BATS_HELPERS_STEPS`                           |
 | `RUN_STEPS_DEBUG`                      | `BATS_HELPERS_STEPS_DEBUG`                     |
-| `TEST_CASES`                           | `BATS_HELPERS_TEST_CASES`                      |
-| `SCRIPT_FILE`                          | `BATS_HELPERS_SCRIPT_FILE`                     |
 | `ASSERT_DIR_EXCLUDE`                   | `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              |
 | `BATS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` |
 | `BATS_MOCK_TMPDIR`                     | `BATS_HELPERS_MOCK_TMPDIR`                     |
 | `_USER`                                | `BATS_HELPERS_MOCK_USER`                       |
 
-Failure messages name the new variable, so a test asserting on `TEST_CASES array is empty.` or `SCRIPT_FILE is not set.` has to be updated even while the old variable still works.
+`mock_setup` now exports `BATS_HELPERS_MOCK_TMPDIR` rather than `BATS_MOCK_TMPDIR`. The old name is still read as an input, but it is no longer written, so a test that reads the mock directory back after `mock_setup` has to read the new name. `mock_resolve_tmp` also names the new variable when it cannot resolve a directory, so a test asserting on `Set BATS_MOCK_TMPDIR to a writable directory` has to be updated.
 
-`mock_setup` now exports `BATS_HELPERS_MOCK_TMPDIR` rather than `BATS_MOCK_TMPDIR`. The old name is still read as an input, but it is no longer written, so a test that reads the mock directory back after `mock_setup` has to read the new name.
-
-Every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - and every variable the library owns shares the `BATS_HELPERS_` prefix, matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. Apart from the two below, each replacement keeps the arguments, the standard output and the return semantics, so a call is updated by swapping the name alone.
+Every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. Apart from the two below, each replacement keeps the arguments, the standard output and the return semantics, so a call is updated by swapping the name alone.
 
 `assert_contains` and `assert_not_contains` take the needle first, while their replacements take the haystack first, so a call has to swap its arguments as well as change its name:
 

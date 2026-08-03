@@ -78,7 +78,7 @@ fixture_add() {
 
 @test "run_steps" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
-  declare -a BATS_HELPERS_STEPS=(
+  declare -a STEPS=(
     "Some Substring"
   )
 
@@ -147,22 +147,10 @@ fixture_add() {
   assert_file_contains "${notice}" "Deprecated: 'restore_file' will be removed in the next version. Use 'file_restore' instead."
 }
 
-@test "STEPS" {
-  notice="${BATS_TEST_TMPDIR}/notice.txt"
-  declare -a STEPS=(
-    "Some Substring"
-  )
-
-  run echo "Some Substring"
-  steps_run "assert" 3>"${notice}"
-
-  assert_file_contains "${notice}" "Deprecated: 'STEPS' will be removed in the next version. Use 'BATS_HELPERS_STEPS' instead."
-}
-
 @test "RUN_STEPS_DEBUG" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export RUN_STEPS_DEBUG=1
-  declare -a BATS_HELPERS_STEPS=(
+  declare -a STEPS=(
     "Some Substring"
   )
 
@@ -171,27 +159,6 @@ fixture_add() {
 
   assert_file_contains "${notice}" "Deprecated: 'RUN_STEPS_DEBUG' will be removed in the next version. Use 'BATS_HELPERS_STEPS_DEBUG' instead."
   assert_file_contains "${notice}" "  > Total steps : 1"
-}
-
-@test "TEST_CASES" {
-  notice="${BATS_TEST_TMPDIR}/notice.txt"
-  declare -a TEST_CASES=(
-    1 2 3
-  )
-
-  dataprovider_run "fixture_add" 3 3>"${notice}"
-
-  assert_file_contains "${notice}" "Deprecated: 'TEST_CASES' will be removed in the next version. Use 'BATS_HELPERS_TEST_CASES' instead."
-}
-
-@test "SCRIPT_FILE" {
-  notice="${BATS_TEST_TMPDIR}/notice.txt"
-  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
-
-  tui_run "custom answer1" "custom answer2" 3>"${notice}"
-
-  assert_output_contains "custom answer1"
-  assert_file_contains "${notice}" "Deprecated: 'SCRIPT_FILE' will be removed in the next version. Use 'BATS_HELPERS_SCRIPT_FILE' instead."
 }
 
 @test "ASSERT_DIR_EXCLUDE" {
@@ -242,21 +209,11 @@ fixture_add() {
 @test "Prefixed variables take precedence and emit no notices" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
 
-  declare -a STEPS=("Absent Substring")
-  declare -a BATS_HELPERS_STEPS=("Some Substring")
+  declare -a STEPS=("Some Substring")
   export RUN_STEPS_DEBUG=1
   export BATS_HELPERS_STEPS_DEBUG=0
   run echo "Some Substring"
   steps_run "assert" 3>"${notice}"
-
-  declare -a TEST_CASES=(1 2 4)
-  declare -a BATS_HELPERS_TEST_CASES=(1 2 3)
-  dataprovider_run "fixture_add" 3 3>>"${notice}"
-
-  export SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
-  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script.sh"
-  tui_run "custom answer1" "custom answer2" 3>>"${notice}"
-  assert_output_contains "custom answer1"
 
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/1.txt"

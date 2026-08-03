@@ -7,7 +7,7 @@
 load _test_helper
 
 @test "Interactive" {
-  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script.sh"
+  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   declare -a answers=(
     "custom answer1"
@@ -21,7 +21,7 @@ load _test_helper
 }
 
 @test "Defaults" {
-  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script.sh"
+  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   declare -a answers=(
     "nothing"
@@ -35,7 +35,7 @@ load _test_helper
 }
 
 @test "Answers reach the script literally" {
-  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script.sh"
+  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   declare -a answers=(
     "it's a quoted answer"
@@ -49,7 +49,7 @@ load _test_helper
 
 @test "Script path containing a space" {
   cp "${BATS_TEST_DIRNAME}/fixtures/tui_script.sh" "${BATS_TEST_TMPDIR}/tui script.sh"
-  export BATS_HELPERS_SCRIPT_FILE="tui script.sh"
+  export SCRIPT_FILE="tui script.sh"
   pushd "${BATS_TEST_TMPDIR}"
 
   tui_run "custom answer1" "custom answer2"
@@ -60,8 +60,7 @@ load _test_helper
   popd
 }
 
-@test "Missing BATS_HELPERS_SCRIPT_FILE" {
-  unset BATS_HELPERS_SCRIPT_FILE
+@test "Missing SCRIPT_FILE" {
   unset SCRIPT_FILE
 
   declare -a answers=(
@@ -70,11 +69,10 @@ load _test_helper
   )
   run tui_run "${answers[@]}"
   assert_failure
-  assert_output_contains "BATS_HELPERS_SCRIPT_FILE is not set."
+  assert_output_contains "SCRIPT_FILE is not set."
 }
 
-@test "Missing BATS_HELPERS_SCRIPT_FILE - caller recovers" {
-  unset BATS_HELPERS_SCRIPT_FILE
+@test "Missing SCRIPT_FILE - caller recovers" {
   unset SCRIPT_FILE
 
   declare -a answers=(
@@ -88,8 +86,8 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Non-existing BATS_HELPERS_SCRIPT_FILE" {
-  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
+@test "Non-existing SCRIPT_FILE" {
+  export SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
 
   declare -a answers=(
     "nothing"
@@ -100,8 +98,8 @@ load _test_helper
   assert_output_contains "Script file 'tests/fixtures/tui_script_nonexisting.sh' does not exist."
 }
 
-@test "BATS_HELPERS_SCRIPT_FILE is not a regular file" {
-  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures"
+@test "SCRIPT_FILE is not a regular file" {
+  export SCRIPT_FILE="tests/fixtures"
 
   declare -a answers=(
     "nothing"
@@ -112,8 +110,8 @@ load _test_helper
   assert_output_contains "Script file 'tests/fixtures' is not a regular file."
 }
 
-@test "Non-existing BATS_HELPERS_SCRIPT_FILE - caller recovers" {
-  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
+@test "Non-existing SCRIPT_FILE - caller recovers" {
+  export SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
 
   declare -a answers=(
     "nothing"

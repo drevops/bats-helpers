@@ -76,9 +76,11 @@ Two exceptions:
 - **`flunk` and `format_error`** are bare verbs, mirroring bats-support's `fail`.
 
 ### Variable Naming
-Every variable the library *defines* carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global such as `STEPS` or `SCRIPT_FILE` would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`.
+Every variable the library reads from the wider environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`. This holds in `src/mock.bash` too: a variable that reaches the consumer is the library's whichever upstream it came from, so it reads `BATS_HELPERS_MOCK_TMPDIR` and `BATS_HELPERS_MOCK_USER`.
 
-The rule has no exceptions, including in `src/mock.bash`: a variable that reaches the consumer is the library's regardless of which upstream it came from, so `BATS_MOCK_TMPDIR` and `_USER` are read under the prefix as `BATS_HELPERS_MOCK_TMPDIR` and `BATS_HELPERS_MOCK_USER`. It covers only what the library provides, not what it consumes - bats-core's own `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME` and `BATS_VERBOSE_RUN` keep their names.
+`STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the three exceptions and stay unprefixed. They are not environment configuration but the test data itself, declared with `declare -a` on the line above the call that reads them, so the declaration and its use are read together and a long prefix costs more in daily ergonomics than the collision risk costs in rare confusion.
+
+The prefix rule covers what the library provides, not what it consumes - bats-core's own `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME` and `BATS_VERBOSE_RUN` keep their names.
 
 A renamed variable is resolved into a local at the top of the function that owns it, preferring the prefixed name and falling back to the old one with a deprecation notice. The chain is written out in full at each site, for the same reason the function aliases are.
 
@@ -169,4 +171,4 @@ Both shapes below work for a positive case, so the split is settled here rather 
 
 - **Call the helper bare for a positive case**: `steps_run "assert" "${mocks[@]}"`. The helper's `flunk` returns non-zero, which fails the test under BATS errexit and reports the specific reason against the calling line. The `run` wrapper needs a follow-up `assert_success`, and omitting it discards the result without failing anything.
 - **Wrap the call for a negative case**: `run steps_run "assert" "${mocks[@]}"` followed by `assert_failure`. The bare form would abort the test at the `flunk` before reaching the assertion.
-- **Declare test data arrays with `declare -a`**: `declare -a BATS_HELPERS_STEPS=( ... )`, `declare -a BATS_HELPERS_TEST_CASES=( ... )`, `declare -a answers=( ... )`. Helpers read these arrays through BASH dynamic scoping, so the declaration marks the array as an input to the call that follows it.
+- **Declare test data arrays with `declare -a`**: `declare -a STEPS=( ... )`, `declare -a TEST_CASES=( ... )`, `declare -a answers=( ... )`. Helpers read these arrays through BASH dynamic scoping, so the declaration marks the array as an input to the call that follows it.

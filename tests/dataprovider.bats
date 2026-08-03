@@ -20,27 +20,27 @@ fixture_concat() {
 
 @test "Test dataprovider runner, direct - success" {
   # Numbers.
-  declare -a BATS_HELPERS_TEST_CASES=(
+  declare -a TEST_CASES=(
     1 2 3
     4 5 9
   )
   dataprovider_run "fixture_add" 3
 
   # String.
-  declare -a BATS_HELPERS_TEST_CASES=(
+  declare -a TEST_CASES=(
     "start" "finish" "startfinish"
   )
   dataprovider_run "fixture_concat" 3
 
   # More arguments than needed is allowed.
-  declare -a BATS_HELPERS_TEST_CASES=(
+  declare -a TEST_CASES=(
     "start" "middle" "finish" "startmiddle"
   )
   dataprovider_run "fixture_concat" 4
 }
 
 @test "Test dataprovider runner - success" {
-  declare -a BATS_HELPERS_TEST_CASES=(
+  declare -a TEST_CASES=(
     1 2 3
     1 2 3
   )
@@ -53,7 +53,7 @@ fixture_concat() {
 }
 
 @test "Test dataprovider runner - failure" {
-  declare -a BATS_HELPERS_TEST_CASES=(
+  declare -a TEST_CASES=(
     1 2 3
     1 2 4
     1 2 3
@@ -81,29 +81,29 @@ fixture_concat() {
 
   run dataprovider_run "fixture_add" 2
   assert_failure
-  assert_output_contains "BATS_HELPERS_TEST_CASES array is empty."
+  assert_output_contains "TEST_CASES array is empty."
 
-  declare -a BATS_HELPERS_TEST_CASES=()
+  declare -a TEST_CASES=()
   run dataprovider_run "fixture_add" 2
   assert_failure
-  assert_output_contains "BATS_HELPERS_TEST_CASES array is empty."
+  assert_output_contains "TEST_CASES array is empty."
 
-  declare -a BATS_HELPERS_TEST_CASES=(
+  declare -a TEST_CASES=(
     1 2
   )
   run dataprovider_run "fixture_add" 3
   assert_failure
-  assert_output_contains "Number of arguments per test case is greater than the total elements in BATS_HELPERS_TEST_CASES."
+  assert_output_contains "Number of arguments per test case is greater than the total elements in TEST_CASES."
 
-  declare -a BATS_HELPERS_TEST_CASES=(
+  declare -a TEST_CASES=(
     1 2 3
     1 2
   )
   run dataprovider_run "fixture_add" 3
   assert_failure
-  assert_output_contains "Total elements in BATS_HELPERS_TEST_CASES must be a multiple of 3."
+  assert_output_contains "Total elements in TEST_CASES must be a multiple of 3."
 
-  declare -a BATS_HELPERS_TEST_CASES=(
+  declare -a TEST_CASES=(
     1 2 3
     1 2 ""
     1 2 4

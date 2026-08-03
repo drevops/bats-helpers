@@ -11,7 +11,7 @@
 # and the 'assert' phase checks how they were called. Steps that only assert on
 # output need the 'assert' phase alone.
 #
-#   declare -a BATS_HELPERS_STEPS=( ... )
+#   declare -a STEPS=( ... )
 #   mocks="$(steps_run "setup")"
 #   # ... code to be tested ...
 #   steps_run "assert" "${mocks}"
@@ -39,7 +39,7 @@
 #      'assert' phase.
 #
 # Globals:
-#   BATS_HELPERS_STEPS: Array of steps to process.
+#   STEPS: Array of steps to process.
 #   BATS_HELPERS_STEPS_DEBUG: Set to '1' to enable debug output.
 #
 # Outputs:
@@ -56,14 +56,8 @@ steps_run() {
     [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'RUN_STEPS_DEBUG' will be removed in the next version. Use 'BATS_HELPERS_STEPS_DEBUG' instead." >&3
   fi
 
-  local -a steps=()
-  if [ -n "${BATS_HELPERS_STEPS+x}" ]; then
-    steps=("${BATS_HELPERS_STEPS[@]}")
-  elif [ -n "${STEPS+x}" ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'STEPS' will be removed in the next version. Use 'BATS_HELPERS_STEPS' instead." >&3
-    steps=("${STEPS[@]}")
-  else
-    flunk "BATS_HELPERS_STEPS array is empty."
+  if [ -z "${STEPS+x}" ]; then
+    flunk "STEPS array is empty."
     return 1
   fi
 
@@ -71,7 +65,7 @@ steps_run() {
   declare -A mocked_commands
 
   steps_debug "Phase       : ${phase}"
-  steps_debug "Total steps : ${#steps[@]}"
+  steps_debug "Total steps : ${#STEPS[@]}"
   steps_debug
 
   # Create associative array for mocked commands.
@@ -87,8 +81,8 @@ steps_run() {
   local mock
   local command_index
   local i
-  for ((i = 0; i < ${#steps[@]}; i++)); do
-    local item="${steps[${i}]}"
+  for ((i = 0; i < ${#STEPS[@]}; i++)); do
+    local item="${STEPS[${i}]}"
 
     steps_debug "STEP START: '${item}'"
 
