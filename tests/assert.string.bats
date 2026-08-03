@@ -315,8 +315,10 @@ load _test_helper
   assert_success
   assert_equal '100% done' "${output}"
 
+  # shellcheck disable=SC1003,SC2016
   run string_format_to_regex '.|$()[]{}?+*^\'
   assert_success
+  # shellcheck disable=SC1003
   assert_equal '\.\|\$\(\)\[\]\{\}\?\+\*\^\\' "${output}"
 
   run string_format_to_regex ""

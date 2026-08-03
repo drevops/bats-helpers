@@ -391,6 +391,7 @@ string_format_to_regex() {
     char="${format:index:1}"
 
     if [ "${char}" != "%" ]; then
+      # shellcheck disable=SC1003
       case "${char}" in
         '\' | '.' | '|' | '$' | '(' | ')' | '[' | ']' | '{' | '}' | '?' | '+' | '*' | '^')
           regex="${regex}\\${char}"
@@ -404,7 +405,7 @@ string_format_to_regex() {
       continue
     fi
 
-    placeholder="${format:index + 1:1}"
+    placeholder="${format:index+1:1}"
 
     case "${placeholder}" in
       d)
