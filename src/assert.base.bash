@@ -56,17 +56,19 @@ format_error() {
   echo "##################################################"
   echo
 
+  # Captured streams are printed with 'printf' because 'echo' would read a
+  # value of '-n', '-e' or '-E' as one of its own flags and swallow it.
   if [ "${output-}" != "" ]; then
     echo "----------------------------------------"
     echo "${BATS_TEST_TMPDIR}"
-    echo "${output}"
+    printf '%s\n' "${output}"
     echo "----------------------------------------"
   fi
 
   if [ "${stderr-}" != "" ]; then
     echo "----------------------------------------"
     echo "stderr:"
-    echo "${stderr}"
+    printf '%s\n' "${stderr}"
     echo "----------------------------------------"
   fi
 }
