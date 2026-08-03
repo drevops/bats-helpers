@@ -34,6 +34,19 @@ load _test_helper
   assert_output_contains "custom answer2"
 }
 
+@test "Answers reach the script literally" {
+  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script.sh"
+
+  declare -a answers=(
+    "it's a quoted answer"
+    "100% of %s answers"
+  )
+  tui_run "${answers[@]}"
+
+  assert_output_contains "it's a quoted answer"
+  assert_output_contains "100% of %s answers"
+}
+
 @test "Missing BATS_HELPERS_SCRIPT_FILE" {
   unset BATS_HELPERS_SCRIPT_FILE
   unset SCRIPT_FILE
@@ -71,7 +84,19 @@ load _test_helper
   )
   run tui_run "${answers[@]}"
   assert_failure
-  assert_output_contains "BATS_HELPERS_SCRIPT_FILE does not exist."
+  assert_output_contains "Script file 'tests/fixtures/tui_script_nonexisting.sh' does not exist."
+}
+
+@test "BATS_HELPERS_SCRIPT_FILE is not a regular file" {
+  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures"
+
+  declare -a answers=(
+    "nothing"
+    "custom answer2"
+  )
+  run tui_run "${answers[@]}"
+  assert_failure
+  assert_output_contains "Script file 'tests/fixtures' is not a regular file."
 }
 
 @test "Non-existing BATS_HELPERS_SCRIPT_FILE - caller recovers" {

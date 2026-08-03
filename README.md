@@ -446,7 +446,7 @@ assert_file_exists "$(file_backup_path "${BATS_TEST_TMPDIR}/.env")"
 
 ### Environment variables
 
-Every variable the library reads, in one place. Each is also covered by the section of the feature that uses it.
+Every variable the library defines, in one place. Each is also covered by the section of the feature that uses it. Variables that belong to bats-core - `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME`, `BATS_VERBOSE_RUN` - are read but not owned here, and are documented by [bats-core](https://bats-core.readthedocs.io/).
 
 | Variable                                       | Read by                                                       | Description                                                                                 |
 |------------------------------------------------|---------------------------------------------------------------|---------------------------------------------------------------------------------------------|

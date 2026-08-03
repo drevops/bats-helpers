@@ -76,9 +76,9 @@ Two exceptions:
 - **`flunk` and `format_error`** are bare verbs, mirroring bats-support's `fail`.
 
 ### Variable Naming
-Every variable the library reads from the environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global such as `STEPS` or `SCRIPT_FILE` would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`.
+Every variable the library *defines* carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global such as `STEPS` or `SCRIPT_FILE` would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`.
 
-`BATS_MOCK_TMPDIR` is the one exception. It is upstream grayhemp/bats-mock's own name, and `mock_setup` exports it for the consumer to read back, so it is an output as well as an input and cannot be aliased one way.
+The rule covers what the library owns, not what it consumes. Variables defined elsewhere keep their own names: bats-core's `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME` and `BATS_VERBOSE_RUN`, and upstream grayhemp/bats-mock's `BATS_MOCK_TMPDIR`. `BATS_MOCK_TMPDIR` is the one of those the library would otherwise be free to rename, and it stays because `mock_setup` exports it for the consumer to read back, making it an output as well as an input.
 
 A renamed variable is resolved into a local at the top of the function that owns it, preferring the prefixed name and falling back to the old one with a deprecation notice. The chain is written out in full at each site, for the same reason the function aliases are.
 

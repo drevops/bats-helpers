@@ -279,7 +279,7 @@ steps_debug_sub() {
 #   BATS_HELPERS_STEPS_DEBUG: Set to '1' to enable debug output.
 ##
 steps_debug_write() {
-  if [ "${BATS_HELPERS_STEPS_DEBUG:-${RUN_STEPS_DEBUG-}}" = "1" ]; then
+  if [ "${BATS_HELPERS_STEPS_DEBUG-${RUN_STEPS_DEBUG-}}" = "1" ]; then
     echo "${1}${2}" >&3
   fi
 }

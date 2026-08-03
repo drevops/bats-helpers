@@ -228,7 +228,8 @@ assert_file_not_contains() {
 #     the search.
 #
 # Outputs:
-#   STDOUT: Space-separated '--exclude-dir' parameters.
+#   STDOUT: One '--exclude-dir' parameter per line, so that a directory name
+#     containing spaces survives being read back into an array.
 ##
 assert_dir_exclude_params() {
   local -a exclude_dirs=(".git" ".idea" "vendor" "node_modules")
@@ -240,13 +241,12 @@ assert_dir_exclude_params() {
     exclude_dirs+=("${ASSERT_DIR_EXCLUDE[@]}")
   fi
 
-  local params=""
   local exclude_dir
   for exclude_dir in "${exclude_dirs[@]}"; do
-    [ -n "${exclude_dir}" ] && params+="--exclude-dir=${exclude_dir} "
+    [ -n "${exclude_dir}" ] && echo "--exclude-dir=${exclude_dir}"
   done
 
-  echo "${params}"
+  return 0
 }
 
 ##
@@ -269,10 +269,10 @@ assert_dir_contains_string() {
 
   assert_dir_exists "${dir}" || return 1
 
-  local exclude_params
-  exclude_params="$(assert_dir_exclude_params)"
+  local -a exclude_params
+  mapfile -t exclude_params < <(assert_dir_exclude_params)
 
-  if grep -rI ${exclude_params} -l "${string}" "${dir}"; then
+  if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
     return 0
   else
     format_error "Directory '${dir}' does not contain string '${string}'" | flunk
@@ -300,10 +300,10 @@ assert_dir_not_contains_string() {
 
   [ ! -d "${dir}" ] && return 0
 
-  local exclude_params
-  exclude_params="$(assert_dir_exclude_params)"
+  local -a exclude_params
+  mapfile -t exclude_params < <(assert_dir_exclude_params)
 
-  if grep -rI ${exclude_params} -l "${string}" "${dir}"; then
+  if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
     format_error "Directory '${dir}' contains string '${string}', but should not" | flunk
   else
     return 0

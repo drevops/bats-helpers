@@ -30,8 +30,13 @@ tui_run() {
     return 1
   fi
 
+  if [ ! -e "${script_file}" ]; then
+    flunk "Script file '${script_file}' does not exist."
+    return 1
+  fi
+
   if [ ! -f "${script_file}" ]; then
-    flunk "BATS_HELPERS_SCRIPT_FILE does not exist."
+    flunk "Script file '${script_file}' is not a regular file."
     return 1
   fi
 
@@ -46,5 +51,8 @@ tui_run() {
     input="${input-}""${val}"
   done
 
-  run bash -c "printf '${input}' | ./${script_file}"
+  # The answers and the path are passed as positional parameters rather than
+  # interpolated, so that an apostrophe, a '%' directive or a space in either
+  # reaches the script literally.
+  run bash -c 'printf "%b" "$1" | "./$2"' _ "${input}" "${script_file}"
 }

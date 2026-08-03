@@ -198,7 +198,7 @@ fixture_add() {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/1.txt"
-  export ASSERT_DIR_EXCLUDE=(vendor2)
+  declare -a ASSERT_DIR_EXCLUDE=(vendor2)
 
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing" 3>"${notice}"
 
@@ -237,8 +237,8 @@ fixture_add() {
 
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/1.txt"
-  export ASSERT_DIR_EXCLUDE=(other)
-  export BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2)
+  declare -a ASSERT_DIR_EXCLUDE=(other)
+  declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2)
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing" 3>>"${notice}"
 
   export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
