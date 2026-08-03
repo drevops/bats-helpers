@@ -19,6 +19,16 @@ capture_counted() {
   run printf '%s\n' "error one" "ok" "error two" "ok"
 }
 
+# The output the format count assertions read.
+capture_formatted() {
+  run printf '%s\n' "Deleted 12 files" "ok" "Deleted 3 files"
+}
+
+# The same, with one of the two matching lines cased differently.
+capture_formatted_mixed() {
+  run printf '%s\n' "Deleted 12 files" "ok" "DELETED 3 files"
+}
+
 ##
 ## Line assertions.
 ##
@@ -540,10 +550,10 @@ capture_counted() {
 ##
 
 @test "assert_line_count_matches_format" {
-  run printf '%s\n' "Deleted 12 files" "ok" "Deleted 3 files"
+  capture_formatted
   assert_line_count_matches_format 2 "Deleted %d files"
 
-  run printf '%s\n' "Deleted 12 files" "ok" "Deleted 3 files"
+  capture_formatted
   run assert_line_count_matches_format 1 "Deleted %d files"
   assert_failure
   assert_output_contains "Output has 2 lines matching 'Deleted %d files', but should have 1"
@@ -551,30 +561,30 @@ capture_counted() {
 }
 
 @test "assert_line_count_matches_format_case" {
-  run printf '%s\n' "Deleted 12 files" "ok" "DELETED 3 files"
+  capture_formatted_mixed
   assert_line_count_matches_format_case 1 "Deleted %d files"
 
-  run printf '%s\n' "Deleted 12 files" "ok" "DELETED 3 files"
+  capture_formatted_mixed
   run assert_line_count_matches_format_case 2 "Deleted %d files"
   assert_failure
   assert_output_contains "Output has 1 line matching 'Deleted %d files', but should have 2"
 }
 
 @test "assert_line_count_not_matches_format" {
-  run printf '%s\n' "Deleted 12 files" "ok" "Deleted 3 files"
+  capture_formatted
   assert_line_count_not_matches_format 1 "Deleted %d files"
 
-  run printf '%s\n' "Deleted 12 files" "ok" "Deleted 3 files"
+  capture_formatted
   run assert_line_count_not_matches_format 2 "Deleted %d files"
   assert_failure
   assert_output_contains "Output has 1 line not matching 'Deleted %d files', but should have 2"
 }
 
 @test "assert_line_count_not_matches_format_case" {
-  run printf '%s\n' "Deleted 12 files" "ok" "DELETED 3 files"
+  capture_formatted_mixed
   assert_line_count_not_matches_format_case 2 "Deleted %d files"
 
-  run printf '%s\n' "Deleted 12 files" "ok" "DELETED 3 files"
+  capture_formatted_mixed
   run assert_line_count_not_matches_format_case 1 "Deleted %d files"
   assert_failure
   assert_output_contains "Output has 2 lines not matching 'Deleted %d files', but should have 1"
@@ -636,6 +646,7 @@ capture_counted() {
   # Clamped at the start.
   capture
   run line_context 0
+  assert_success
   assert_output "> 0: Usage: tool.sh
   1: Reading config
   2: Deleted 12 files"
@@ -643,6 +654,7 @@ capture_counted() {
   # Clamped at the end.
   capture
   run line_context 3
+  assert_success
   assert_output "  1: Reading config
   2: Deleted 12 files
 > 3: Done."
@@ -651,6 +663,7 @@ capture_counted() {
   # that the mark overwrites the indent instead of shifting the line.
   run printf '%s\n' a b c d e f g h i j k l
   run line_context 10
+  assert_success
   assert_output "   8: i
    9: j
 > 10: k
@@ -659,26 +672,33 @@ capture_counted() {
 
 @test "line_plural" {
   run line_plural 0
+  assert_success
   assert_output "0 lines"
 
   run line_plural 1
+  assert_success
   assert_output "1 line"
 
   run line_plural 2
+  assert_success
   assert_output "2 lines"
 }
 
 @test "line_participle" {
   run line_participle "literal" 0
+  assert_success
   assert_output "containing"
 
   run line_participle "regex" 0
+  assert_success
   assert_output "matching"
 
   run line_participle "format" 0
+  assert_success
   assert_output "matching"
 
   run line_participle "literal" 1
+  assert_success
   assert_output "not containing"
 }
 
@@ -708,10 +728,12 @@ capture_counted() {
 @test "line_equal_indices" {
   capture_counted
   run line_equal_indices "ok"
+  assert_success
   assert_output "1 3"
 
   capture_counted
   run line_equal_indices "absent"
+  assert_success
   assert_output ""
 }
 
@@ -750,7 +772,7 @@ capture_counted() {
 
 @test "line_assert_count_match" {
   capture_counted
-  run line_assert_count_match 2 0 "literal" 0
+  run line_assert_count_match 0 "literal" 0 2
   assert_failure
   assert_output_contains "A line count and a needle are required."
 

@@ -440,7 +440,7 @@ assert_line_count() {
 }
 
 ##
-# Asserts that the number of captured lines is not a number.
+# Asserts that the number of captured lines differs from a number.
 #
 # Arguments:
 #   1. expected: Number of lines not to expect.
@@ -1188,7 +1188,8 @@ line_assert_count_match() {
   local participle
   participle="$(line_participle "${mode}" "${negate}")"
 
-  local message="Output has $(line_plural "${actual}") ${participle} '${needle}', but should have ${expected}"
+  local message
+  message="Output has $(line_plural "${actual}") ${participle} '${needle}', but should have ${expected}"
   message="${message}"$'\n'"$(string_match_footer "${mode}" "${case_sensitive}" "${case_decided}")"
 
   format_error "${message}" | flunk

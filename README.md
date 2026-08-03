@@ -157,7 +157,7 @@ Assert how many lines there are, or how many of them a needle matches:
 
 Every `contains`, `matches` and `matches_format` assertion above has a `_case` twin that matches case-sensitively - `assert_line_contains_case`, `assert_no_line_matches_case`, `assert_line_count_not_contains_case` and so on. `assert_line`, `assert_any_line`, `assert_no_line` and the two `assert_line_count` assertions compare exactly and have no twin. See [Match modes](#match-modes).
 
-Throughout, `not_` describes the needle and never the count, exactly as it does elsewhere in the library. `assert_line_count_not_contains 3 "error"` asserts that three lines do **not** contain `error`, not that the number of lines containing it is other than three:
+`not` negates whatever follows it. Where a verb follows, it negates the match, exactly as it does elsewhere in the library: `assert_line_count_not_contains 3 "error"` asserts that three lines do **not** contain `error`, not that the number of lines containing it is other than three. Where nothing follows it - `assert_line_not`, `assert_line_count_not` - there is no verb to negate, so it negates the assertion's own comparison:
 
 ```bash
 run ./script.sh
@@ -195,6 +195,8 @@ case: insensitive
 `run` drops empty lines unless it is asked to keep them, so an empty line is not an element of `${lines[@]}` and every index after it shifts up. Pass `--keep-empty-lines` when the blank lines are part of what is being asserted, or when an index has to line up with the output as it was printed:
 
 ```bash
+bats_require_minimum_version 1.13.0
+
 # 'lines' holds 'first' and 'third'; the empty line is not an element.
 run printf '%s\n' "first" "" "third"
 assert_line_count 2
@@ -207,7 +209,7 @@ assert_line 1 ""
 assert_line 2 "third"
 ```
 
-As with `--separate-stderr`, a `bats_require_minimum_version` declaration of `1.5.0` or newer is needed, or bats-core prints a `BW02` warning for every `run` that carries a flag.
+As with `--separate-stderr`, that declaration has to be `1.5.0` or newer, or bats-core prints a `BW02` warning for every `run` that carries a flag.
 
 #### Exit statuses
 
