@@ -617,6 +617,10 @@ mock_forward_enabled() {
 #
 # Outputs:
 #   STDERR: A diagnostic when the real command is not on PATH.
+#
+# Returns:
+#   Never returns to the caller. The process is replaced by the real command,
+#   or exits 127 when the real command is not on PATH.
 ##
 mock_forward_exec() {
   local mock="${1}"

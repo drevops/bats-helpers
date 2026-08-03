@@ -396,15 +396,11 @@ mock_paths() {
 #   STDOUT: One command name per line.
 ##
 mock_names() {
-  local dir
-  dir="$(mock_resolve_tmp)" || return 1
-
-  local name_file
-  for name_file in "${dir}"/*.name; do
-    [ -e "${name_file}" ] || continue
-    cat "${name_file}"
+  local mock
+  while IFS= read -r mock; do
+    cat "${mock}.name"
     echo
-  done
+  done < <(mock_paths)
 
   return 0
 }
