@@ -418,7 +418,7 @@ These names still work, but print a notice on every call and are removed in the 
 | `restore_file`                   | `file_restore`                 |
 | `random_string`                  | `string_random`                |
 
-The eight names below the assertion aliases were renamed to put the subject first, so every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. Only the name changed: arguments, output and return semantics are identical, so a call is updated by swapping the name alone.
+The eight names below the assertion aliases were renamed to put the subject first, so every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. The replacement keeps the arguments, the standard output and the return semantics, so a call is updated by swapping the name alone. The deprecated alias additionally writes its notice to file descriptor 3.
 
 `assert_contains` and `assert_not_contains` take the needle first, while their replacements take the haystack first, so a call has to swap its arguments as well as change its name:
 

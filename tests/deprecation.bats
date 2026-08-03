@@ -66,7 +66,7 @@ load _test_helper
 
   assert_success
   assert_equal 5 "${#output}"
-  assert_string_not_contains "${output}" " "
+  assert_empty "${output//[a-zA-Z0-9]/}"
   assert_file_contains "${notice}" "Deprecated: 'random_string' will be removed in the next version. Use 'string_random' instead."
 }
 
@@ -119,6 +119,7 @@ load _test_helper
   # shellcheck disable=SC2016
   run read_env '$VAR1' 3>"${notice}"
 
+  assert_success
   assert_output_contains "val1"
   assert_file_contains "${notice}" "Deprecated: 'read_env' will be removed in the next version. Use 'file_read_env' instead."
 

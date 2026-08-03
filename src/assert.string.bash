@@ -103,9 +103,17 @@ string_random() {
   local ret=''
   local i
 
-  # Built from Bash's own generator rather than a '/dev/urandom' pipeline: a
-  # pipeline leaks its tools' STDERR into the value that Bats' 'run' returns,
-  # and leaves a reader spinning on the device when the writer exits first.
+  if ! [[ ${len} =~ ^[0-9]+$ ]]; then
+    flunk "Length must be a non-negative integer."
+    return 1
+  fi
+
+  # Base 10 is explicit so that a zero-padded length is not read as octal.
+  len=$((10#${len}))
+
+  # A '/dev/urandom' pipeline is not usable here: its tools' STDERR reaches the
+  # caller, where Bats' 'run' merges it into the returned value, and its reader
+  # can outlive the writer and hang.
   for ((i = 0; i < len; i++)); do
     ret="${ret}${alphabet:RANDOM%${#alphabet}:1}"
   done
