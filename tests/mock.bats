@@ -203,6 +203,43 @@ load _test_helper
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
+@test "Mock: paths without a sandbox" {
+  local original="${BATS_TEST_TMPDIR}"
+
+  BATS_HELPERS_MOCK_TMPDIR=""
+  BATS_MOCK_TMPDIR=""
+  BATS_TEST_TMPDIR=""
+  run mock_paths
+  BATS_TEST_TMPDIR="${original}"
+
+  assert_failure
+  assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
+}
+
+@test "Mock: names without a sandbox" {
+  local original="${BATS_TEST_TMPDIR}"
+
+  BATS_HELPERS_MOCK_TMPDIR=""
+  BATS_MOCK_TMPDIR=""
+  BATS_TEST_TMPDIR=""
+  run mock_names
+  BATS_TEST_TMPDIR="${original}"
+
+  assert_failure
+  assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
+}
+
+@test "Mock: registry" {
+  mock_curl="$(mock_command "curl")"
+  mock_git="$(mock_command "git")"
+
+  assert_string_contains "$(mock_paths)" "${mock_curl}"
+  assert_string_contains "$(mock_paths)" "${mock_git}"
+
+  assert_string_contains "$(mock_names)" "curl"
+  assert_string_contains "$(mock_names)" "git"
+}
+
 @test "Mock: call environment" {
   mock_curl=$(mock_command "curl")
 

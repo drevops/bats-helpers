@@ -396,11 +396,16 @@ mock_paths() {
 #   STDOUT: One command name per line.
 ##
 mock_names() {
+  local paths
+  paths="$(mock_paths)" || return 1
+
+  [ -n "${paths}" ] || return 0
+
   local mock
   while IFS= read -r mock; do
     cat "${mock}.name"
     echo
-  done < <(mock_paths)
+  done <<<"${paths}"
 
   return 0
 }

@@ -2,7 +2,7 @@
 #
 # Tests for the ordered mock call log.
 #
-# shellcheck disable=SC2034
+# shellcheck disable=SC2030,SC2031,SC2034
 
 load _test_helper
 
@@ -164,6 +164,32 @@ load _test_helper
   run mock_assert_not_called "crul"
   assert_failure
   assert_output_contains "Command 'crul' is not mocked. Register it with 'mock_command' first."
+}
+
+@test "Log path without a sandbox" {
+  local original="${BATS_TEST_TMPDIR}"
+
+  BATS_HELPERS_MOCK_TMPDIR=""
+  BATS_MOCK_TMPDIR=""
+  BATS_TEST_TMPDIR=""
+  run mock_log_path
+  BATS_TEST_TMPDIR="${original}"
+
+  assert_failure
+  assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
+}
+
+@test "Sequence assertion without a sandbox" {
+  local original="${BATS_TEST_TMPDIR}"
+
+  BATS_HELPERS_MOCK_TMPDIR=""
+  BATS_MOCK_TMPDIR=""
+  BATS_TEST_TMPDIR=""
+  run mock_assert_calls "curl 'example.com'"
+  BATS_TEST_TMPDIR="${original}"
+
+  assert_failure
+  assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
 @test "Log covers a mock created without a command name" {
