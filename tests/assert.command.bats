@@ -6,8 +6,8 @@
 
 load _test_helper
 
-# Passing flags to 'run' warns below this version.
-bats_require_minimum_version 1.5.0
+# Matches the library's minimum, and silences the warning flags on 'run' emit.
+bats_require_minimum_version 1.13.0
 
 @test "assert_success" {
   status=0

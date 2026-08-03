@@ -118,7 +118,7 @@ Use these after running a command with `run`.
 `run` merges STDERR into `$output`, so on its own it cannot tell which stream a message went to. Pass `--separate-stderr` to capture the two apart: `$output` then holds STDOUT alone, and the assertions above read the captured STDERR.
 
 ```bash
-bats_require_minimum_version 1.5.0
+bats_require_minimum_version 1.13.0
 
 @test "the script warns without polluting stdout" {
   run --separate-stderr ./script.sh
@@ -129,7 +129,7 @@ bats_require_minimum_version 1.5.0
 }
 ```
 
-`bats_require_minimum_version 1.5.0` is what bats-core asks for before `run` accepts flags; without it every flagged call prints a `BW02` warning.
+Without a `bats_require_minimum_version` declaration of `1.5.0` or newer, bats-core prints a `BW02` warning for every `run` that carries a flag.
 
 Each of these assertions fails when `--separate-stderr` is missing, instead of comparing against a value that was never captured:
 
@@ -139,7 +139,7 @@ Stderr was not captured. Run the command with 'run --separate-stderr'.
 
 The check matters most for `assert_stderr_empty`, which would otherwise pass for a command that did write to STDERR - the stream having simply never been captured. Use `assert_stderr_captured` to make the same check on its own.
 
-Once captured, STDERR is appended to every failure report, so a command that failed shows why rather than only that it did:
+A captured STDERR that is not empty is appended to failure reports, so a command that failed shows why rather than only that it did:
 
 ```text
 Command failed with exit status 3
