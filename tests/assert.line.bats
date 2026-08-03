@@ -53,6 +53,18 @@ capture_formatted_mixed() {
   run assert_line -1 "Usage: tool.sh"
   assert_failure
   assert_output_contains "Line 3 (from index -1) does not equal 'Usage: tool.sh'"
+
+  # An index outside the captured lines is an error rather than a comparison
+  # against an empty string, at either end.
+  capture
+  run assert_line 4 "Done."
+  assert_failure
+  assert_output_contains "Line index 4 is out of range for output with 4 lines."
+
+  capture
+  run assert_line -5 "Usage: tool.sh"
+  assert_failure
+  assert_output_contains "Line index -5 is out of range for output with 4 lines."
 }
 
 @test "assert_line_not" {
@@ -84,6 +96,11 @@ capture_formatted_mixed() {
   assert_output_contains "match mode: literal"
   assert_output_contains "case: insensitive"
   assert_output_contains "> 1: Reading config"
+
+  capture
+  run assert_line_contains 9 "config"
+  assert_failure
+  assert_output_contains "Line index 9 is out of range for output with 4 lines."
 }
 
 @test "assert_line_contains_case" {

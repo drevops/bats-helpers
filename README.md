@@ -155,7 +155,7 @@ Assert how many lines there are, or how many of them a needle matches:
 | `assert_line_count_matches_format`   | Asserts how many lines match a format string               |
 | `assert_line_count_not_matches_format` | Asserts how many lines do not match a format string      |
 
-Every `contains`, `matches` and `matches_format` assertion above has a `_case` twin that matches case-sensitively - `assert_line_contains_case`, `assert_no_line_matches_case`, `assert_line_count_not_contains_case` and so on. `assert_line`, `assert_any_line`, `assert_no_line` and the two `assert_line_count` assertions compare exactly and have no twin. See [Match modes](#match-modes).
+Every `contains`, `matches` and `matches_format` assertion above has a `_case` twin that matches case-sensitively - `assert_line_contains_case`, `assert_no_line_matches_case`, `assert_line_count_not_contains_case` and so on. `assert_line`, `assert_line_not`, `assert_any_line`, `assert_no_line` and the two `assert_line_count` assertions compare exactly and have no twin. See [Match modes](#match-modes).
 
 `not` negates whatever follows it. Where a verb follows, it negates the match, exactly as it does elsewhere in the library: `assert_line_count_not_contains 3 "error"` asserts that three lines do **not** contain `error`, not that the number of lines containing it is other than three. Where nothing follows it - `assert_line_not`, `assert_line_count_not` - there is no verb to negate, so it negates the assertion's own comparison:
 
