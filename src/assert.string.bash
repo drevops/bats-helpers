@@ -99,12 +99,16 @@ assert_equal() {
 ##
 string_random() {
   local len="${1:-8}"
-  local ret
+  local alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  local ret=''
+  local i
 
-  # 'tr' reads the device directly and 'head' counts bytes, so neither a
-  # broken-pipe warning nor a locale complaint can reach the caller's STDERR,
-  # where Bats' 'run' would merge it into the returned string.
-  ret="$(LC_ALL=C tr -dc 'a-zA-Z0-9' </dev/urandom 2>/dev/null | head -c "${len}")"
+  # Built from Bash's own generator rather than a '/dev/urandom' pipeline: a
+  # pipeline leaks its tools' STDERR into the value that Bats' 'run' returns,
+  # and leaves a reader spinning on the device when the writer exits first.
+  for ((i = 0; i < len; i++)); do
+    ret="${ret}${alphabet:RANDOM%${#alphabet}:1}"
+  done
 
   echo "${ret}"
 }
