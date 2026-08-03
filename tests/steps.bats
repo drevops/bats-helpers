@@ -7,7 +7,7 @@
 load _test_helper
 
 @test "Substring presence" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "Some Substring"
   )
 
@@ -32,7 +32,7 @@ load _test_helper
 }
 
 @test "Substring presence - negative: caller recovers" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "Some Substring"
   )
 
@@ -45,7 +45,7 @@ load _test_helper
 }
 
 @test "Substring absence" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "- Some Substring"
   )
 
@@ -70,7 +70,7 @@ load _test_helper
 }
 
 @test "Substring absence - negative: caller recovers" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "- Some Substring"
   )
 
@@ -83,7 +83,7 @@ load _test_helper
 }
 
 @test "Direct command execution" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin # 0 # someval"
   )
 
@@ -93,7 +93,7 @@ load _test_helper
 }
 
 @test "Direct command execution, args" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
@@ -103,7 +103,7 @@ load _test_helper
 }
 
 @test "Wrapped execution through Bats' 'run'" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin # 0 # someval"
   )
 
@@ -114,7 +114,7 @@ load _test_helper
 }
 
 @test "Command, args" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
@@ -125,7 +125,7 @@ load _test_helper
 }
 
 @test "Command, args - negative: wrong args" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
@@ -139,7 +139,7 @@ load _test_helper
 }
 
 @test "Command, args - negative: wrong args - caller recovers" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
@@ -153,7 +153,7 @@ load _test_helper
 }
 
 @test "Command - negative: mock does not exist" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
@@ -163,7 +163,7 @@ load _test_helper
 }
 
 @test "Command - negative: mock does not exist - caller recovers" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
 
@@ -174,7 +174,7 @@ load _test_helper
 }
 
 @test "Command, args, no exit code or output" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2"
   )
 
@@ -185,7 +185,7 @@ load _test_helper
 }
 
 @test "Command, args, output, no exit code" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # someval with spaces"
   )
 
@@ -197,7 +197,7 @@ load _test_helper
 }
 
 @test "Command, args, error exit code" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 1 # someval with spaces"
   )
 
@@ -210,7 +210,7 @@ load _test_helper
 }
 
 @test "Command, args - negative: incorrect input - delim" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 ## someval"
   )
 
@@ -220,7 +220,7 @@ load _test_helper
 }
 
 @test "Command, args - negative: incorrect input - delim - caller recovers" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 ## someval"
   )
 
@@ -231,7 +231,7 @@ load _test_helper
 }
 
 @test "Command, multiple commands, same, repeated call" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
   )
@@ -249,7 +249,7 @@ load _test_helper
 }
 
 @test "Command, multiple commands, same, combined execution" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
   )
@@ -264,7 +264,7 @@ load _test_helper
 }
 
 @test "Command, multiple commands, same, combined execution, and" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
   )
@@ -279,7 +279,7 @@ load _test_helper
 }
 
 @test "Command, multiple commands, different" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@otherbin --opt1 --opt2 # 0 # someval2 with spaces"
   )
@@ -295,7 +295,7 @@ load _test_helper
 }
 
 @test "Command, multiple commands, different - negative: incorrect arguments" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@otherbin --opt1 --opt2 # 0 # someval2 with spaces"
   )
@@ -311,7 +311,7 @@ load _test_helper
 }
 
 @test "Command, multiple commands, different, repeated call" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
     "@otherbin --opt3 --opt4 # 0 # someval3 with spaces"
@@ -336,7 +336,7 @@ load _test_helper
 }
 
 @test "Command, multiple commands, different, repeated call - negative" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
     "@otherbin --opt3 --opt4 # 0 # someval3 with spaces"
@@ -359,7 +359,7 @@ load _test_helper
 }
 
 @test "Command, multiple commands, different, repeated call, order" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt11 --opt21 # 0 # someval1 with spaces"
     "@somebin --opt11 --opt22 # 0 # someval2 with spaces"
     "@otherbin --opt31 --opt41 # 0 # someval3 with spaces"
@@ -381,7 +381,7 @@ load _test_helper
 }
 
 @test "Command, multiple commands, different, repeated call, order - negative" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt11 --opt21 # 0 # someval1 with spaces"
     "@somebin --opt11 --opt22 # 0 # someval2 with spaces"
     "@otherbin --opt31 --opt41 # 0 # someval3 with spaces"
@@ -406,7 +406,7 @@ load _test_helper
 @test "Command, multiple commands, different, combined, repeated call, order" {
   # To assert string presence/absence without creating a script that prints
   # strings, we use the output of commands.
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
@@ -429,7 +429,7 @@ load _test_helper
 @test "Command, multiple commands, different, combined, repeated call, order, shorthand" {
   # To assert string presence/absence without creating a script that prints
   # strings, we use the output of commands.
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 --opt2 # someval1 with spaces"
     "someval1 with spaces"
     "@somebin --opt1 --opt2 # someval2 with spaces"
@@ -450,7 +450,7 @@ load _test_helper
 }
 
 @test "Command, multi-line argument" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 \
     --opt2 \
       --opt3 \
@@ -471,7 +471,7 @@ load _test_helper
 }
 
 @test "Command with side effect - basic file creation" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     '@somebin --opt1 # 0 # success # touch ${BATS_TEST_TMPDIR}/side_effect_file'
   )
 
@@ -487,7 +487,7 @@ load _test_helper
 }
 
 @test "Command with side effect - environment variable" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 # 0 # success # export TEST_SIDE_EFFECT=executed"
   )
 
@@ -502,7 +502,7 @@ load _test_helper
 }
 
 @test "Command with side effect - echo to file" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 # 0 # success # echo 'side effect executed' > \${BATS_TEST_TMPDIR}/side_effect_output"
   )
 
@@ -520,7 +520,7 @@ load _test_helper
 }
 
 @test "Command with side effect - multiple commands" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 # 0 # success # touch \${BATS_TEST_TMPDIR}/file1; echo 'data' > \${BATS_TEST_TMPDIR}/file2"
   )
 
@@ -539,7 +539,7 @@ load _test_helper
 }
 
 @test "Command with side effect - exit status and output" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --opt1 # 1 # error message # echo 'error logged' > \${BATS_TEST_TMPDIR}/error_log"
   )
 
@@ -557,7 +557,7 @@ load _test_helper
 }
 
 @test "Command with side effect - no output, only side effect" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     '@somebin --opt1 # 0 # # touch ${BATS_TEST_TMPDIR}/no_output_side_effect'
   )
 
@@ -572,7 +572,7 @@ load _test_helper
 }
 
 @test "Command with side effect - shorthand status with side effect" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     '@somebin --opt1 # success output # # touch ${BATS_TEST_TMPDIR}/shorthand_side_effect'
   )
 
@@ -588,7 +588,7 @@ load _test_helper
 }
 
 @test "Multiple commands with different side effects" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     '@cmd1 # 0 # output1 # touch ${BATS_TEST_TMPDIR}/cmd1_file'
     "@cmd2 # 0 # output2 # echo 'cmd2 executed' > \${BATS_TEST_TMPDIR}/cmd2_file"
   )
@@ -613,7 +613,7 @@ load _test_helper
 }
 
 @test "Command with side effect - repeated calls with different side effects" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     '@somebin # 0 # call1 # touch ${BATS_TEST_TMPDIR}/call1_file'
     '@somebin # 0 # call2 # touch ${BATS_TEST_TMPDIR}/call2_file'
   )
@@ -636,7 +636,7 @@ load _test_helper
 }
 
 @test "Command with side effect - error in parsing too many separators" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin # 0 # output # side effect # extra"
   )
 
@@ -646,7 +646,7 @@ load _test_helper
 }
 
 @test "Command with side effect - consecutive ## still forbidden" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin # 0 ## output # side effect"
   )
 
@@ -656,7 +656,7 @@ load _test_helper
 }
 
 @test "Wildcard command - any arguments accepted" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin * # 0 # wildcard output 1"
     "@somebin * # 0 # wildcard output 2"
     "@somebin * # 0 # wildcard output 3"
@@ -681,7 +681,7 @@ load _test_helper
 }
 
 @test "Wildcard command - multiple calls with different args" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@git * # 0 # git output 1"
     "@git * # 0 # git output 2"
   )
@@ -700,7 +700,7 @@ load _test_helper
 }
 
 @test "Wildcard command - with side effects" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     '@somebin * # 0 # wildcard success # touch ${BATS_TEST_TMPDIR}/wildcard_file'
   )
 
@@ -717,7 +717,7 @@ load _test_helper
 }
 
 @test "Wildcard command - error status" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin * # 1 # wildcard error"
   )
 
@@ -731,7 +731,7 @@ load _test_helper
 }
 
 @test "Mixed exact and wildcard commands" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@git status # 0 # exact status output"
     "@git * # 0 # wildcard git output"
     "@npm * # 1 # npm error"
@@ -758,7 +758,7 @@ load _test_helper
 }
 
 @test "Wildcard command - shorthand syntax" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin * # wildcard shorthand output"
   )
 
@@ -772,7 +772,7 @@ load _test_helper
 }
 
 @test "Escaped hash - URL with fragment in command arguments" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@curl -fsSL https://example.com\#anchor -o file.php # 0"
   )
 
@@ -784,7 +784,7 @@ load _test_helper
 }
 
 @test "Escaped hash - Git URL with branch fragment" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@git clone https://github.com/user/repo.git\#stable # 0 # Cloning repo"
   )
 
@@ -797,7 +797,7 @@ load _test_helper
 }
 
 @test "Escaped hash - multiple escaped hashes in arguments" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin --url1=https://a.com\#tag1 --url2=https://b.com\#tag2 # 0"
   )
 
@@ -809,7 +809,7 @@ load _test_helper
 }
 
 @test "Escaped hash - in output" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@somebin # 0 # Output with \# hash"
   )
 
@@ -822,7 +822,7 @@ load _test_helper
 }
 
 @test "Escaped hash - in side effect" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     '@somebin # 0 # success # echo "Comment \# starts here" > ${BATS_TEST_TMPDIR}/escaped_hash'
   )
 
@@ -840,7 +840,7 @@ load _test_helper
 }
 
 @test "Escaped hash - complex URL with query and fragment" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@curl -fsSL https://example.com/install?key=123\#section -o installer.php # 0 # Downloaded"
   )
 
@@ -853,7 +853,7 @@ load _test_helper
 }
 
 @test "Escaped hash - mix of escaped and delimiter hashes" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@php installer.php --uri=https://github.com/repo.git\#stable # 0 # Success \# done"
   )
 
@@ -866,7 +866,7 @@ load _test_helper
 }
 
 @test "Escaped hash - all three parts with escaped hashes" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     '@somebin --url=https://site.com\#tag # 0 # Message with \# hash # echo "Comment \# here" > ${BATS_TEST_TMPDIR}/all_escaped'
   )
 
@@ -884,7 +884,7 @@ load _test_helper
 }
 
 @test "Escaped hash - real-world example from user" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@curl -fsSL https://www.vortextemplate.com/install?1234567890 -o installer.php # 0"
     "@php installer.php --no-interaction --uri=https://github.com/drevops/vortex.git\#stable # 0"
     "Using installer script from URL: https://www.vortextemplate.com/install"
@@ -905,9 +905,9 @@ load _test_helper
 
 @test "Debug output" {
   debug="${BATS_TEST_TMPDIR}/debug.txt"
-  export RUN_STEPS_DEBUG=1
+  export BATS_HELPERS_STEPS_DEBUG=1
 
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@curl example.com # 0 # Some Substring"
     "Some Substring"
   )
@@ -928,7 +928,7 @@ load _test_helper
 @test "Debug output - disabled" {
   debug="${BATS_TEST_TMPDIR}/debug.txt"
 
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "Some Substring"
   )
 
@@ -938,13 +938,13 @@ load _test_helper
   assert_empty "$(cat "${debug}")"
 }
 
-@test "Missing STEPS" {
+@test "Missing BATS_HELPERS_STEPS" {
   run steps_run "assert"
   assert_failure
-  assert_output_contains "STEPS array is empty."
+  assert_output_contains "BATS_HELPERS_STEPS array is empty."
 }
 
-@test "Missing STEPS - caller recovers" {
+@test "Missing BATS_HELPERS_STEPS - caller recovers" {
   recovered=0
   steps_run "assert" 2>/dev/null || recovered=1
 
@@ -952,7 +952,7 @@ load _test_helper
 }
 
 @test "Mocked command called fewer times than expected" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@curl example.com # 0"
     "@curl example.org # 0"
   )
@@ -966,7 +966,7 @@ load _test_helper
 }
 
 @test "Mocked command called fewer times than expected - caller recovers" {
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "@curl example.com # 0"
     "@curl example.org # 0"
   )

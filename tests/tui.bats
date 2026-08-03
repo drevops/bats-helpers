@@ -7,7 +7,7 @@
 load _test_helper
 
 @test "Interactive" {
-  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
+  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   declare -a answers=(
     "custom answer1"
@@ -21,7 +21,7 @@ load _test_helper
 }
 
 @test "Defaults" {
-  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
+  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   declare -a answers=(
     "nothing"
@@ -34,7 +34,8 @@ load _test_helper
   assert_output_contains "custom answer2"
 }
 
-@test "Missing SCRIPT_FILE" {
+@test "Missing BATS_HELPERS_SCRIPT_FILE" {
+  unset BATS_HELPERS_SCRIPT_FILE
   unset SCRIPT_FILE
 
   declare -a answers=(
@@ -43,10 +44,11 @@ load _test_helper
   )
   run tui_run "${answers[@]}"
   assert_failure
-  assert_output_contains "SCRIPT_FILE is not set."
+  assert_output_contains "BATS_HELPERS_SCRIPT_FILE is not set."
 }
 
-@test "Missing SCRIPT_FILE - caller recovers" {
+@test "Missing BATS_HELPERS_SCRIPT_FILE - caller recovers" {
+  unset BATS_HELPERS_SCRIPT_FILE
   unset SCRIPT_FILE
 
   declare -a answers=(
@@ -60,8 +62,8 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Non-existing SCRIPT_FILE" {
-  export SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
+@test "Non-existing BATS_HELPERS_SCRIPT_FILE" {
+  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
 
   declare -a answers=(
     "nothing"
@@ -69,11 +71,11 @@ load _test_helper
   )
   run tui_run "${answers[@]}"
   assert_failure
-  assert_output_contains "SCRIPT_FILE does not exist."
+  assert_output_contains "BATS_HELPERS_SCRIPT_FILE does not exist."
 }
 
-@test "Non-existing SCRIPT_FILE - caller recovers" {
-  export SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
+@test "Non-existing BATS_HELPERS_SCRIPT_FILE - caller recovers" {
+  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
 
   declare -a answers=(
     "nothing"

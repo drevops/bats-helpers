@@ -232,7 +232,7 @@ load _test_helper
   # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
-  export ASSERT_DIR_EXCLUDE=(vendor2)
+  export BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2)
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
 }
@@ -266,7 +266,7 @@ load _test_helper
   # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
-  export ASSERT_DIR_EXCLUDE=(vendor2)
+  export BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2)
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
 }
 

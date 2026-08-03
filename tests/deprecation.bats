@@ -5,9 +5,15 @@
 # Each test asserts that the old name still works and still warns. File
 # descriptor 3 is redirected per call so the notice can be asserted on.
 #
-# shellcheck disable=SC2034,SC2129
+# shellcheck disable=SC2030,SC2031,SC2034,SC2129
 
 load _test_helper
+
+fixture_add() {
+  local num1="${1}"
+  local num2="${2}"
+  echo $((num1 + num2))
+}
 
 @test "assert_not_git_repo" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
@@ -72,7 +78,7 @@ load _test_helper
 
 @test "run_steps" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
-  declare -a STEPS=(
+  declare -a BATS_HELPERS_STEPS=(
     "Some Substring"
   )
 
@@ -139,6 +145,110 @@ load _test_helper
 
   assert_file_not_contains "${BATS_TEST_TMPDIR}/.env" "VAR=value"
   assert_file_contains "${notice}" "Deprecated: 'restore_file' will be removed in the next version. Use 'file_restore' instead."
+}
+
+@test "STEPS" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  declare -a STEPS=(
+    "Some Substring"
+  )
+
+  run echo "Some Substring"
+  steps_run "assert" 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'STEPS' will be removed in the next version. Use 'BATS_HELPERS_STEPS' instead."
+}
+
+@test "RUN_STEPS_DEBUG" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  export RUN_STEPS_DEBUG=1
+  declare -a BATS_HELPERS_STEPS=(
+    "Some Substring"
+  )
+
+  run echo "Some Substring"
+  steps_run "assert" 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'RUN_STEPS_DEBUG' will be removed in the next version. Use 'BATS_HELPERS_STEPS_DEBUG' instead."
+  assert_file_contains "${notice}" "  > Total steps : 1"
+}
+
+@test "TEST_CASES" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  declare -a TEST_CASES=(
+    1 2 3
+  )
+
+  dataprovider_run "fixture_add" 3 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'TEST_CASES' will be removed in the next version. Use 'BATS_HELPERS_TEST_CASES' instead."
+}
+
+@test "SCRIPT_FILE" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
+
+  tui_run "custom answer1" "custom answer2" 3>"${notice}"
+
+  assert_output_contains "custom answer1"
+  assert_file_contains "${notice}" "Deprecated: 'SCRIPT_FILE' will be removed in the next version. Use 'BATS_HELPERS_SCRIPT_FILE' instead."
+}
+
+@test "ASSERT_DIR_EXCLUDE" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/1.txt"
+  export ASSERT_DIR_EXCLUDE=(vendor2)
+
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing" 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'ASSERT_DIR_EXCLUDE' will be removed in the next version. Use 'BATS_HELPERS_ASSERT_DIR_EXCLUDE' instead."
+}
+
+@test "BATS_FIXTURE_EXPORT_CODEBASE_ENABLED" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/build"
+
+  fixture_export_codebase "${BATS_TEST_TMPDIR}/build" 3>"${notice}"
+
+  assert_file_exists "${BATS_TEST_TMPDIR}/build/README.md"
+  assert_file_contains "${notice}" "Deprecated: 'BATS_FIXTURE_EXPORT_CODEBASE_ENABLED' will be removed in the next version. Use 'BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED' instead."
+}
+
+@test "Prefixed variables take precedence and emit no notices" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+
+  declare -a STEPS=("Absent Substring")
+  declare -a BATS_HELPERS_STEPS=("Some Substring")
+  export RUN_STEPS_DEBUG=1
+  export BATS_HELPERS_STEPS_DEBUG=0
+  run echo "Some Substring"
+  steps_run "assert" 3>"${notice}"
+
+  declare -a TEST_CASES=(1 2 4)
+  declare -a BATS_HELPERS_TEST_CASES=(1 2 3)
+  dataprovider_run "fixture_add" 3 3>>"${notice}"
+
+  export SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
+  export BATS_HELPERS_SCRIPT_FILE="tests/fixtures/tui_script.sh"
+  tui_run "custom answer1" "custom answer2" 3>>"${notice}"
+  assert_output_contains "custom answer1"
+
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/1.txt"
+  export ASSERT_DIR_EXCLUDE=(other)
+  export BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2)
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing" 3>>"${notice}"
+
+  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=0
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/build"
+  fixture_export_codebase "${BATS_TEST_TMPDIR}/build" 3>>"${notice}"
+  assert_file_not_exists "${BATS_TEST_TMPDIR}/build/README.md"
+
+  assert_file_exists "${notice}"
+  assert_empty "$(cat "${notice}")"
 }
 
 @test "Assertions calling other assertions emit no notices" {
