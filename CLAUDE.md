@@ -78,7 +78,9 @@ Two exceptions:
 ### Variable Naming
 Every variable the library reads from the wider environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`. This holds in `src/mock.bash` too: a variable that reaches the consumer is the library's whichever upstream it came from, so it reads `BATS_HELPERS_MOCK_TMPDIR` and `BATS_HELPERS_MOCK_USER`.
 
-`STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the three exceptions and stay unprefixed. They are not environment configuration but the test data itself, declared with `declare -a` on the line above the call that reads them, so the declaration and its use are read together and a long prefix costs more in daily ergonomics than the collision risk costs in rare confusion.
+`STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the three exceptions and stay unprefixed. They are not environment configuration but the test data itself, written on the lines directly above the call that reads them, so the declaration and its use are read together and a long prefix costs more in daily ergonomics than the collision risk costs in rare confusion. `STEPS` and `TEST_CASES` are arrays declared with `declare -a`; `SCRIPT_FILE` is a scalar path.
+
+A deprecated name is read only when its replacement is unset **or empty**, so exporting the replacement as an empty string falls back rather than taking precedence. Every fallback in the library follows that one rule.
 
 The prefix rule covers what the library provides, not what it consumes - bats-core's own `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME` and `BATS_VERBOSE_RUN` keep their names.
 

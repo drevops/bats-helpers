@@ -15,7 +15,8 @@
 #      prompts for them.
 #
 # Globals:
-#   SCRIPT_FILE: Path to the script to run, relative to the current directory.
+#   SCRIPT_FILE: Path to the script to run. Relative paths resolve against the
+#     current directory.
 ##
 tui_run() {
   if [ -z "${SCRIPT_FILE-}" ]; then
@@ -34,18 +35,23 @@ tui_run() {
   fi
 
   local answers=("$@")
-  local input
+  local input=""
   local i
   local val
 
   for i in "${answers[@]}"; do
     val="${i}"
-    [ "${i}" = "nothing" ] && val='\n' || val="${val}"'\n'
-    input="${input-}""${val}"
+    [ "${i}" = "nothing" ] && val=""
+    input="${input}${val}"$'\n'
   done
 
+  # A bare './' would break an absolute path, and omitting it would look up a
+  # relative one on PATH.
+  local script_path="${SCRIPT_FILE}"
+  [ "${script_path#/}" = "${script_path}" ] && script_path="./${script_path}"
+
   # The answers and the path are passed as positional parameters rather than
-  # interpolated, so that an apostrophe, a '%' directive or a space in either
-  # reaches the script literally.
-  run bash -c 'printf "%b" "$1" | "./$2"' _ "${input}" "${SCRIPT_FILE}"
+  # interpolated, and written with '%s' rather than '%b', so that an apostrophe,
+  # a '%' directive, a backslash escape or a space reaches the script literally.
+  run bash -c 'printf "%s" "$1" | "$2"' _ "${input}" "${script_path}"
 }

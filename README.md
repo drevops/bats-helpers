@@ -491,7 +491,7 @@ These names still work, but print a notice on every call and are removed in the 
 | `restore_file`                   | `file_restore`                |
 | `random_string`                  | `string_random`               |
 
-The variables follow the same pattern. The old name is read only when the new one is unset, so setting both leaves the new one in charge:
+The variables follow the same pattern. The old name is read only when the new one is unset or empty, so setting both to real values leaves the new one in charge:
 
 | Deprecated                             | Use instead                                    |
 |----------------------------------------|------------------------------------------------|

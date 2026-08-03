@@ -52,7 +52,7 @@ steps_run() {
   local phase="${1:-${PHASE_ASSERT}}"
   local mocked_commands_var="${2-}"
 
-  if [ -z "${BATS_HELPERS_STEPS_DEBUG+x}" ] && [ -n "${RUN_STEPS_DEBUG+x}" ]; then
+  if [ -z "${BATS_HELPERS_STEPS_DEBUG-}" ] && [ -n "${RUN_STEPS_DEBUG-}" ]; then
     [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'RUN_STEPS_DEBUG' will be removed in the next version. Use 'BATS_HELPERS_STEPS_DEBUG' instead." >&3
   fi
 
@@ -273,7 +273,9 @@ steps_debug_sub() {
 #   BATS_HELPERS_STEPS_DEBUG: Set to '1' to enable debug output.
 ##
 steps_debug_write() {
-  if [ "${BATS_HELPERS_STEPS_DEBUG-${RUN_STEPS_DEBUG-}}" = "1" ]; then
+  local debug="${BATS_HELPERS_STEPS_DEBUG:-${RUN_STEPS_DEBUG-}}"
+
+  if [ "${debug}" = "1" ]; then
     echo "${1}${2}" >&3
   fi
 }

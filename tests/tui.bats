@@ -47,6 +47,29 @@ load _test_helper
   assert_output_contains "100% of %s answers"
 }
 
+@test "Answers containing backslash escapes are not decoded" {
+  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
+
+  declare -a answers=(
+    'literal\nnewline'
+    'literal\ctruncate'
+  )
+  tui_run "${answers[@]}"
+
+  assert_output_contains 'literal\nnewline'
+  assert_output_contains 'literal\ctruncate'
+}
+
+@test "Absolute script path containing a space" {
+  cp "${BATS_TEST_DIRNAME}/fixtures/tui_script.sh" "${BATS_TEST_TMPDIR}/tui script.sh"
+  export SCRIPT_FILE="${BATS_TEST_TMPDIR}/tui script.sh"
+
+  tui_run "custom answer1" "custom answer2"
+
+  assert_output_contains "Static script output"
+  assert_output_contains "custom answer1"
+}
+
 @test "Script path containing a space" {
   cp "${BATS_TEST_DIRNAME}/fixtures/tui_script.sh" "${BATS_TEST_TMPDIR}/tui script.sh"
   export SCRIPT_FILE="tui script.sh"
