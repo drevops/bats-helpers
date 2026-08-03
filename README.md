@@ -722,6 +722,14 @@ git status
 git log
 ```
 
+When the mock carries argument specifications, the diagnostic lists what each of them required, so the mismatch reads beside the call that caused it:
+
+```
+Mock 'git' received a call that no expectation covers: git 'log' '--oneline'
+  specification 1: argument 1 equals 'status'
+  specification 2: argument 1 equals 'push', some argument not_equals '--force'
+```
+
 A response set *without* a call index is a catch-all that answers everything, so it exempts the mock from strictness. That is the per-mock escape hatch, `mock_set_strict "${mock_git}" 0` is the explicit one, and `BATS_HELPERS_MOCK_STRICT` is the suite-wide one:
 
 ```bash

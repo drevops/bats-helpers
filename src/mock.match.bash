@@ -460,6 +460,84 @@ mock_match_value() {
 }
 
 ##
+# Writes what a specification requires of a call.
+#
+# Arguments:
+#   1. spec: Path prefix of the specification.
+#
+# Outputs:
+#   STDOUT: The requirements, comma-separated.
+##
+mock_spec_describe() {
+  local spec="${1}"
+  local description=""
+
+  local arg_num
+  arg_num="$(cat "${spec}.arg_num")"
+
+  local i
+  local position
+  local matcher
+  local value
+
+  for ((i = 1; i <= arg_num; i++)); do
+    position="$(cat "${spec}.arg.${i}.position")"
+    matcher="$(cat "${spec}.arg.${i}.matcher")"
+    value="$(cat "${spec}.arg.${i}.value")"
+
+    [ -n "${description}" ] && description="${description}, "
+
+    if [ "${position}" = "*" ]; then
+      description="${description}some argument ${matcher}"
+    else
+      description="${description}argument ${position} ${matcher}"
+    fi
+
+    case "${matcher}" in
+      present | not_present) ;;
+      *)
+        description="${description} '${value}'"
+        ;;
+    esac
+  done
+
+  if [ -e "${spec}.argc" ]; then
+    [ -n "${description}" ] && description="${description}, "
+    description="${description}$(cat "${spec}.argc") argument(s)"
+  fi
+
+  [ -z "${description}" ] && description="any call"
+
+  echo "${description}"
+}
+
+##
+# Writes what each specification of a mock requires of a call.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#
+# Outputs:
+#   STDOUT: One indented line per specification, and nothing when the mock has
+#           none.
+##
+mock_spec_describe_all() {
+  local mock="${1}"
+
+  [ -e "${mock}.spec_num" ] || return 0
+
+  local spec_num
+  spec_num="$(cat "${mock}.spec_num")"
+
+  local i
+  for ((i = 1; i <= spec_num; i++)); do
+    echo "  specification ${i}: $(mock_spec_describe "${mock}.spec.${i}")"
+  done
+
+  return 0
+}
+
+##
 # Resolves the file holding a response property for a call.
 #
 # Arguments:

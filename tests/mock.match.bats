@@ -367,6 +367,52 @@ bats_require_minimum_version 1.13.0
   assert_output "commits"
 }
 
+@test "mock_spec_describe" {
+  mock_git="$(mock_command "git")"
+
+  spec="$(mock_spec_add "${mock_git}")"
+  assert_equal "any call" "$(mock_spec_describe "${spec}")"
+
+  mock_spec_arg "${spec}" 1 equals "push"
+  mock_spec_arg "${spec}" '*' not_equals "--force"
+  mock_spec_arg "${spec}" 2 present
+  mock_spec_count "${spec}" 3
+
+  assert_equal "argument 1 equals 'push', some argument not_equals '--force', argument 2 present, 3 argument(s)" "$(mock_spec_describe "${spec}")"
+}
+
+@test "mock_spec_describe_all" {
+  mock_git="$(mock_command "git")"
+
+  assert_equal "" "$(mock_spec_describe_all "${mock_git}")"
+
+  first="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${first}" 1 equals "status"
+
+  second="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${second}" 1 equals "push"
+
+  assert_equal "  specification 1: argument 1 equals 'status'
+  specification 2: argument 1 equals 'push'" "$(mock_spec_describe_all "${mock_git}")"
+}
+
+@test "A call no specification accepts names the specifications" {
+  mock_git="$(mock_command "git")"
+
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 equals "status"
+
+  run git log
+  assert_failure
+  assert_output_contains "Mock 'git' received a call that no expectation covers: git 'log'"
+  assert_output_contains "specification 1: argument 1 equals 'status'"
+
+  run mock_verify
+  assert_failure
+  assert_output_contains "Mock 'git' received a call that no expectation covers: git 'log'"
+  assert_output_contains "specification 1: argument 1 equals 'status'"
+}
+
 @test "mock_set_forward" {
   mock_basename="$(mock_command "basename")"
   mock_set_forward "${mock_basename}"

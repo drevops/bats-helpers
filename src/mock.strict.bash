@@ -111,7 +111,8 @@ mock_strict_accepts() {
 #   3. line: The call, serialised by 'mock_log_line'.
 #
 # Outputs:
-#   STDERR: A diagnostic naming the call.
+#   STDERR: A diagnostic naming the call and every specification that turned
+#           it down.
 ##
 mock_strict_reject() {
   local mock="${1}"
@@ -119,6 +120,7 @@ mock_strict_reject() {
   local line="${3}"
 
   echo "Mock '${name}' received a call that no expectation covers: ${line}" >&2
+  mock_spec_describe_all "${mock}" >&2
 
   printf '%s\n' "${line}" >>"${mock}.unexpected"
 }
@@ -184,6 +186,8 @@ mock_verify_mock() {
     while IFS= read -r line; do
       echo "Mock '${name}' received a call that no expectation covers: ${line}"
     done <"${mock}.unexpected"
+
+    mock_spec_describe_all "${mock}"
   fi
 
   local call_num
