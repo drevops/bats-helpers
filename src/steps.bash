@@ -174,7 +174,6 @@ steps_run() {
 
         steps_debug_sub "SETUP: Setup mock for binary '${command_binary}' complete."
       else
-        # Check if mock for the binary exists in the assert phase.
         if [[ -z ${mocked_commands["${command_binary}"]-} ]]; then
           flunk "ERROR: Mock for the binary '${command_binary}' does not exist."
           return 1

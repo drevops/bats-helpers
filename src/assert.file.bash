@@ -144,9 +144,7 @@ assert_symlink_exists() {
 assert_symlink_not_exists() {
   local file="${1}"
 
-  if [ ! -h "${file}" ] && [ -f "${file}" ]; then
-    return 0
-  elif [ ! -h "${file}" ]; then
+  if [ ! -h "${file}" ]; then
     return 0
   else
     format_error "Symlink '${file}' exists, but should not" | flunk
