@@ -294,8 +294,8 @@ mock_prepare_tmp() {
   local dir
   dir="$(mock_resolve_tmp)" || return 1
 
-  rm -rf "${dir}/bats-mock-tmp" >/dev/null
-  mkdir -p "${dir}/bats-mock-tmp"
+  rm -rf "${dir}/bats-mock-tmp" >/dev/null || return 1
+  mkdir -p "${dir}/bats-mock-tmp" || return 1
 
   echo "${dir}/bats-mock-tmp"
 }

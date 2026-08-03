@@ -155,6 +155,14 @@ load _test_helper
   assert_success
 }
 
+@test "Mock: temporary directory that cannot be created" {
+  touch "${BATS_TEST_TMPDIR}/regular_file"
+  export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/regular_file/custom"
+
+  run mock_prepare_tmp
+  assert_failure
+}
+
 @test "Mock: temporary directory without a sandbox" {
   local original="${BATS_TEST_TMPDIR}"
 
