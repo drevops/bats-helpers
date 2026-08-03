@@ -1021,6 +1021,7 @@ load _test_helper
 
   mocks="$(steps_run "setup")"
   run curl example.com
+  assert_success
 
   recovered=0
   steps_run "assert" "${mocks[@]}" 2>/dev/null || recovered=1
@@ -1035,6 +1036,7 @@ load _test_helper
 
   mocks="$(steps_run "setup")"
   run curl example.com
+  assert_success
 
   run curl example.org
   assert_failure

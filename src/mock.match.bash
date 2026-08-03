@@ -240,6 +240,11 @@ mock_set_forward() {
   local mock="${1?'Mock must be specified'}"
   local enabled="${2:-1}"
 
+  if [ ! -e "${mock}" ]; then
+    flunk "Mock '${mock}' does not exist. Create it with 'mock_command' first."
+    return 1
+  fi
+
   if [ "${enabled}" != "0" ] && [ "${enabled}" != "1" ]; then
     flunk "Forwarding must be '0' or '1', got '${enabled}'."
     return 1
@@ -618,17 +623,20 @@ mock_forward_exec() {
   local name="${2}"
   shift 2
 
-  local real
-  real="$(PATH="$(mock_forward_path "${mock%/*}")" command -v "${name}")" || real=""
+  local forward_path
+  forward_path="$(mock_forward_path "${mock%/*}")"
 
-  # A name that does not resolve to a path is a builtin or a function, and
-  # 'exec' would search PATH for it and find the mock again.
-  if [ "${real#/}" = "${real}" ]; then
+  local real
+  real="$(PATH="${forward_path}" command -v "${name}")" || real=""
+
+  if [ -z "${real}" ]; then
     echo "Command '${name}' is not available to forward to" >&2
     exit 127
   fi
 
-  exec "${real}" ${@+"$@"}
+  # A builtin resolves to a bare name, which 'exec' looks up on PATH, where the
+  # mock directory would otherwise still come first.
+  PATH="${forward_path}" exec "${real}" ${@+"$@"}
 }
 
 ##

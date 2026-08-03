@@ -336,10 +336,15 @@ bats_require_minimum_version 1.13.0
 @test "Specification response falls back to the per-call and default responses" {
   mock_git="$(mock_command "git")"
   mock_set_output "${mock_git}" "default output"
+  mock_set_output "${mock_git}" "first call output" 1
 
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 equals "status"
   mock_spec_set_status "${spec}" 4
+
+  run git status
+  assert_failure --status 4
+  assert_output "first call output"
 
   run git status
   assert_failure --status 4
@@ -358,12 +363,15 @@ bats_require_minimum_version 1.13.0
   mock_spec_set_output "${log_spec}" "commits"
 
   run git log
+  assert_success
   assert_output "commits"
 
   run git status
+  assert_success
   assert_output "clean"
 
   run git log
+  assert_success
   assert_output "commits"
 }
 
@@ -438,6 +446,10 @@ bats_require_minimum_version 1.13.0
   run mock_set_forward "${mock_basename}" "yes"
   assert_failure
   assert_output_contains "Forwarding must be '0' or '1', got 'yes'."
+
+  run mock_set_forward "${BATS_TEST_TMPDIR}/not_a_mock"
+  assert_failure
+  assert_output_contains "does not exist. Create it with 'mock_command' first."
 }
 
 @test "mock_set_forward - real command is not available" {
@@ -455,9 +467,11 @@ bats_require_minimum_version 1.13.0
   mock_echo="$(mock_command "echo")"
   mock_set_forward "${mock_echo}"
 
-  run -127 mock_forward_exec "${mock_echo}" "echo" "text"
-  assert_failure --status 127
-  assert_output_contains "Command 'echo' is not available to forward to"
+  # A builtin resolves to a bare name, which the forwarded lookup has to
+  # resolve outside the mock directory rather than back into the mock.
+  run mock_forward_exec "${mock_echo}" "echo" "text"
+  assert_success
+  assert_output "text"
 }
 
 @test "mock_forward_path" {

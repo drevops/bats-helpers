@@ -27,6 +27,11 @@ mock_set_strict() {
   local mock="${1?'Mock must be specified'}"
   local enabled="${2:-1}"
 
+  if [ ! -e "${mock}" ]; then
+    flunk "Mock '${mock}' does not exist. Create it with 'mock_command' first."
+    return 1
+  fi
+
   if [ "${enabled}" != "0" ] && [ "${enabled}" != "1" ]; then
     flunk "Strictness must be '0' or '1', got '${enabled}'."
     return 1

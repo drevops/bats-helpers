@@ -707,7 +707,7 @@ The real command is found by searching `PATH` without the mock directory. A forw
 #### Strictness
 
 > [!IMPORTANT]
-> Mocks are strict by default. A suite whose script calls a mock more times than the test configured responses for now fails where it used to take the default response silently. That is the gap this default closes; `BATS_HELPERS_MOCK_STRICT=0` restores the old behaviour for a whole suite.
+> Mocks are strict by default. Once a response carrying a call index or an argument specification has declared an expectation, a call that the expectations do not cover fails the test rather than being answered with the default status and output. Set `BATS_HELPERS_MOCK_STRICT=0` to make a whole suite permissive.
 
 A mock with no configured response records calls without constraining them. Configuring a response *with* a call index, or adding an argument specification, declares an expectation - a statement that the call arrives. From then on the mock rejects the calls its expectations do not cover, rather than answering them with the default status and output and letting the script take a path the test does not know about:
 
@@ -724,7 +724,7 @@ git log
 
 When the mock carries argument specifications, the diagnostic lists what each of them required, so the mismatch reads beside the call that caused it:
 
-```
+```text
 Mock 'git' received a call that no expectation covers: git 'log' '--oneline'
   specification 1: argument 1 equals 'status'
   specification 2: argument 1 equals 'push', some argument not_equals '--force'

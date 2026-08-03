@@ -159,6 +159,10 @@ load _test_helper
   run mock_set_strict "${mock_git}" "yes"
   assert_failure
   assert_output_contains "Strictness must be '0' or '1', got 'yes'."
+
+  run mock_set_strict "${BATS_TEST_TMPDIR}/not_a_mock"
+  assert_failure
+  assert_output_contains "does not exist. Create it with 'mock_command' first."
 }
 
 @test "mock_strict_enabled" {
