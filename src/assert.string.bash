@@ -516,27 +516,51 @@ string_assert_match() {
     message="String '${haystack}' does not ${verb} '${needle}'"
   fi
 
-  local case_label="insensitive"
-  [ "${case_sensitive}" = "1" ] && case_label="sensitive"
-
-  message="${message}"$'\n'"match mode: ${mode}"
-  message="${message}"$'\n'"case: ${case_label}"
-
   # The setting that was in force is only worth naming when the other one would
   # have decided the assertion the other way.
   local opposite_case=$((1 - case_sensitive))
   local opposite_status=0
   string_match "${haystack}" "${pattern}" "${pattern_mode}" "${opposite_case}" "${anchor}" || opposite_status=$?
 
-  if [ "${opposite_status}" -ne "${match_status}" ]; then
-    if [ "${case_sensitive}" = "1" ]; then
-      message="${message}"$'\n'"note: it matches without the '_case' suffix"
-    else
-      message="${message}"$'\n'"note: it does not match with the '_case' suffix"
-    fi
-  fi
+  local case_decided=0
+  [ "${opposite_status}" -ne "${match_status}" ] && case_decided=1
+
+  message="${message}"$'\n'"$(string_match_footer "${mode}" "${case_sensitive}" "${case_decided}")"
 
   format_error "${message}" | flunk
+}
+
+##
+# Formats how a failed match was performed.
+#
+# Arguments:
+#   1. mode: How the needle was read - 'literal', 'regex' or 'format'.
+#   2. case_sensitive: '1' when the match was case-sensitive, '0' when not.
+#   3. case_decided: '1' when the opposite case setting would have decided the
+#      assertion the other way.
+#
+# Outputs:
+#   STDOUT: The match mode and the case sensitivity, followed by a note naming
+#           the case setting when it is what decided the outcome.
+##
+string_match_footer() {
+  local mode="${1}"
+  local case_sensitive="${2}"
+  local case_decided="${3}"
+
+  local case_label="insensitive"
+  [ "${case_sensitive}" = "1" ] && case_label="sensitive"
+
+  echo "match mode: ${mode}"
+  echo "case: ${case_label}"
+
+  [ "${case_decided}" = "1" ] || return 0
+
+  if [ "${case_sensitive}" = "1" ]; then
+    echo "note: it matches without the '_case' suffix"
+  else
+    echo "note: it does not match with the '_case' suffix"
+  fi
 }
 
 ##
