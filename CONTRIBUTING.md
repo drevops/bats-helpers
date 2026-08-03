@@ -55,8 +55,10 @@ Two rules that are easy to miss:
 
 ```shell
 npm version minor
-git push
+git push --follow-tags
 npm publish
 ```
+
+`npm version` creates an annotated tag that a plain `git push` leaves behind, so `--follow-tags` is what gets the tag to GitHub.
 
 The `Draft release notes` workflow runs on pushes to `main` and on tag pushes, and assembles the GitHub release draft from the merged pull request titles.
