@@ -107,6 +107,10 @@ Use these after running a command with `run`.
 | `assert_output_not_contains` | Checks if output does not contain a specific string    |
 | `assert_output_matches`      | Checks if output matches a regular expression          |
 | `assert_output_not_matches`  | Checks if output does not match a regular expression   |
+| `assert_output_matches_format`     | Checks if output matches a format string         |
+| `assert_output_not_matches_format` | Checks if output does not match a format string  |
+
+Each also has a `_case` twin that matches case-sensitively - `assert_output_contains_case`, `assert_output_not_matches_format_case` and so on. See [Match modes](#match-modes).
 
 #### Standard error assertions
 
@@ -117,8 +121,12 @@ Use these after running a command with `run`.
 | `assert_stderr_not_contains` | Checks if STDERR does not contain a specific string         |
 | `assert_stderr_matches`      | Checks if STDERR matches a regular expression               |
 | `assert_stderr_not_matches`  | Checks if STDERR does not match a regular expression        |
+| `assert_stderr_matches_format`     | Checks if STDERR matches a format string              |
+| `assert_stderr_not_matches_format` | Checks if STDERR does not match a format string       |
 | `assert_stderr_empty`        | Asserts that a command wrote nothing to STDERR              |
 | `assert_stderr_captured`     | Asserts that STDERR was captured separately from the output |
+
+Each of the five matching assertions also has a `_case` twin. See [Match modes](#match-modes).
 
 `run` merges STDERR into `$output`, so on its own it cannot tell which stream a message went to. Pass `--separate-stderr` to capture the two apart: `$output` then holds STDOUT alone, and the assertions above read the captured STDERR.
 
@@ -172,6 +180,10 @@ A capture lives only until the next `run`: a plain one clears `$stderr`, so the 
 | `assert_string_not_ends_with`   | Asserts that a string does not end with a substring       |
 | `assert_string_matches`         | Asserts that a string matches a regular expression        |
 | `assert_string_not_matches`     | Asserts that a string does not match a regular expression |
+| `assert_string_matches_format`     | Asserts that a string matches a format string          |
+| `assert_string_not_matches_format` | Asserts that a string does not match a format string   |
+
+Each also has a `_case` twin that matches case-sensitively - `assert_string_contains_case`, `assert_string_not_starts_with_case` and so on. See [Match modes](#match-modes).
 
 Every `contains` assertion takes the container first and the string to look for second:
 
@@ -183,34 +195,41 @@ assert_dir_contains_string "${dir}" "needle"
 
 #### Match modes
 
-A containment assertion reads its needle literally and matches case-insensitively. Options placed before the positional arguments change that:
+How a needle is read, and whether case matters, is chosen by picking the assertion - there are no options to pass. Every combination has a name, so a call site says what it compares without being read against a flag elsewhere in the file.
 
-| Option             | Effect                                                  |
-|--------------------|---------------------------------------------------------|
-| `--literal`        | Read the needle literally. The default                  |
-| `--regex`          | Read the needle as an extended regular expression       |
-| `--format`         | Read the needle as a format string, see below           |
-| `--ignore-case`    | Match case-insensitively. The default                   |
-| `--case-sensitive` | Match case-sensitively                                  |
-| `--`               | End the options, for a needle spelled like one          |
+Three things vary. **How the needle is read** is the verb:
 
-They are taken by `assert_string_contains`, `assert_string_not_contains`, the four prefix and suffix assertions, `assert_output_contains`, `assert_output_not_contains`, `assert_stderr_contains`, `assert_stderr_not_contains`, `assert_file_contains` and `assert_file_not_contains`. The `matches` assertions are the same thing with `--regex` already applied:
+| Verb             | The needle is                             |
+|------------------|-------------------------------------------|
+| `contains`       | A literal substring                       |
+| `starts_with`    | A literal prefix                          |
+| `ends_with`      | A literal suffix                          |
+| `matches`        | An extended regular expression            |
+| `matches_format` | A format string, see below                |
+
+**Whether it must be present** is the `not_` prefix, and **whether case matters** is the `_case` suffix. Absent the suffix, the match ignores case, which is what the library has always done:
 
 ```bash
-assert_output_contains --case-sensitive "Error: config file not found"
-assert_output_contains --regex 'Deleted [0-9]+ files'
-assert_output_matches 'Deleted [0-9]+ files'
-assert_string_starts_with --case-sensitive "${line}" "WARNING"
+assert_output_contains            "Deleted 12 files"    # ignores case
+assert_output_contains_case       "Deleted 12 files"    # case-sensitive
+assert_output_not_contains        "Removed"
+assert_output_not_contains_case   "removed"
+
+assert_output_matches             'Deleted [0-9]+ files'
+assert_output_matches_case        'Deleted [0-9]+ files'
+assert_output_matches_format      "Deleted %d files"
+
+assert_string_starts_with_case    "${line}" "WARNING"
+assert_file_not_matches_case      "${log}" 'FATAL'
 ```
 
-Only an exact spelling of an option is read as one, so a needle that merely starts with a dash needs no escaping. A needle that is exactly one of the six goes after `--`:
+The same twelve names exist for each of `string`, `output`, `stderr` and `file`, and the four prefix and suffix forms for `string`. A needle is only ever a needle, so one that looks like an option needs no escaping:
 
 ```bash
 assert_output_contains "usage: --verbose enables logging"
-assert_output_contains -- "--regex"
 ```
 
-**Prefer the literal default.** A literal needle cannot be broken by a character that happens to be a regular expression operator, and its failure report can be read straight against the value it did not match. Reach for `--regex` only for the part of a value that genuinely varies between runs - a timestamp, a PID, a duration, a version - and leave the rest literal. Where the only variation is a number or a word, `--format` says so without a regular expression:
+**Prefer a literal assertion.** A literal needle cannot be broken by a character that happens to be a regular expression operator, and its failure report can be read straight against the value it did not match. Reach for `matches` only for the part of a value that genuinely varies between runs - a timestamp, a PID, a duration, a version - and leave the rest literal. Where the only variation is a number or a word, `matches_format` says so without a regular expression:
 
 | Placeholder | Matches                                   |
 |-------------|-------------------------------------------|
@@ -222,8 +241,8 @@ assert_output_contains -- "--regex"
 Everything outside a placeholder is matched literally, so a format string escapes nothing of its own:
 
 ```bash
-assert_output_contains --format "Deleted %d files in %fs"
-assert_file_contains --format "${log}" "user %s logged in"
+assert_output_matches_format "Deleted %d files in %fs"
+assert_file_matches_format "${log}" "user %s logged in"
 ```
 
 The prefix and suffix assertions, and the `^` and `$` anchors of a regular expression, all apply to the whole value rather than to each of its lines:
@@ -233,13 +252,19 @@ The prefix and suffix assertions, and the `^` and `$` anchors of a regular expre
 assert_output_matches '^Done$'
 ```
 
-The failure report names the mode and the case sensitivity that were in force, and calls out the case setting when the other one would have decided the assertion the other way:
+A needle that is not a usable regular expression is reported as an error rather than as a mismatch, so a `not_matches` assertion fails on it too:
+
+```text
+Invalid regular expression '['.
+```
+
+The failure report names the mode and the case sensitivity that were in force, and calls out the case sensitivity when the other choice would have decided the assertion the other way:
 
 ```text
 String 'some text' does not contain 'SOME'
 match mode: literal
 case: sensitive
-note: it matches with '--ignore-case'
+note: it matches without the '_case' suffix
 ```
 
 Use `string_match` to make the same comparison without asserting on it, and `string_format_to_regex` to see what a format string expands to.
@@ -254,6 +279,8 @@ Use `string_match` to make the same comparison without asserting on it, and `str
 | `assert_file_not_contains`       | Checks if a file does not contain a specific string    |
 | `assert_file_matches`            | Checks if a file matches a regular expression          |
 | `assert_file_not_matches`        | Checks if a file does not match a regular expression   |
+| `assert_file_matches_format`     | Checks if a file matches a format string               |
+| `assert_file_not_matches_format` | Checks if a file does not match a format string        |
 | `assert_files_equal`             | Asserts that two files are equal                       |
 | `assert_files_not_equal`         | Asserts that two files are not equal                   |
 | `assert_file_mode`               | Checks the file permission mode                        |
@@ -276,7 +303,7 @@ assert_file_exists "${dir}/*.txt"
 assert_file_not_exists "${dir}/*.rtf"
 ```
 
-`assert_dir_contains_string` and `assert_dir_not_contains_string` search recursively, skip binary files, and always exclude `.git`, `.idea`, `vendor` and `node_modules`. They take none of the match mode options: they always match case-sensitively and always read the string as a `grep` basic regular expression. Set `BATS_HELPERS_ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
+`assert_dir_contains_string` and `assert_dir_not_contains_string` search recursively, skip binary files, and always exclude `.git`, `.idea`, `vendor` and `node_modules`. They have no match mode variants: they always match case-sensitively and always read the string as a `grep` basic regular expression. Set `BATS_HELPERS_ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
 
 ```bash
 declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=("build" "dist")

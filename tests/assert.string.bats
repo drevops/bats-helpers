@@ -10,27 +10,25 @@ load _test_helper
   assert_string_contains "some needle in a haystack" "needle"
   assert_string_contains "some n[ee]dle in a haystack" "n[ee]dle"
   assert_string_contains "some NEEDLE in a haystack" "needle"
-  assert_string_contains --case-sensitive "some needle in a haystack" "needle"
-  assert_string_contains --regex "some needle 42 in a haystack" 'needle [0-9]+'
-  assert_string_contains --format "Deleted 12 files in 0.5s" "Deleted %d files in %fs"
   assert_string_contains $'first line\nsecond line' $'line\nsecond'
 
   run assert_string_contains "some ne edle in a haystack" "needle"
   assert_failure
-  run assert_string_contains --case-sensitive "some NEEDLE in a haystack" "needle"
+}
+
+@test "assert_string_contains_case" {
+  assert_string_contains_case "some needle in a haystack" "needle"
+  assert_string_contains_case "some n[ee]dle in a haystack" "n[ee]dle"
+
+  run assert_string_contains_case "some NEEDLE in a haystack" "needle"
   assert_failure
-  run assert_string_contains --regex "some needle in a haystack" 'needle [0-9]+'
-  assert_failure
-  run assert_string_contains --format "Deleted some files" "Deleted %d files"
+  run assert_string_contains_case "some ne edle in a haystack" "needle"
   assert_failure
 }
 
 @test "assert_string_not_contains" {
   assert_string_not_contains "some needle in a haystack" "otherneedle"
   assert_string_not_contains "some n[ee]dle in a haystack" "othern[ee]dle"
-  assert_string_not_contains --case-sensitive "some NEEDLE in a haystack" "needle"
-  assert_string_not_contains --regex "some needle in a haystack" 'needle [0-9]+'
-  assert_string_not_contains --format "Deleted some files" "Deleted %d files"
 
   run assert_string_not_contains "some needle in a haystack" "needle"
   assert_failure
@@ -38,78 +36,19 @@ load _test_helper
   assert_failure
   run assert_string_not_contains "some NEEDLE in a haystack" "needle"
   assert_failure
-  run assert_string_not_contains --regex "some needle 42 in a haystack" 'needle [0-9]+'
-  assert_failure
 }
 
-@test "assert_string_starts_with" {
-  assert_string_starts_with "some needle" "some"
-  assert_string_starts_with "some needle" "SOME"
-  assert_string_starts_with --case-sensitive "some needle" "some"
-  assert_string_starts_with --regex "42 needles" '[0-9]+'
-  assert_string_starts_with --format "42 needles" "%d needles"
+@test "assert_string_not_contains_case" {
+  assert_string_not_contains_case "some needle in a haystack" "otherneedle"
+  assert_string_not_contains_case "some NEEDLE in a haystack" "needle"
 
-  # The anchor applies to the whole string, not to each of its lines.
-  assert_string_starts_with $'first\nsecond' "first"
-
-  run assert_string_starts_with "some needle" "needle"
-  assert_failure
-  run assert_string_starts_with --case-sensitive "some needle" "SOME"
-  assert_failure
-  run assert_string_starts_with $'first\nsecond' "second"
-  assert_failure
-}
-
-@test "assert_string_not_starts_with" {
-  assert_string_not_starts_with "some needle" "needle"
-  assert_string_not_starts_with --case-sensitive "some needle" "SOME"
-  assert_string_not_starts_with --regex "some needle" '[0-9]+'
-  assert_string_not_starts_with $'first\nsecond' "second"
-
-  run assert_string_not_starts_with "some needle" "some"
-  assert_failure
-  run assert_string_not_starts_with "some needle" "SOME"
-  assert_failure
-  run assert_string_not_starts_with --regex "42 needles" '[0-9]+'
-  assert_failure
-}
-
-@test "assert_string_ends_with" {
-  assert_string_ends_with "some needle" "needle"
-  assert_string_ends_with "some needle" "NEEDLE"
-  assert_string_ends_with --case-sensitive "some needle" "needle"
-  assert_string_ends_with --regex "needles 42" '[0-9]+'
-  assert_string_ends_with --format "took 0.5s" "took %fs"
-
-  # The anchor applies to the whole string, not to each of its lines.
-  assert_string_ends_with $'first\nsecond' "second"
-
-  run assert_string_ends_with "some needle" "some"
-  assert_failure
-  run assert_string_ends_with --case-sensitive "some needle" "NEEDLE"
-  assert_failure
-  run assert_string_ends_with $'first\nsecond' "first"
-  assert_failure
-}
-
-@test "assert_string_not_ends_with" {
-  assert_string_not_ends_with "some needle" "some"
-  assert_string_not_ends_with --case-sensitive "some needle" "NEEDLE"
-  assert_string_not_ends_with --regex "some needle" '[0-9]+'
-  assert_string_not_ends_with $'first\nsecond' "first"
-
-  run assert_string_not_ends_with "some needle" "needle"
-  assert_failure
-  run assert_string_not_ends_with "some needle" "NEEDLE"
-  assert_failure
-  run assert_string_not_ends_with --regex "needles 42" '[0-9]+'
+  run assert_string_not_contains_case "some needle in a haystack" "needle"
   assert_failure
 }
 
 @test "assert_string_matches" {
   assert_string_matches "some needle 42" 'needle [0-9]+'
   assert_string_matches "some NEEDLE 42" 'needle [0-9]+'
-  assert_string_matches --case-sensitive "some needle 42" 'needle [0-9]+'
   assert_string_matches "some needle" '^some'
   assert_string_matches "some needle" 'needle$'
 
@@ -119,18 +58,148 @@ load _test_helper
 
   run assert_string_matches "some needle" 'needle [0-9]+'
   assert_failure
-  run assert_string_matches --case-sensitive "some NEEDLE 42" 'needle [0-9]+'
+}
+
+@test "assert_string_matches_case" {
+  assert_string_matches_case "some needle 42" 'needle [0-9]+'
+
+  run assert_string_matches_case "some NEEDLE 42" 'needle [0-9]+'
+  assert_failure
+  run assert_string_matches_case "some needle" 'needle [0-9]+'
   assert_failure
 }
 
 @test "assert_string_not_matches" {
   assert_string_not_matches "some needle" 'needle [0-9]+'
-  assert_string_not_matches --case-sensitive "some NEEDLE 42" 'needle [0-9]+'
   assert_string_not_matches $'first\nsecond' '^second'
 
   run assert_string_not_matches "some needle 42" 'needle [0-9]+'
   assert_failure
   run assert_string_not_matches "some NEEDLE 42" 'needle [0-9]+'
+  assert_failure
+}
+
+@test "assert_string_not_matches_case" {
+  assert_string_not_matches_case "some needle" 'needle [0-9]+'
+  assert_string_not_matches_case "some NEEDLE 42" 'needle [0-9]+'
+
+  run assert_string_not_matches_case "some needle 42" 'needle [0-9]+'
+  assert_failure
+}
+
+@test "assert_string_matches_format" {
+  assert_string_matches_format "Deleted 12 files in 0.5s" "Deleted %d files in %fs"
+  assert_string_matches_format "DELETED 12 files" "Deleted %d files"
+  assert_string_matches_format "user alex logged in" "user %s logged in"
+  assert_string_matches_format "100% done" "100%% done"
+
+  run assert_string_matches_format "Deleted some files" "Deleted %d files"
+  assert_failure
+}
+
+@test "assert_string_matches_format_case" {
+  assert_string_matches_format_case "Deleted 12 files" "Deleted %d files"
+
+  run assert_string_matches_format_case "DELETED 12 files" "Deleted %d files"
+  assert_failure
+  run assert_string_matches_format_case "Deleted some files" "Deleted %d files"
+  assert_failure
+}
+
+@test "assert_string_not_matches_format" {
+  assert_string_not_matches_format "Deleted some files" "Deleted %d files"
+
+  run assert_string_not_matches_format "Deleted 12 files" "Deleted %d files"
+  assert_failure
+  run assert_string_not_matches_format "DELETED 12 files" "Deleted %d files"
+  assert_failure
+}
+
+@test "assert_string_not_matches_format_case" {
+  assert_string_not_matches_format_case "Deleted some files" "Deleted %d files"
+  assert_string_not_matches_format_case "DELETED 12 files" "Deleted %d files"
+
+  run assert_string_not_matches_format_case "Deleted 12 files" "Deleted %d files"
+  assert_failure
+}
+
+@test "assert_string_starts_with" {
+  assert_string_starts_with "some needle" "some"
+  assert_string_starts_with "some needle" "SOME"
+
+  # The anchor applies to the whole string, not to each of its lines.
+  assert_string_starts_with $'first\nsecond' "first"
+
+  run assert_string_starts_with "some needle" "needle"
+  assert_failure
+  run assert_string_starts_with $'first\nsecond' "second"
+  assert_failure
+}
+
+@test "assert_string_starts_with_case" {
+  assert_string_starts_with_case "some needle" "some"
+
+  run assert_string_starts_with_case "some needle" "SOME"
+  assert_failure
+  run assert_string_starts_with_case "some needle" "needle"
+  assert_failure
+}
+
+@test "assert_string_not_starts_with" {
+  assert_string_not_starts_with "some needle" "needle"
+  assert_string_not_starts_with $'first\nsecond' "second"
+
+  run assert_string_not_starts_with "some needle" "some"
+  assert_failure
+  run assert_string_not_starts_with "some needle" "SOME"
+  assert_failure
+}
+
+@test "assert_string_not_starts_with_case" {
+  assert_string_not_starts_with_case "some needle" "needle"
+  assert_string_not_starts_with_case "some needle" "SOME"
+
+  run assert_string_not_starts_with_case "some needle" "some"
+  assert_failure
+}
+
+@test "assert_string_ends_with" {
+  assert_string_ends_with "some needle" "needle"
+  assert_string_ends_with "some needle" "NEEDLE"
+
+  # The anchor applies to the whole string, not to each of its lines.
+  assert_string_ends_with $'first\nsecond' "second"
+
+  run assert_string_ends_with "some needle" "some"
+  assert_failure
+  run assert_string_ends_with $'first\nsecond' "first"
+  assert_failure
+}
+
+@test "assert_string_ends_with_case" {
+  assert_string_ends_with_case "some needle" "needle"
+
+  run assert_string_ends_with_case "some needle" "NEEDLE"
+  assert_failure
+  run assert_string_ends_with_case "some needle" "some"
+  assert_failure
+}
+
+@test "assert_string_not_ends_with" {
+  assert_string_not_ends_with "some needle" "some"
+  assert_string_not_ends_with $'first\nsecond' "first"
+
+  run assert_string_not_ends_with "some needle" "needle"
+  assert_failure
+  run assert_string_not_ends_with "some needle" "NEEDLE"
+  assert_failure
+}
+
+@test "assert_string_not_ends_with_case" {
+  assert_string_not_ends_with_case "some needle" "some"
+  assert_string_not_ends_with_case "some needle" "NEEDLE"
+
+  run assert_string_not_ends_with_case "some needle" "needle"
   assert_failure
 }
 
@@ -180,35 +249,35 @@ load _test_helper
   run string_match "some needle" "NEEDLE" "literal" 0 "anywhere"
   assert_success
   run string_match "some needle" "NEEDLE" "literal" 1 "anywhere"
-  [ "${status}" -eq 1 ]
+  assert_equal 1 "${status}"
 
   run string_match "some needle" "some" "literal" 1 "start"
   assert_success
   run string_match "some needle" "needle" "literal" 1 "start"
-  [ "${status}" -eq 1 ]
+  assert_equal 1 "${status}"
 
   run string_match "some needle" "needle" "literal" 1 "end"
   assert_success
   run string_match "some needle" "some" "literal" 1 "end"
-  [ "${status}" -eq 1 ]
+  assert_equal 1 "${status}"
 
   run string_match "some needle 42" 'needle [0-9]+' "regex" 1 "anywhere"
   assert_success
   run string_match "some needle" 'needle [0-9]+' "regex" 1 "anywhere"
-  [ "${status}" -eq 1 ]
+  assert_equal 1 "${status}"
 
   run string_match "some needle" 'SOME' "regex" 0 "start"
   assert_success
   run string_match "some needle" 'SOME' "regex" 1 "start"
-  [ "${status}" -eq 1 ]
+  assert_equal 1 "${status}"
 
   run string_match "some needle" 'NEEDLE' "regex" 0 "end"
   assert_success
   run string_match "some needle" 'NEEDLE' "regex" 1 "end"
-  [ "${status}" -eq 1 ]
+  assert_equal 1 "${status}"
 
   run string_match "some needle" "[" "regex" 1 "anywhere"
-  [ "${status}" -eq 2 ]
+  assert_equal 2 "${status}"
 }
 
 @test "string_match leaves the shell's case matching option alone" {
@@ -263,62 +332,41 @@ load _test_helper
   assert_output_contains "Unknown format placeholder '%'."
 }
 
-@test "Match mode options" {
-  # Only an exact option is consumed, so a needle that looks like one is not.
-  run echo "usage: --verbose enables logging"
-  assert_output_contains "--verbose"
-
-  # A needle that is exactly an option is reached through the terminator.
-  run echo "the --regex option"
-  assert_output_contains -- "--regex"
-
-  # A positional argument is never read as an option.
-  assert_string_contains "--regex and more" "--regex"
+@test "string_assert_match" {
+  # A needle spelled like an option is just a needle.
+  assert_string_contains "the --regex option" "--regex"
   assert_string_contains "some -- text" "--"
-
-  # Repeating an option is harmless.
-  assert_string_contains --regex --regex "some needle" 'n..dle'
-  assert_string_contains --case-sensitive --case-sensitive "some needle" "needle"
-
-  run assert_string_contains --literal --regex "some needle" "needle"
-  assert_failure
-  assert_output_contains "Conflicting match modes '--literal' and '--regex'."
-
-  run assert_string_contains --ignore-case --case-sensitive "some needle" "needle"
-  assert_failure
-  assert_output_contains "Conflicting case options '--ignore-case' and '--case-sensitive'."
 
   run assert_string_contains "some needle"
   assert_failure
   assert_output_contains "A haystack and a needle are required."
 
-  run echo "some needle"
-  run assert_output_contains "some" "extra"
+  run assert_string_contains "some needle" "needle" "extra"
   assert_failure
-  assert_output_contains "Unexpected argument 'extra'. Match mode options come before the positional arguments."
+  assert_output_contains "A haystack and a needle are required."
 
   run assert_string_matches "some needle" "["
   assert_failure
   assert_output_contains "Invalid regular expression '['."
 
-  run assert_string_contains --format "some needle" "%z"
+  run assert_string_matches_format "some needle" "%z"
   assert_failure
   assert_output_contains "Unknown format placeholder '%z'."
 }
 
 @test "Failure report names the match mode and the case sensitivity" {
-  run assert_string_contains --case-sensitive "some text" "SOME"
+  run assert_string_contains_case "some text" "SOME"
   assert_failure
   assert_output_contains "String 'some text' does not contain 'SOME'"
   assert_output_contains "match mode: literal"
   assert_output_contains "case: sensitive"
-  assert_output_contains "note: it matches with '--ignore-case'"
+  assert_output_contains "note: it matches without the '_case' suffix"
 
   run assert_string_not_contains "some text" "SOME"
   assert_failure
   assert_output_contains "String 'some text' contains 'SOME', but should not"
   assert_output_contains "case: insensitive"
-  assert_output_contains "note: it does not match with '--case-sensitive'"
+  assert_output_contains "note: it does not match with the '_case' suffix"
 
   # Case did not decide the outcome, so it is not called out. The previous
   # capture is cleared because 'format_error' appends it to the report.
@@ -337,7 +385,7 @@ load _test_helper
   assert_failure
   assert_output_contains "String 'some text' matches '^some', but should not"
 
-  run assert_string_contains --format "Deleted some files" "Deleted %d files"
+  run assert_string_matches_format "Deleted some files" "Deleted %d files"
   assert_failure
   assert_output_contains "String 'Deleted some files' does not match 'Deleted %d files'"
   assert_output_contains "match mode: format"

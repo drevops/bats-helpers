@@ -33,114 +33,6 @@ assert_not_empty() {
 }
 
 ##
-# Asserts that a string contains a substring.
-#
-# Arguments:
-#   1. options: Match mode options. Optional, see 'string_assert_match'.
-#   2. haystack: String to search.
-#   3. needle: Substring to search for.
-##
-assert_string_contains() {
-  string_assert_match_pair "anywhere" 0 "" "$@"
-}
-
-##
-# Asserts that a string does not contain a substring.
-#
-# Arguments:
-#   1. options: Match mode options. Optional, see 'string_assert_match'.
-#   2. haystack: String to search.
-#   3. needle: Substring to search for.
-##
-assert_string_not_contains() {
-  string_assert_match_pair "anywhere" 1 "" "$@"
-}
-
-##
-# Asserts that a string starts with a substring.
-#
-# The needle is matched against the start of the whole string rather than the
-# start of each of its lines.
-#
-# Arguments:
-#   1. options: Match mode options. Optional, see 'string_assert_match'.
-#   2. haystack: String to search.
-#   3. needle: Substring to search for.
-##
-assert_string_starts_with() {
-  string_assert_match_pair "start" 0 "" "$@"
-}
-
-##
-# Asserts that a string does not start with a substring.
-#
-# The needle is matched against the start of the whole string rather than the
-# start of each of its lines.
-#
-# Arguments:
-#   1. options: Match mode options. Optional, see 'string_assert_match'.
-#   2. haystack: String to search.
-#   3. needle: Substring to search for.
-##
-assert_string_not_starts_with() {
-  string_assert_match_pair "start" 1 "" "$@"
-}
-
-##
-# Asserts that a string ends with a substring.
-#
-# The needle is matched against the end of the whole string rather than the end
-# of each of its lines.
-#
-# Arguments:
-#   1. options: Match mode options. Optional, see 'string_assert_match'.
-#   2. haystack: String to search.
-#   3. needle: Substring to search for.
-##
-assert_string_ends_with() {
-  string_assert_match_pair "end" 0 "" "$@"
-}
-
-##
-# Asserts that a string does not end with a substring.
-#
-# The needle is matched against the end of the whole string rather than the end
-# of each of its lines.
-#
-# Arguments:
-#   1. options: Match mode options. Optional, see 'string_assert_match'.
-#   2. haystack: String to search.
-#   3. needle: Substring to search for.
-##
-assert_string_not_ends_with() {
-  string_assert_match_pair "end" 1 "" "$@"
-}
-
-##
-# Asserts that a string matches an extended regular expression.
-#
-# Arguments:
-#   1. options: Match mode options. Optional, see 'string_assert_match'.
-#   2. haystack: String to search.
-#   3. needle: Extended regular expression to match.
-##
-assert_string_matches() {
-  string_assert_match_pair "anywhere" 0 "--regex" "$@"
-}
-
-##
-# Asserts that a string does not match an extended regular expression.
-#
-# Arguments:
-#   1. options: Match mode options. Optional, see 'string_assert_match'.
-#   2. haystack: String to search.
-#   3. needle: Extended regular expression to match.
-##
-assert_string_not_matches() {
-  string_assert_match_pair "anywhere" 1 "--regex" "$@"
-}
-
-##
 # Asserts that two strings are equal.
 #
 # Arguments:
@@ -157,36 +49,242 @@ assert_equal() {
 }
 
 ##
-# Generates a random alphanumeric string.
+## Containment assertions.
+##
+
+##
+# Asserts that a string contains a substring, ignoring case.
 #
 # Arguments:
-#   1. length: Number of characters to generate. Optional, defaults to 8.
-#
-# Outputs:
-#   STDOUT: The generated string.
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
 ##
-string_random() {
-  local len="${1:-8}"
-  local alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  local ret=''
-  local i
+assert_string_contains() {
+  string_assert_match "anywhere" 0 "literal" 0 "$@"
+}
 
-  if ! [[ ${len} =~ ^[0-9]+$ ]]; then
-    flunk "Length must be a non-negative integer."
-    return 1
-  fi
+##
+# Asserts that a string contains a substring, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_contains_case() {
+  string_assert_match "anywhere" 0 "literal" 1 "$@"
+}
 
-  # Base 10 is explicit so that a zero-padded length is not read as octal.
-  len=$((10#${len}))
+##
+# Asserts that a string does not contain a substring, ignoring case.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_not_contains() {
+  string_assert_match "anywhere" 1 "literal" 0 "$@"
+}
 
-  # A '/dev/urandom' pipeline is not usable here: its tools' STDERR reaches the
-  # caller, where Bats' 'run' merges it into the returned value, and its reader
-  # can outlive the writer and hang.
-  for ((i = 0; i < len; i++)); do
-    ret="${ret}${alphabet:RANDOM%${#alphabet}:1}"
-  done
+##
+# Asserts that a string does not contain a substring, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_not_contains_case() {
+  string_assert_match "anywhere" 1 "literal" 1 "$@"
+}
 
-  echo "${ret}"
+##
+## Regular expression assertions.
+##
+
+##
+# Asserts that a string matches a regular expression, ignoring case.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Extended regular expression to match.
+##
+assert_string_matches() {
+  string_assert_match "anywhere" 0 "regex" 0 "$@"
+}
+
+##
+# Asserts that a string matches a regular expression, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Extended regular expression to match.
+##
+assert_string_matches_case() {
+  string_assert_match "anywhere" 0 "regex" 1 "$@"
+}
+
+##
+# Asserts that a string does not match a regular expression, ignoring case.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Extended regular expression to match.
+##
+assert_string_not_matches() {
+  string_assert_match "anywhere" 1 "regex" 0 "$@"
+}
+
+##
+# Asserts that a string does not match a regular expression, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Extended regular expression to match.
+##
+assert_string_not_matches_case() {
+  string_assert_match "anywhere" 1 "regex" 1 "$@"
+}
+
+##
+## Format assertions.
+##
+
+##
+# Asserts that a string matches a format string, ignoring case.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Format string, see 'string_format_to_regex'.
+##
+assert_string_matches_format() {
+  string_assert_match "anywhere" 0 "format" 0 "$@"
+}
+
+##
+# Asserts that a string matches a format string, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Format string, see 'string_format_to_regex'.
+##
+assert_string_matches_format_case() {
+  string_assert_match "anywhere" 0 "format" 1 "$@"
+}
+
+##
+# Asserts that a string does not match a format string, ignoring case.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Format string, see 'string_format_to_regex'.
+##
+assert_string_not_matches_format() {
+  string_assert_match "anywhere" 1 "format" 0 "$@"
+}
+
+##
+# Asserts that a string does not match a format string, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Format string, see 'string_format_to_regex'.
+##
+assert_string_not_matches_format_case() {
+  string_assert_match "anywhere" 1 "format" 1 "$@"
+}
+
+##
+## Prefix and suffix assertions.
+##
+## The needle is matched against the start or the end of the whole string
+## rather than of each of its lines.
+##
+
+##
+# Asserts that a string starts with a substring, ignoring case.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_starts_with() {
+  string_assert_match "start" 0 "literal" 0 "$@"
+}
+
+##
+# Asserts that a string starts with a substring, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_starts_with_case() {
+  string_assert_match "start" 0 "literal" 1 "$@"
+}
+
+##
+# Asserts that a string does not start with a substring, ignoring case.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_not_starts_with() {
+  string_assert_match "start" 1 "literal" 0 "$@"
+}
+
+##
+# Asserts that a string does not start with a substring, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_not_starts_with_case() {
+  string_assert_match "start" 1 "literal" 1 "$@"
+}
+
+##
+# Asserts that a string ends with a substring, ignoring case.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_ends_with() {
+  string_assert_match "end" 0 "literal" 0 "$@"
+}
+
+##
+# Asserts that a string ends with a substring, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_ends_with_case() {
+  string_assert_match "end" 0 "literal" 1 "$@"
+}
+
+##
+# Asserts that a string does not end with a substring, ignoring case.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_not_ends_with() {
+  string_assert_match "end" 1 "literal" 0 "$@"
+}
+
+##
+# Asserts that a string does not end with a substring, case-sensitively.
+#
+# Arguments:
+#   1. haystack: String to search.
+#   2. needle: Substring to search for.
+##
+assert_string_not_ends_with_case() {
+  string_assert_match "end" 1 "literal" 1 "$@"
 }
 
 ##
@@ -202,7 +300,7 @@ string_random() {
 # Arguments:
 #   1. haystack: String to search.
 #   2. needle: String to search for, read according to the mode.
-#   3. mode: Match mode - 'literal' or 'regex'.
+#   3. mode: How the needle is read - 'literal' or 'regex'.
 #   4. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
 #   5. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
 #
@@ -334,88 +432,28 @@ string_format_to_regex() {
 }
 
 ##
-# Asserts that a needle matches a haystack the caller has already resolved.
-#
-# The match mode options are read from the front of the remaining arguments:
-#
-#   --literal         Read the needle literally. The default.
-#   --regex           Read the needle as an extended regular expression.
-#   --format          Read the needle as a format string, see
-#                     'string_format_to_regex'.
-#   --ignore-case     Match case-insensitively. The default.
-#   --case-sensitive  Match case-sensitively.
-#   --                End the options, for a needle that is one of them.
-#
-# Only an exact match of one of those is read as an option, so a needle that
-# merely starts with a dash is left alone.
+# Asserts that a needle matches a haystack, reporting how on failure.
 #
 # Arguments:
 #   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
 #   2. negate: '1' to assert that the needle does not match.
-#   3. haystack: String to search.
-#   4. options: Match mode options. Optional.
-#   5. needle: String to search for. Optional, read from STDIN when omitted.
+#   3. mode: How the needle is read - 'literal', 'regex' or 'format'.
+#   4. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   5. haystack: String to search.
+#   6. needle: String to search for.
 ##
 string_assert_match() {
-  local anchor="${1}"
-  local negate="${2}"
-  local haystack="${3}"
-  shift 3
-
-  ##
-  ## Option parsing.
-  ##
-
-  local mode=""
-  local case_mode=""
-  local requested
-
-  while [ "$#" -gt 0 ]; do
-    case "${1}" in
-      --literal | --regex | --format)
-        requested="${1#--}"
-
-        if [ -n "${mode}" ] && [ "${mode}" != "${requested}" ]; then
-          flunk "Conflicting match modes '--${mode}' and '${1}'."
-          return 1
-        fi
-
-        mode="${requested}"
-        shift
-        ;;
-      --ignore-case | --case-sensitive)
-        requested="${1#--}"
-
-        if [ -n "${case_mode}" ] && [ "${case_mode}" != "${requested}" ]; then
-          flunk "Conflicting case options '--${case_mode}' and '${1}'."
-          return 1
-        fi
-
-        case_mode="${requested}"
-        shift
-        ;;
-      --)
-        shift
-        break
-        ;;
-      *)
-        break
-        ;;
-    esac
-  done
-
-  mode="${mode:-literal}"
-  case_mode="${case_mode:-ignore-case}"
-
-  local needle
-  if [ "$#" -eq 0 ]; then
-    needle="$(cat -)"
-  elif [ "$#" -eq 1 ]; then
-    needle="${1}"
-  else
-    flunk "Unexpected argument '${2}'. Match mode options come before the positional arguments."
+  if [ "$#" -ne 6 ]; then
+    flunk "A haystack and a needle are required."
     return 1
   fi
+
+  local anchor="${1}"
+  local negate="${2}"
+  local mode="${3}"
+  local case_sensitive="${4}"
+  local haystack="${5}"
+  local needle="${6}"
 
   ##
   ## Matching.
@@ -428,9 +466,6 @@ string_assert_match() {
     pattern="$(string_format_to_regex "${needle}")" || return 1
     pattern_mode="regex"
   fi
-
-  local case_sensitive=0
-  [ "${case_mode}" = "case-sensitive" ] && case_sensitive=1
 
   local match_status=0
   string_match "${haystack}" "${pattern}" "${pattern_mode}" "${case_sensitive}" "${anchor}" || match_status=$?
@@ -494,9 +529,9 @@ string_assert_match() {
 
   if [ "${opposite_status}" -ne "${match_status}" ]; then
     if [ "${case_sensitive}" = "1" ]; then
-      message="${message}"$'\n'"note: it matches with '--ignore-case'"
+      message="${message}"$'\n'"note: it matches without the '_case' suffix"
     else
-      message="${message}"$'\n'"note: it does not match with '--case-sensitive'"
+      message="${message}"$'\n'"note: it does not match with the '_case' suffix"
     fi
   fi
 
@@ -504,39 +539,36 @@ string_assert_match() {
 }
 
 ##
-# Asserts on a haystack and a needle given as the last two arguments.
+# Generates a random alphanumeric string.
 #
 # Arguments:
-#   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
-#   2. negate: '1' to assert that the needle does not match.
-#   3. mode: Match mode option to apply before the caller's own, or an empty
-#      string.
-#   4. options: Match mode options. Optional, see 'string_assert_match'.
-#   5. haystack: String to search.
-#   6. needle: String to search for.
+#   1. length: Number of characters to generate. Optional, defaults to 8.
+#
+# Outputs:
+#   STDOUT: The generated string.
 ##
-string_assert_match_pair() {
-  local anchor="${1}"
-  local negate="${2}"
-  local mode="${3}"
-  shift 3
+string_random() {
+  local len="${1:-8}"
+  local alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  local ret=''
+  local i
 
-  local -a args=()
-  [ -n "${mode}" ] && args+=("${mode}")
-
-  while [ "$#" -gt 2 ]; do
-    args+=("${1}")
-    shift
-  done
-
-  if [ "$#" -ne 2 ]; then
-    flunk "A haystack and a needle are required."
+  if ! [[ ${len} =~ ^[0-9]+$ ]]; then
+    flunk "Length must be a non-negative integer."
     return 1
   fi
 
-  args+=("--" "${2}")
+  # Base 10 is explicit so that a zero-padded length is not read as octal.
+  len=$((10#${len}))
 
-  string_assert_match "${anchor}" "${negate}" "${1}" "${args[@]}"
+  # A '/dev/urandom' pipeline is not usable here: its tools' STDERR reaches the
+  # caller, where Bats' 'run' merges it into the returned value, and its reader
+  # can outlive the writer and hang.
+  for ((i = 0; i < len; i++)); do
+    ret="${ret}${alphabet:RANDOM%${#alphabet}:1}"
+  done
+
+  echo "${ret}"
 }
 
 ##

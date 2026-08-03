@@ -55,42 +55,31 @@ bats_require_minimum_version 1.13.0
 @test "assert_output_contains" {
   run echo "some existing text"
   assert_output_contains "some existing text"
-
-  run echo "some existing text"
   assert_output_contains "some EXISTING text"
-
-  run echo "some existing text"
   assert_output_contains "existing"
-
-  run echo "some existing text"
-  assert_output_contains --case-sensitive "some existing text"
-
-  run echo "some existing 42 text"
-  assert_output_contains --regex 'existing [0-9]+'
-
-  run echo "some existing 42 text"
-  assert_output_contains --format "existing %d text"
-
-  run echo "some existing text"
   assert_output_contains <<<"existing"
 
   run assert_output_contains "non-existing"
   assert_failure
+}
 
-  run echo "some EXISTING text"
-  run assert_output_contains --case-sensitive "some existing text"
+@test "assert_output_contains_case" {
+  run echo "some existing text"
+  assert_output_contains_case "some existing text"
+  assert_output_contains_case <<<"existing"
+
+  run echo "some existing text"
+  run assert_output_contains_case "some EXISTING text"
+  assert_failure
+
+  run assert_output_contains_case "non-existing"
   assert_failure
 }
 
 @test "assert_output_not_contains" {
   run echo "some existing text"
   assert_output_not_contains "non-existing"
-
-  run echo "some EXISTING text"
-  assert_output_not_contains --case-sensitive "some existing text"
-
-  run echo "some existing text"
-  assert_output_not_contains --regex 'existing [0-9]+'
+  assert_output_not_contains <<<"non-existing"
 
   run assert_output_not_contains "some existing text"
   assert_failure
@@ -100,9 +89,15 @@ bats_require_minimum_version 1.13.0
 
   run assert_output_not_contains "existing"
   assert_failure
+}
 
-  run echo "some existing 42 text"
-  run assert_output_not_contains --regex 'existing [0-9]+'
+@test "assert_output_not_contains_case" {
+  run echo "some existing text"
+  assert_output_not_contains_case "non-existing"
+  assert_output_not_contains_case "some EXISTING text"
+
+  run echo "some existing text"
+  run assert_output_not_contains_case "some existing text"
   assert_failure
 }
 
@@ -112,17 +107,23 @@ bats_require_minimum_version 1.13.0
   assert_output_matches 'EXISTING [0-9]+'
   assert_output_matches '^some'
   assert_output_matches 'text$'
-  assert_output_matches --case-sensitive 'existing [0-9]+'
-
-  run echo "some existing 42 text"
   assert_output_matches <<<'existing [0-9]+'
 
   run echo "some existing text"
   run assert_output_matches 'existing [0-9]+'
   assert_failure
+}
+
+@test "assert_output_matches_case" {
+  run echo "some existing 42 text"
+  assert_output_matches_case 'existing [0-9]+'
 
   run echo "some EXISTING 42 text"
-  run assert_output_matches --case-sensitive 'existing [0-9]+'
+  run assert_output_matches_case 'existing [0-9]+'
+  assert_failure
+
+  run echo "some existing text"
+  run assert_output_matches_case 'existing [0-9]+'
   assert_failure
 }
 
@@ -130,15 +131,69 @@ bats_require_minimum_version 1.13.0
   run echo "some existing text"
   assert_output_not_matches 'existing [0-9]+'
 
-  run echo "some EXISTING 42 text"
-  assert_output_not_matches --case-sensitive 'existing [0-9]+'
-
   run echo "some existing 42 text"
   run assert_output_not_matches 'existing [0-9]+'
   assert_failure
 
   run echo "some existing 42 text"
   run assert_output_not_matches 'EXISTING [0-9]+'
+  assert_failure
+}
+
+@test "assert_output_not_matches_case" {
+  run echo "some existing text"
+  assert_output_not_matches_case 'existing [0-9]+'
+
+  run echo "some EXISTING 42 text"
+  assert_output_not_matches_case 'existing [0-9]+'
+
+  run echo "some existing 42 text"
+  run assert_output_not_matches_case 'existing [0-9]+'
+  assert_failure
+}
+
+@test "assert_output_matches_format" {
+  run echo "Deleted 12 files in 0.5s"
+  assert_output_matches_format "Deleted %d files in %fs"
+  assert_output_matches_format "DELETED %d files"
+  assert_output_matches_format <<<"Deleted %d files"
+
+  run echo "Deleted some files"
+  run assert_output_matches_format "Deleted %d files"
+  assert_failure
+}
+
+@test "assert_output_matches_format_case" {
+  run echo "Deleted 12 files"
+  assert_output_matches_format_case "Deleted %d files"
+
+  run echo "DELETED 12 files"
+  run assert_output_matches_format_case "Deleted %d files"
+  assert_failure
+}
+
+@test "assert_output_not_matches_format" {
+  run echo "Deleted some files"
+  assert_output_not_matches_format "Deleted %d files"
+
+  run echo "Deleted 12 files"
+  run assert_output_not_matches_format "Deleted %d files"
+  assert_failure
+
+  run echo "DELETED 12 files"
+  run assert_output_not_matches_format "Deleted %d files"
+  assert_failure
+}
+
+@test "assert_output_not_matches_format_case" {
+  run echo "Deleted some files"
+  assert_output_not_matches_format_case "Deleted %d files"
+
+  run echo "DELETED 12 files"
+  assert_output_not_matches_format_case "Deleted %d files"
+
+  run echo "Deleted 12 files"
+  run assert_output_not_matches_format_case "Deleted %d files"
   assert_failure
 }
 
@@ -178,18 +233,10 @@ bats_require_minimum_version 1.13.0
   assert_stderr_contains "some existing error"
   assert_stderr_contains "some EXISTING error"
   assert_stderr_contains "existing"
-  assert_stderr_contains --case-sensitive "some existing error"
-
-  run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
-  assert_stderr_contains --regex 'existing [0-9]+'
-  assert_stderr_contains --format "existing %d error"
+  assert_stderr_contains <<<"existing"
 
   run --separate-stderr bash -c 'echo "some existing error" >&2'
   run assert_stderr_contains "non-existing"
-  assert_failure
-
-  run --separate-stderr bash -c 'echo "some EXISTING error" >&2'
-  run assert_stderr_contains --case-sensitive "some existing error"
   assert_failure
 
   unset stderr
@@ -198,12 +245,23 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "run --separate-stderr"
 }
 
+@test "assert_stderr_contains_case" {
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
+  assert_stderr_contains_case "some existing error"
+
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
+  run assert_stderr_contains_case "some EXISTING error"
+  assert_failure
+
+  unset stderr
+  run assert_stderr_contains_case "existing"
+  assert_failure
+  assert_output_contains "run --separate-stderr"
+}
+
 @test "assert_stderr_not_contains" {
   run --separate-stderr bash -c 'echo "some existing error" >&2'
   assert_stderr_not_contains "non-existing"
-
-  run --separate-stderr bash -c 'echo "some EXISTING error" >&2'
-  assert_stderr_not_contains --case-sensitive "some existing error"
 
   run --separate-stderr bash -c 'echo "some existing error" >&2'
   run assert_stderr_not_contains "some existing error"
@@ -213,16 +271,23 @@ bats_require_minimum_version 1.13.0
   run assert_stderr_not_contains "some EXISTING error"
   assert_failure
 
-  run --separate-stderr bash -c 'echo "some existing error" >&2'
-  run assert_stderr_not_contains "existing"
+  unset stderr
+  run assert_stderr_not_contains "non-existing"
   assert_failure
+  assert_output_contains "run --separate-stderr"
+}
 
-  run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
-  run assert_stderr_not_contains --regex 'existing [0-9]+'
+@test "assert_stderr_not_contains_case" {
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
+  assert_stderr_not_contains_case "non-existing"
+  assert_stderr_not_contains_case "some EXISTING error"
+
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
+  run assert_stderr_not_contains_case "some existing error"
   assert_failure
 
   unset stderr
-  run assert_stderr_not_contains "non-existing"
+  run assert_stderr_not_contains_case "non-existing"
   assert_failure
   assert_output_contains "run --separate-stderr"
 }
@@ -233,14 +298,9 @@ bats_require_minimum_version 1.13.0
   assert_stderr_matches 'EXISTING [0-9]+'
   assert_stderr_matches '^some'
   assert_stderr_matches 'error$'
-  assert_stderr_matches --case-sensitive 'existing [0-9]+'
 
   run --separate-stderr bash -c 'echo "some existing error" >&2'
   run assert_stderr_matches 'existing [0-9]+'
-  assert_failure
-
-  run --separate-stderr bash -c 'echo "some EXISTING 42 error" >&2'
-  run assert_stderr_matches --case-sensitive 'existing [0-9]+'
   assert_failure
 
   unset stderr
@@ -249,12 +309,23 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "run --separate-stderr"
 }
 
+@test "assert_stderr_matches_case" {
+  run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
+  assert_stderr_matches_case 'existing [0-9]+'
+
+  run --separate-stderr bash -c 'echo "some EXISTING 42 error" >&2'
+  run assert_stderr_matches_case 'existing [0-9]+'
+  assert_failure
+
+  unset stderr
+  run assert_stderr_matches_case 'existing'
+  assert_failure
+  assert_output_contains "run --separate-stderr"
+}
+
 @test "assert_stderr_not_matches" {
   run --separate-stderr bash -c 'echo "some existing error" >&2'
   assert_stderr_not_matches 'existing [0-9]+'
-
-  run --separate-stderr bash -c 'echo "some EXISTING 42 error" >&2'
-  assert_stderr_not_matches --case-sensitive 'existing [0-9]+'
 
   run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
   run assert_stderr_not_matches 'existing [0-9]+'
@@ -266,6 +337,80 @@ bats_require_minimum_version 1.13.0
 
   unset stderr
   run assert_stderr_not_matches 'existing'
+  assert_failure
+  assert_output_contains "run --separate-stderr"
+}
+
+@test "assert_stderr_not_matches_case" {
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
+  assert_stderr_not_matches_case 'existing [0-9]+'
+
+  run --separate-stderr bash -c 'echo "some EXISTING 42 error" >&2'
+  assert_stderr_not_matches_case 'existing [0-9]+'
+
+  run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
+  run assert_stderr_not_matches_case 'existing [0-9]+'
+  assert_failure
+
+  unset stderr
+  run assert_stderr_not_matches_case 'existing'
+  assert_failure
+  assert_output_contains "run --separate-stderr"
+}
+
+@test "assert_stderr_matches_format" {
+  run --separate-stderr bash -c 'echo "Deleted 12 files in 0.5s" >&2'
+  assert_stderr_matches_format "Deleted %d files in %fs"
+  assert_stderr_matches_format "DELETED %d files"
+
+  run --separate-stderr bash -c 'echo "Deleted some files" >&2'
+  run assert_stderr_matches_format "Deleted %d files"
+  assert_failure
+
+  unset stderr
+  run assert_stderr_matches_format "Deleted %d files"
+  assert_failure
+  assert_output_contains "run --separate-stderr"
+}
+
+@test "assert_stderr_matches_format_case" {
+  run --separate-stderr bash -c 'echo "Deleted 12 files" >&2'
+  assert_stderr_matches_format_case "Deleted %d files"
+
+  run --separate-stderr bash -c 'echo "DELETED 12 files" >&2'
+  run assert_stderr_matches_format_case "Deleted %d files"
+  assert_failure
+
+  unset stderr
+  run assert_stderr_matches_format_case "Deleted %d files"
+  assert_failure
+  assert_output_contains "run --separate-stderr"
+}
+
+@test "assert_stderr_not_matches_format" {
+  run --separate-stderr bash -c 'echo "Deleted some files" >&2'
+  assert_stderr_not_matches_format "Deleted %d files"
+
+  run --separate-stderr bash -c 'echo "Deleted 12 files" >&2'
+  run assert_stderr_not_matches_format "Deleted %d files"
+  assert_failure
+
+  unset stderr
+  run assert_stderr_not_matches_format "Deleted %d files"
+  assert_failure
+  assert_output_contains "run --separate-stderr"
+}
+
+@test "assert_stderr_not_matches_format_case" {
+  run --separate-stderr bash -c 'echo "DELETED 12 files" >&2'
+  assert_stderr_not_matches_format_case "Deleted %d files"
+
+  run --separate-stderr bash -c 'echo "Deleted 12 files" >&2'
+  run assert_stderr_not_matches_format_case "Deleted %d files"
+  assert_failure
+
+  unset stderr
+  run assert_stderr_not_matches_format_case "Deleted %d files"
   assert_failure
   assert_output_contains "run --separate-stderr"
 }
@@ -282,4 +427,11 @@ bats_require_minimum_version 1.13.0
   run assert_stderr_empty
   assert_failure
   assert_output_contains "run --separate-stderr"
+}
+
+@test "command_assert_match" {
+  run echo "some existing text"
+  run assert_output_contains "some" "extra"
+  assert_failure
+  assert_output_contains "A needle is required."
 }

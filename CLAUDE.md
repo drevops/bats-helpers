@@ -90,9 +90,11 @@ A renamed variable is resolved into a local at the top of the function that owns
 All assertion functions follow the pattern of checking conditions and calling `flunk()` with formatted error messages on failure.
 
 ### Match Modes
-A containment assertion selects its match mode through leading `--` options rather than a positional argument or an environment variable, so the call site says which comparison it asked for. `--literal` and `--ignore-case` are the defaults, so an assertion naming no option reads as it always did. Only an exact spelling of an option is consumed and `--` ends them, so a needle such as `--verbose` still reads as a needle.
+A match mode is chosen by picking the assertion, never by passing an option or setting a variable. Every combination of the three axes has its own name, so a call site says what it compares without a reader having to resolve a flag: the verb says how the needle is read (`contains`, `starts_with`, `ends_with`, `matches`, `matches_format`), the `not_` prefix negates, and the `_case` suffix matches case-sensitively. Absent that suffix the match ignores case, which is what the library has always done, so no existing assertion changed meaning.
 
-`string_assert_match` in `src/assert.string.bash` is the one place that parses those options, matches, and builds the failure report. An assertion whose haystack is a positional argument reaches it through `string_assert_match_pair`, a file assertion through `file_assert_match`, and the rest call it directly with the haystack they resolved. Every public assertion is a single delegating line naming its anchor and whether it negates, so a new one is added without copying the parser.
+Options were considered and rejected: an assertion argument is then either a needle or a flag depending on its spelling, which costs an escape hatch, and a needle such as `--verbose` stops being a plain string. Naming every cell trades a larger surface for a call site that cannot be misread.
+
+The cost of that trade is 56 near-identical wrappers, so none of them holds logic. `string_assert_match` in `src/assert.string.bash` matches and builds the failure report; `command_assert_match` resolves a needle that may come from STDIN and `file_assert_match` resolves one from disk, then both delegate to it. Every public assertion is a single line passing its anchor, polarity, mode and case sensitivity as literals. Add one by writing that line, never by adding a branch below it.
 
 Matching is Bash-native rather than a `grep` pipeline, which is what lets one engine serve every mode and both anchors. The consequence worth knowing is that `^` and `$` anchor to the whole value rather than to each of its lines, matching how bats-assert reads `--regexp`.
 

@@ -214,7 +214,7 @@ steps_run() {
       steps_debug "Type: string absent"
 
       if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
-        assert_output_not_contains -- "${item:2}" || return 1 # Skip '-' and a space.
+        assert_output_not_contains "${item:2}" || return 1 # Skip '-' and a space.
       fi
     ##
     ## String present.
@@ -223,7 +223,7 @@ steps_run() {
       steps_debug "Type: string present"
 
       if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
-        assert_output_contains -- "${item}" || return 1
+        assert_output_contains "${item}" || return 1
       fi
     fi
 
