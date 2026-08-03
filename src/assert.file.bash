@@ -184,24 +184,71 @@ assert_file_mode() {
 }
 
 ##
-# Asserts that a file exists and contains a string.
+# Asserts that a needle matches the contents of a file.
+#
+# A negated assertion passes for a file that does not exist, which cannot hold
+# the needle; a positive one asserts that the file exists first. Only a regular
+# file has contents to read, so a directory or a glob is rejected rather than
+# handed to 'cat'.
+#
+# Arguments:
+#   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
+#   2. negate: '1' to assert that the needle does not match.
+#   3. mode: How the needle is read - 'literal', 'regex' or 'format'.
+#   4. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   5. file: File to search.
+#   6. string: String to search for.
+##
+file_assert_match() {
+  if [ "$#" -ne 6 ]; then
+    flunk "A file and a string are required."
+    return 1
+  fi
+
+  local negate="${2}"
+  local file="${5}"
+
+  if [ "${negate}" = "1" ]; then
+    [ ! -f "${file}" ] && return 0
+  else
+    assert_file_exists "${file}" || return 1
+
+    if [ ! -f "${file}" ]; then
+      format_error "File '${file}' is not a regular file" | flunk
+      return 1
+    fi
+  fi
+
+  local contents
+  contents="$(cat "${file}")"
+
+  string_assert_match "${1}" "${2}" "${3}" "${4}" "${contents}" "${6}"
+}
+
+##
+# Asserts that a file exists and contains a string, ignoring case.
 #
 # Arguments:
 #   1. file: File to search.
 #   2. string: String to search for.
 ##
 assert_file_contains() {
-  local file="${1}"
-  local string="${2}"
-  assert_file_exists "${file}" || return 1
-
-  local contents
-  contents="$(cat "${file}")"
-  assert_string_contains "${contents}" "${string}"
+  file_assert_match "anywhere" 0 "literal" 0 "$@"
 }
 
 ##
-# Asserts that a file does not contain a string.
+# Asserts that a file exists and contains a string, case-sensitively.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: String to search for.
+##
+assert_file_contains_case() {
+  file_assert_match "anywhere" 0 "literal" 1 "$@"
+}
+
+##
+# Asserts that a file does not contain a string, ignoring case.
 #
 # A file that does not exist cannot contain the string, so it passes.
 #
@@ -210,14 +257,116 @@ assert_file_contains() {
 #   2. string: String to search for.
 ##
 assert_file_not_contains() {
-  local file="${1}"
-  local string="${2}"
+  file_assert_match "anywhere" 1 "literal" 0 "$@"
+}
 
-  [ ! -f "${file}" ] && return 0
+##
+# Asserts that a file does not contain a string, case-sensitively.
+#
+# A file that does not exist cannot contain the string, so it passes.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: String to search for.
+##
+assert_file_not_contains_case() {
+  file_assert_match "anywhere" 1 "literal" 1 "$@"
+}
 
-  local contents
-  contents="$(cat "${file}")"
-  assert_string_not_contains "${contents}" "${string}"
+##
+# Asserts that a file exists and matches a regular expression, ignoring case.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: Extended regular expression to match.
+##
+assert_file_matches() {
+  file_assert_match "anywhere" 0 "regex" 0 "$@"
+}
+
+##
+# Asserts that a file exists and matches a regular expression, case-sensitively.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: Extended regular expression to match.
+##
+assert_file_matches_case() {
+  file_assert_match "anywhere" 0 "regex" 1 "$@"
+}
+
+##
+# Asserts that a file does not match a regular expression, ignoring case.
+#
+# A file that does not exist cannot match, so it passes.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: Extended regular expression to match.
+##
+assert_file_not_matches() {
+  file_assert_match "anywhere" 1 "regex" 0 "$@"
+}
+
+##
+# Asserts that a file does not match a regular expression, case-sensitively.
+#
+# A file that does not exist cannot match, so it passes.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: Extended regular expression to match.
+##
+assert_file_not_matches_case() {
+  file_assert_match "anywhere" 1 "regex" 1 "$@"
+}
+
+##
+# Asserts that a file exists and matches a format string, ignoring case.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: Format string, see 'string_format_to_regex'.
+##
+assert_file_matches_format() {
+  file_assert_match "anywhere" 0 "format" 0 "$@"
+}
+
+##
+# Asserts that a file exists and matches a format string, case-sensitively.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: Format string, see 'string_format_to_regex'.
+##
+assert_file_matches_format_case() {
+  file_assert_match "anywhere" 0 "format" 1 "$@"
+}
+
+##
+# Asserts that a file does not match a format string, ignoring case.
+#
+# A file that does not exist cannot match, so it passes.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: Format string, see 'string_format_to_regex'.
+##
+assert_file_not_matches_format() {
+  file_assert_match "anywhere" 1 "format" 0 "$@"
+}
+
+##
+# Asserts that a file does not match a format string, case-sensitively.
+#
+# A file that does not exist cannot match, so it passes.
+#
+# Arguments:
+#   1. file: File to search.
+#   2. string: Format string, see 'string_format_to_regex'.
+##
+assert_file_not_matches_format_case() {
+  file_assert_match "anywhere" 1 "format" 1 "$@"
 }
 
 ##

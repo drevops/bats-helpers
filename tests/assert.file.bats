@@ -154,6 +154,7 @@ load _test_helper
   echo "one more line of existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
 
   assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some existing text"
+  assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some EXISTING text"
 
   run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/non_existing.txt" "some existing text"
   assert_failure
@@ -162,6 +163,33 @@ load _test_helper
 
   run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "other non-existing text"
   assert_failure
+
+  run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+  assert_failure
+  assert_output_contains "A file and a string are required."
+
+  # Only a regular file has contents to read.
+  run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert" "some existing text"
+  assert_failure
+  assert_output_contains "is not a regular file"
+
+  run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/*.txt" "some existing text"
+  assert_failure
+  assert_output_contains "is not a regular file"
+}
+
+@test "assert_file_contains_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "some existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_contains_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some existing text"
+
+  run assert_file_contains_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some EXISTING text"
+  assert_failure
+
+  run assert_file_contains_case "${BATS_TEST_TMPDIR}/fixture_file_assert/non_existing.txt" "some existing text"
+  assert_failure
+  assert_output_contains "does not exist"
 }
 
 @test "assert_file_not_contains" {
@@ -175,8 +203,143 @@ load _test_helper
   run assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some existing text"
   assert_failure
 
+  run assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some EXISTING text"
+  assert_failure
+
   # Text exists, non-existing file.
   assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/somefile.txt" "some existing text"
+}
+
+@test "assert_file_not_contains_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "some existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_not_contains_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "other non-existing text"
+  assert_file_not_contains_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some EXISTING text"
+
+  # Text exists, non-existing file.
+  assert_file_not_contains_case "${BATS_TEST_TMPDIR}/fixture_file_assert/somefile.txt" "some existing text"
+
+  run assert_file_not_contains_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some existing text"
+  assert_failure
+}
+
+@test "assert_file_matches" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "Deleted 12 files in 0.5s" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_matches "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'Deleted [0-9]+ files'
+  assert_file_matches "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'DELETED [0-9]+ files'
+
+  run assert_file_matches "${BATS_TEST_TMPDIR}/fixture_file_assert/non_existing.txt" 'Deleted [0-9]+ files'
+  assert_failure
+  assert_output_contains "does not exist"
+
+  run assert_file_matches "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'Removed [0-9]+ files'
+  assert_failure
+}
+
+@test "assert_file_matches_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "Deleted 12 files in 0.5s" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_matches_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'Deleted [0-9]+ files'
+
+  run assert_file_matches_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'DELETED [0-9]+ files'
+  assert_failure
+
+  run assert_file_matches_case "${BATS_TEST_TMPDIR}/fixture_file_assert/non_existing.txt" 'Deleted [0-9]+ files'
+  assert_failure
+  assert_output_contains "does not exist"
+}
+
+@test "assert_file_not_matches" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "Deleted 12 files in 0.5s" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_not_matches "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'Removed [0-9]+ files'
+
+  # A file that does not exist cannot match.
+  assert_file_not_matches "${BATS_TEST_TMPDIR}/fixture_file_assert/somefile.txt" 'Deleted [0-9]+ files'
+
+  run assert_file_not_matches "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'Deleted [0-9]+ files'
+  assert_failure
+
+  run assert_file_not_matches "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'DELETED [0-9]+ files'
+  assert_failure
+}
+
+@test "assert_file_not_matches_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "Deleted 12 files in 0.5s" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_not_matches_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'Removed [0-9]+ files'
+  assert_file_not_matches_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'DELETED [0-9]+ files'
+
+  # A file that does not exist cannot match.
+  assert_file_not_matches_case "${BATS_TEST_TMPDIR}/fixture_file_assert/somefile.txt" 'Deleted [0-9]+ files'
+
+  run assert_file_not_matches_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" 'Deleted [0-9]+ files'
+  assert_failure
+}
+
+@test "assert_file_matches_format" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "Deleted 12 files in 0.5s" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_matches_format "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "Deleted %d files in %fs"
+  assert_file_matches_format "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "DELETED %d files"
+
+  run assert_file_matches_format "${BATS_TEST_TMPDIR}/fixture_file_assert/non_existing.txt" "Deleted %d files"
+  assert_failure
+  assert_output_contains "does not exist"
+
+  run assert_file_matches_format "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "Removed %d files"
+  assert_failure
+}
+
+@test "assert_file_matches_format_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "Deleted 12 files in 0.5s" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_matches_format_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "Deleted %d files"
+
+  run assert_file_matches_format_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "DELETED %d files"
+  assert_failure
+
+  run assert_file_matches_format_case "${BATS_TEST_TMPDIR}/fixture_file_assert/non_existing.txt" "Deleted %d files"
+  assert_failure
+  assert_output_contains "does not exist"
+}
+
+@test "assert_file_not_matches_format" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "Deleted 12 files in 0.5s" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_not_matches_format "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "Removed %d files"
+
+  # A file that does not exist cannot match.
+  assert_file_not_matches_format "${BATS_TEST_TMPDIR}/fixture_file_assert/somefile.txt" "Deleted %d files"
+
+  run assert_file_not_matches_format "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "Deleted %d files"
+  assert_failure
+
+  run assert_file_not_matches_format "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "DELETED %d files"
+  assert_failure
+}
+
+@test "assert_file_not_matches_format_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_assert"
+  echo "Deleted 12 files in 0.5s" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
+
+  assert_file_not_matches_format_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "Removed %d files"
+  assert_file_not_matches_format_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "DELETED %d files"
+
+  # A file that does not exist cannot match.
+  assert_file_not_matches_format_case "${BATS_TEST_TMPDIR}/fixture_file_assert/somefile.txt" "Deleted %d files"
+
+  run assert_file_not_matches_format_case "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "Deleted %d files"
+  assert_failure
 }
 
 @test "assert_dir_empty" {
