@@ -169,6 +169,18 @@ load _test_helper
   assert_success
 }
 
+@test "Mock: custom temporary directory with shell metacharacters" {
+  export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/\$(touch pwned) mock"
+  mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}"
+  mock_curl=$(mock_command "curl")
+
+  PATH="${BATS_HELPERS_MOCK_TMPDIR}":${PATH} run curl example.com
+
+  assert_success
+  assert_file_not_exists "${BATS_TEST_TMPDIR}/pwned"
+  assert_equal "curl 'example.com'" "$(mock_log_print)"
+}
+
 @test "Mock: temporary directory that cannot be created" {
   touch "${BATS_TEST_TMPDIR}/regular_file"
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/regular_file/custom"
@@ -203,7 +215,13 @@ load _test_helper
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
-@test "Mock: paths without a sandbox" {
+@test "Mock: paths" {
+  mock_curl="$(mock_command "curl")"
+  mock_git="$(mock_command "git")"
+
+  assert_string_contains "$(mock_paths)" "${mock_curl}"
+  assert_string_contains "$(mock_paths)" "${mock_git}"
+
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
@@ -216,7 +234,13 @@ load _test_helper
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
-@test "Mock: names without a sandbox" {
+@test "Mock: names" {
+  mock_command "curl" >/dev/null
+  mock_command "git" >/dev/null
+
+  assert_string_contains "$(mock_names)" "curl"
+  assert_string_contains "$(mock_names)" "git"
+
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
@@ -227,17 +251,6 @@ load _test_helper
 
   assert_failure
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
-}
-
-@test "Mock: registry" {
-  mock_curl="$(mock_command "curl")"
-  mock_git="$(mock_command "git")"
-
-  assert_string_contains "$(mock_paths)" "${mock_curl}"
-  assert_string_contains "$(mock_paths)" "${mock_git}"
-
-  assert_string_contains "$(mock_names)" "curl"
-  assert_string_contains "$(mock_names)" "git"
 }
 
 @test "Mock: call environment" {

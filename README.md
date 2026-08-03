@@ -563,7 +563,7 @@ This is a very powerful feature that allows to test complex scenarios as unit te
 | `mock_get_call_env`      | Returns env variable value from mock call                                      | `mock`, `var_name`, `[call_index]`      | Variable value   |
 | `mock_assert_call_args`  | Checks the arguments the mock was called with, where `*` matches any arguments | `mock`, `expected_args`, `[call_index]` | `0` when matched |
 | `mock_assert_calls`      | Asserts the ordered sequence of every mocked call                              | `expected_call...`                      | None             |
-| `mock_assert_no_calls`   | Asserts that no mocked command was called                                      | None                                    | None             |
+| `mock_assert_no_calls`   | Asserts that no mocked command outside the excluded ones was called            | None                                    | None             |
 | `mock_assert_called`     | Asserts that a command was called                                              | `command_name`                          | None             |
 | `mock_assert_not_called` | Asserts that a command was not called                                          | `command_name`                          | None             |
 | `mock_verify`            | Asserts that every expectation was met                                         | `[mock...]`                             | None             |

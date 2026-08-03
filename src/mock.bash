@@ -55,6 +55,16 @@ mock_create() {
   echo -n "${mock##*/}" >"${mock}.name"
   echo -n "${BATS_HELPERS_MOCK_STRICT:-1}" >"${mock}.strict"
 
+  # @note: Modification to the original file: the paths baked into the generated
+  # script are quoted for the shell rather than trusted, because the directory
+  # holding them is consumer-supplied through BATS_HELPERS_MOCK_TMPDIR.
+  local mock_quoted
+  local src_dir_quoted
+  local log_quoted
+  printf -v mock_quoted '%q' "${mock}"
+  printf -v src_dir_quoted '%q' "${src_dir}"
+  printf -v log_quoted '%q' "${BATS_HELPERS_MOCK_TMPDIR}/mock.log"
+
   # @note: Modification to the original file: the mock records every call in the
   # shared ordered log, and resolves its response through an argument
   # specification before falling back to the per-call and default responses.
@@ -63,12 +73,12 @@ mock_create() {
 
 set -e
 
-mock="${mock}"
+mock=${mock_quoted}
 
-source "${src_dir}/assert.string.bash"
-source "${src_dir}/mock.log.bash"
-source "${src_dir}/mock.match.bash"
-source "${src_dir}/mock.strict.bash"
+source ${src_dir_quoted}/assert.string.bash
+source ${src_dir_quoted}/mock.log.bash
+source ${src_dir_quoted}/mock.match.bash
+source ${src_dir_quoted}/mock.strict.bash
 
 call_num="\$(( \$(cat "\${mock}.call_num") + 1 ))"
 echo "\${call_num}" > "\${mock}.call_num"
@@ -83,7 +93,7 @@ done > "\${mock}.env.\${call_num}"
 
 name="\$(cat "\${mock}.name")"
 line="\$(mock_log_line "\${name}" "\$@")"
-mock_log_append "${BATS_HELPERS_MOCK_TMPDIR}/mock.log" "\${line}"
+mock_log_append ${log_quoted} "\${line}"
 
 if spec="\$(mock_match_index "\${mock}" "\$@")"; then
   mock_match_hit "\${mock}" "\${spec}"
