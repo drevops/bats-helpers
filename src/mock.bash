@@ -13,16 +13,17 @@
 
 # Creates a mock program
 # Globals:
-#   BATS_TMPDIR
 #   BATS_MOCK_TMPDIR
+#   BATS_TEST_TMPDIR
 # Outputs:
 #   STDOUT: Path to the mock
 mock_create() {
   local index
 
-  # @note: Modification to the original file: allow to provide custom temp
-  # directory. BATS_TMPDIR below was changed to BATS_MOCK_TMPDIR.
-  BATS_MOCK_TMPDIR="${BATS_MOCK_TMPDIR:-$BATS_TMPDIR}"
+  # @note: Modification to the original file: the directory is resolved by
+  # mock_resolve_tmp(), which allows a custom location and defaults to the
+  # per-test one. BATS_TMPDIR below was changed to BATS_MOCK_TMPDIR.
+  BATS_MOCK_TMPDIR="$(mock_resolve_tmp)" || return 1
 
   index="$(find "${BATS_MOCK_TMPDIR}" -name bats-mock.$$.* | wc -l | tr -d ' ')"
   local mock
@@ -259,7 +260,7 @@ mock_setup() {
   #
   # Prepare directory with mock binaries, get it's path, and export it so that
   # bats-mock could use it internally.
-  BATS_MOCK_TMPDIR="$(mock_prepare_tmp)"
+  BATS_MOCK_TMPDIR="$(mock_prepare_tmp)" || return 1
   export "BATS_MOCK_TMPDIR"
   # Set the path to temp mocked binaries directory as the first location in
   # PATH to lookup in mock directories first. This change lives only for the
@@ -268,14 +269,35 @@ mock_setup() {
   PATH="${BATS_MOCK_TMPDIR}:${PATH}"
 }
 
+# Resolves the directory that mocks are stored in.
+# Globals:
+#   BATS_MOCK_TMPDIR
+#   BATS_TEST_TMPDIR
+# Returns:
+#   1: If neither of the globals is set
+# Outputs:
+#   STDOUT: Path to the directory
+#   STDERR: Corresponding error message
+mock_resolve_tmp() {
+  local dir="${BATS_MOCK_TMPDIR:-${BATS_TEST_TMPDIR-}}"
+
+  if [ -z "${dir}" ]; then
+    echo "Unable to resolve the mock directory: BATS_TEST_TMPDIR is not set. Set BATS_MOCK_TMPDIR to a writable directory" >&2
+    return 1
+  fi
+
+  echo "${dir%/}"
+}
+
 # Prepare temporary mock directory.
 mock_prepare_tmp() {
-  # @note: Modification to the original file: allow to provide custom temp
-  # directory. BATS_TMPDIR below was changed to BATS_MOCK_TMPDIR.
-  BATS_MOCK_TMPDIR="${BATS_MOCK_TMPDIR:-$BATS_TMPDIR}"
-  rm -rf "${BATS_MOCK_TMPDIR}/bats-mock-tmp" >/dev/null
-  mkdir -p "${BATS_MOCK_TMPDIR}/bats-mock-tmp"
-  echo "${BATS_MOCK_TMPDIR}/bats-mock-tmp"
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  rm -rf "${dir}/bats-mock-tmp" >/dev/null || return 1
+  mkdir -p "${dir}/bats-mock-tmp" || return 1
+
+  echo "${dir}/bats-mock-tmp"
 }
 
 # Mock provided command.
