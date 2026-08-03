@@ -184,20 +184,65 @@ assert_file_mode() {
 }
 
 ##
-# Asserts that a file exists and contains a string.
+# Asserts on the contents of a file given as the second-to-last argument.
+#
+# A negated assertion passes for a file that does not exist, which cannot hold
+# the needle; a positive one asserts that the file exists first.
 #
 # Arguments:
-#   1. file: File to search.
-#   2. string: String to search for.
+#   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
+#   2. negate: '1' to assert that the needle does not match.
+#   3. mode: Match mode option to apply before the caller's own, or an empty
+#      string.
+#   4. options: Match mode options. Optional, see 'string_assert_match'.
+#   5. file: File to search.
+#   6. string: String to search for.
 ##
-assert_file_contains() {
+file_assert_match() {
+  local anchor="${1}"
+  local negate="${2}"
+  local mode="${3}"
+  shift 3
+
+  local -a args=()
+  [ -n "${mode}" ] && args+=("${mode}")
+
+  while [ "$#" -gt 2 ]; do
+    args+=("${1}")
+    shift
+  done
+
+  if [ "$#" -ne 2 ]; then
+    flunk "A file and a string are required."
+    return 1
+  fi
+
   local file="${1}"
-  local string="${2}"
-  assert_file_exists "${file}" || return 1
+
+  if [ "${negate}" = "1" ]; then
+    [ ! -f "${file}" ] && return 0
+  else
+    assert_file_exists "${file}" || return 1
+  fi
 
   local contents
   contents="$(cat "${file}")"
-  assert_string_contains "${contents}" "${string}"
+
+  args+=("--" "${2}")
+
+  string_assert_match "${anchor}" "${negate}" "${contents}" "${args[@]}"
+}
+
+##
+# Asserts that a file exists and contains a string.
+#
+# Arguments:
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. file: File to search.
+#   3. string: String to search for.
+##
+assert_file_contains() {
+  file_assert_match "anywhere" 0 "" "$@"
 }
 
 ##
@@ -206,18 +251,38 @@ assert_file_contains() {
 # A file that does not exist cannot contain the string, so it passes.
 #
 # Arguments:
-#   1. file: File to search.
-#   2. string: String to search for.
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. file: File to search.
+#   3. string: String to search for.
 ##
 assert_file_not_contains() {
-  local file="${1}"
-  local string="${2}"
+  file_assert_match "anywhere" 1 "" "$@"
+}
 
-  [ ! -f "${file}" ] && return 0
+##
+# Asserts that a file exists and matches an extended regular expression.
+#
+# Arguments:
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. file: File to search.
+#   3. string: Extended regular expression to match.
+##
+assert_file_matches() {
+  file_assert_match "anywhere" 0 "--regex" "$@"
+}
 
-  local contents
-  contents="$(cat "${file}")"
-  assert_string_not_contains "${contents}" "${string}"
+##
+# Asserts that a file does not match an extended regular expression.
+#
+# A file that does not exist cannot match, so it passes.
+#
+# Arguments:
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. file: File to search.
+#   3. string: Extended regular expression to match.
+##
+assert_file_not_matches() {
+  file_assert_match "anywhere" 1 "--regex" "$@"
 }
 
 ##

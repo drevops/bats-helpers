@@ -64,40 +64,63 @@ assert_output() {
 # Asserts that the output of the last command contains a string.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. expected: String to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
 ##
 assert_output_contains() {
-  local expected
-  if [ "$#" -eq 0 ]; then
-    expected="$(cat -)"
-  else
-    expected="${1}"
-  fi
   # shellcheck disable=SC2154
-  assert_string_contains "${output-}" "${expected}"
+  string_assert_match "anywhere" 0 "${output-}" "$@"
 }
 
 ##
 # Asserts that the output of the last command does not contain a string.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. expected: String to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
 ##
 assert_output_not_contains() {
-  local expected
-  if [ "$#" -eq 0 ]; then
-    expected="$(cat -)"
-  else
-    expected="${1}"
-  fi
   # shellcheck disable=SC2154
-  assert_string_not_contains "${output-}" "${expected}"
+  string_assert_match "anywhere" 1 "${output-}" "$@"
+}
+
+##
+# Asserts that the output of the last command matches a regular expression.
+#
+# Arguments:
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. expected: Extended regular expression to match. Optional, read from STDIN
+#      when omitted.
+#
+# Globals:
+#   output: Output captured by the last 'run' call.
+##
+assert_output_matches() {
+  # shellcheck disable=SC2154
+  string_assert_match "anywhere" 0 "${output-}" "--regex" "$@"
+}
+
+##
+# Asserts that the output of the last command does not match a regular
+# expression.
+#
+# Arguments:
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. expected: Extended regular expression to match. Optional, read from STDIN
+#      when omitted.
+#
+# Globals:
+#   output: Output captured by the last 'run' call.
+##
+assert_output_not_matches() {
+  # shellcheck disable=SC2154
+  string_assert_match "anywhere" 1 "${output-}" "--regex" "$@"
 }
 
 ##
@@ -145,7 +168,8 @@ assert_stderr() {
 # Asserts that the standard error of the last command contains a string.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. expected: String to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -153,21 +177,15 @@ assert_stderr() {
 assert_stderr_contains() {
   assert_stderr_captured || return 1
 
-  local expected
-  if [ "$#" -eq 0 ]; then
-    expected="$(cat -)"
-  else
-    expected="${1}"
-  fi
-
-  assert_string_contains "${stderr}" "${expected}"
+  string_assert_match "anywhere" 0 "${stderr}" "$@"
 }
 
 ##
 # Asserts that the standard error of the last command does not contain a string.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. expected: String to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -175,14 +193,43 @@ assert_stderr_contains() {
 assert_stderr_not_contains() {
   assert_stderr_captured || return 1
 
-  local expected
-  if [ "$#" -eq 0 ]; then
-    expected="$(cat -)"
-  else
-    expected="${1}"
-  fi
+  string_assert_match "anywhere" 1 "${stderr}" "$@"
+}
 
-  assert_string_not_contains "${stderr}" "${expected}"
+##
+# Asserts that the standard error of the last command matches a regular
+# expression.
+#
+# Arguments:
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. expected: Extended regular expression to match. Optional, read from STDIN
+#      when omitted.
+#
+# Globals:
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+##
+assert_stderr_matches() {
+  assert_stderr_captured || return 1
+
+  string_assert_match "anywhere" 0 "${stderr}" "--regex" "$@"
+}
+
+##
+# Asserts that the standard error of the last command does not match a regular
+# expression.
+#
+# Arguments:
+#   1. options: Match mode options. Optional, see 'string_assert_match'.
+#   2. expected: Extended regular expression to match. Optional, read from STDIN
+#      when omitted.
+#
+# Globals:
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+##
+assert_stderr_not_matches() {
+  assert_stderr_captured || return 1
+
+  string_assert_match "anywhere" 1 "${stderr}" "--regex" "$@"
 }
 
 ##

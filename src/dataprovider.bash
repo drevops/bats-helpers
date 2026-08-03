@@ -86,7 +86,7 @@ dataprovider_run() {
 
     run "${func_name}" "${test_args[@]}"
 
-    if ! assert_output_contains "${expected}"; then
+    if ! assert_output_contains -- "${expected}"; then
       echo "Error: Failed for set ${set_idx}"
       error_count=$((error_count + 1))
       failed_sets="${failed_sets}${set_idx}, "

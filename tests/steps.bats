@@ -69,6 +69,20 @@ load _test_helper
   assert_failure
 }
 
+@test "Substring absence - substring spelled like a match mode option" {
+  declare -a STEPS=(
+    "- --regex"
+  )
+
+  run echo "Some other"
+  steps_run "assert"
+
+  # Negative.
+  run echo "the --regex option"
+  run steps_run "assert"
+  assert_failure
+}
+
 @test "Substring absence - negative: caller recovers" {
   declare -a STEPS=(
     "- Some Substring"

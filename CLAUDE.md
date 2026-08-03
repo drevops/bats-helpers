@@ -89,6 +89,13 @@ A renamed variable is resolved into a local at the top of the function that owns
 ### Assertion Functions
 All assertion functions follow the pattern of checking conditions and calling `flunk()` with formatted error messages on failure.
 
+### Match Modes
+A containment assertion selects its match mode through leading `--` options rather than a positional argument or an environment variable, so the call site says which comparison it asked for. `--literal` and `--ignore-case` are the defaults, so an assertion naming no option reads as it always did. Only an exact spelling of an option is consumed and `--` ends them, so a needle such as `--verbose` still reads as a needle.
+
+`string_assert_match` in `src/assert.string.bash` is the one place that parses those options, matches, and builds the failure report. An assertion whose haystack is a positional argument reaches it through `string_assert_match_pair`, a file assertion through `file_assert_match`, and the rest call it directly with the haystack they resolved. Every public assertion is a single delegating line naming its anchor and whether it negates, so a new one is added without copying the parser.
+
+Matching is Bash-native rather than a `grep` pipeline, which is what lets one engine serve every mode and both anchors. The consequence worth knowing is that `^` and `$` anchor to the whole value rather than to each of its lines, matching how bats-assert reads `--regexp`.
+
 ### Failure Message Style
 Failure messages are what a consumer reads when their test breaks, so they follow one house style across `src/`. `src/mock.bash` is exempt: it is a vendored copy of grayhemp/bats-mock and restyling it would widen the divergence from upstream.
 

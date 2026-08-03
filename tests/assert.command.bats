@@ -62,13 +62,35 @@ bats_require_minimum_version 1.13.0
   run echo "some existing text"
   assert_output_contains "existing"
 
+  run echo "some existing text"
+  assert_output_contains --case-sensitive "some existing text"
+
+  run echo "some existing 42 text"
+  assert_output_contains --regex 'existing [0-9]+'
+
+  run echo "some existing 42 text"
+  assert_output_contains --format "existing %d text"
+
+  run echo "some existing text"
+  assert_output_contains <<<"existing"
+
   run assert_output_contains "non-existing"
+  assert_failure
+
+  run echo "some EXISTING text"
+  run assert_output_contains --case-sensitive "some existing text"
   assert_failure
 }
 
 @test "assert_output_not_contains" {
   run echo "some existing text"
   assert_output_not_contains "non-existing"
+
+  run echo "some EXISTING text"
+  assert_output_not_contains --case-sensitive "some existing text"
+
+  run echo "some existing text"
+  assert_output_not_contains --regex 'existing [0-9]+'
 
   run assert_output_not_contains "some existing text"
   assert_failure
@@ -77,6 +99,46 @@ bats_require_minimum_version 1.13.0
   assert_failure
 
   run assert_output_not_contains "existing"
+  assert_failure
+
+  run echo "some existing 42 text"
+  run assert_output_not_contains --regex 'existing [0-9]+'
+  assert_failure
+}
+
+@test "assert_output_matches" {
+  run echo "some existing 42 text"
+  assert_output_matches 'existing [0-9]+'
+  assert_output_matches 'EXISTING [0-9]+'
+  assert_output_matches '^some'
+  assert_output_matches 'text$'
+  assert_output_matches --case-sensitive 'existing [0-9]+'
+
+  run echo "some existing 42 text"
+  assert_output_matches <<<'existing [0-9]+'
+
+  run echo "some existing text"
+  run assert_output_matches 'existing [0-9]+'
+  assert_failure
+
+  run echo "some EXISTING 42 text"
+  run assert_output_matches --case-sensitive 'existing [0-9]+'
+  assert_failure
+}
+
+@test "assert_output_not_matches" {
+  run echo "some existing text"
+  assert_output_not_matches 'existing [0-9]+'
+
+  run echo "some EXISTING 42 text"
+  assert_output_not_matches --case-sensitive 'existing [0-9]+'
+
+  run echo "some existing 42 text"
+  run assert_output_not_matches 'existing [0-9]+'
+  assert_failure
+
+  run echo "some existing 42 text"
+  run assert_output_not_matches 'EXISTING [0-9]+'
   assert_failure
 }
 
@@ -116,9 +178,18 @@ bats_require_minimum_version 1.13.0
   assert_stderr_contains "some existing error"
   assert_stderr_contains "some EXISTING error"
   assert_stderr_contains "existing"
+  assert_stderr_contains --case-sensitive "some existing error"
+
+  run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
+  assert_stderr_contains --regex 'existing [0-9]+'
+  assert_stderr_contains --format "existing %d error"
 
   run --separate-stderr bash -c 'echo "some existing error" >&2'
   run assert_stderr_contains "non-existing"
+  assert_failure
+
+  run --separate-stderr bash -c 'echo "some EXISTING error" >&2'
+  run assert_stderr_contains --case-sensitive "some existing error"
   assert_failure
 
   unset stderr
@@ -130,6 +201,9 @@ bats_require_minimum_version 1.13.0
 @test "assert_stderr_not_contains" {
   run --separate-stderr bash -c 'echo "some existing error" >&2'
   assert_stderr_not_contains "non-existing"
+
+  run --separate-stderr bash -c 'echo "some EXISTING error" >&2'
+  assert_stderr_not_contains --case-sensitive "some existing error"
 
   run --separate-stderr bash -c 'echo "some existing error" >&2'
   run assert_stderr_not_contains "some existing error"
@@ -143,8 +217,55 @@ bats_require_minimum_version 1.13.0
   run assert_stderr_not_contains "existing"
   assert_failure
 
+  run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
+  run assert_stderr_not_contains --regex 'existing [0-9]+'
+  assert_failure
+
   unset stderr
   run assert_stderr_not_contains "non-existing"
+  assert_failure
+  assert_output_contains "run --separate-stderr"
+}
+
+@test "assert_stderr_matches" {
+  run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
+  assert_stderr_matches 'existing [0-9]+'
+  assert_stderr_matches 'EXISTING [0-9]+'
+  assert_stderr_matches '^some'
+  assert_stderr_matches 'error$'
+  assert_stderr_matches --case-sensitive 'existing [0-9]+'
+
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
+  run assert_stderr_matches 'existing [0-9]+'
+  assert_failure
+
+  run --separate-stderr bash -c 'echo "some EXISTING 42 error" >&2'
+  run assert_stderr_matches --case-sensitive 'existing [0-9]+'
+  assert_failure
+
+  unset stderr
+  run assert_stderr_matches 'existing'
+  assert_failure
+  assert_output_contains "run --separate-stderr"
+}
+
+@test "assert_stderr_not_matches" {
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
+  assert_stderr_not_matches 'existing [0-9]+'
+
+  run --separate-stderr bash -c 'echo "some EXISTING 42 error" >&2'
+  assert_stderr_not_matches --case-sensitive 'existing [0-9]+'
+
+  run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
+  run assert_stderr_not_matches 'existing [0-9]+'
+  assert_failure
+
+  run --separate-stderr bash -c 'echo "some existing 42 error" >&2'
+  run assert_stderr_not_matches 'EXISTING [0-9]+'
+  assert_failure
+
+  unset stderr
+  run assert_stderr_not_matches 'existing'
   assert_failure
   assert_output_contains "run --separate-stderr"
 }

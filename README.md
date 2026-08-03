@@ -27,7 +27,7 @@
 - [Installation](#-installation)
 - [Usage](#-usage)
   - [Load library](#load-library)
-  - [Assertions](#assertions) - Command run, Standard error, String, File, Git
+  - [Assertions](#assertions) - Command run, Standard error, String, Match modes, File, Git
   - [Data provider](#data-provider) - Parameterized tests
   - [Mocking](#mocking) - Command mocking
   - [Step runner](#step-runner) - Sequential test assertions
@@ -40,6 +40,7 @@
 ## ✨ Features
 
 - Assertions for command output, standard error, strings, files, directories and git repositories.
+- Literal, regular expression and format matching, with case sensitivity as an explicit choice.
 - Command mocking with per-call output, exit status and side effects.
 - Step runner for sequences of mocked calls and output assertions.
 - Data provider for running one function over many test cases.
@@ -97,13 +98,15 @@ load _loader.bash
 
 Use these after running a command with `run`.
 
-| Function Name                | Description                                         |
-|------------------------------|-----------------------------------------------------|
-| `assert_success`             | Asserts that a command succeeds                     |
-| `assert_failure`             | Asserts that a command fails                        |
-| `assert_output`              | Asserts that a command outputs an exact string      |
-| `assert_output_contains`     | Checks if output contains a specific string         |
-| `assert_output_not_contains` | Checks if output does not contain a specific string |
+| Function Name                | Description                                            |
+|------------------------------|--------------------------------------------------------|
+| `assert_success`             | Asserts that a command succeeds                        |
+| `assert_failure`             | Asserts that a command fails                           |
+| `assert_output`              | Asserts that a command outputs an exact string         |
+| `assert_output_contains`     | Checks if output contains a specific string            |
+| `assert_output_not_contains` | Checks if output does not contain a specific string    |
+| `assert_output_matches`      | Checks if output matches a regular expression          |
+| `assert_output_not_matches`  | Checks if output does not match a regular expression   |
 
 #### Standard error assertions
 
@@ -112,6 +115,8 @@ Use these after running a command with `run`.
 | `assert_stderr`              | Asserts that a command writes an exact string to STDERR     |
 | `assert_stderr_contains`     | Checks if STDERR contains a specific string                 |
 | `assert_stderr_not_contains` | Checks if STDERR does not contain a specific string         |
+| `assert_stderr_matches`      | Checks if STDERR matches a regular expression               |
+| `assert_stderr_not_matches`  | Checks if STDERR does not match a regular expression        |
 | `assert_stderr_empty`        | Asserts that a command wrote nothing to STDERR              |
 | `assert_stderr_captured`     | Asserts that STDERR was captured separately from the output |
 
@@ -154,15 +159,19 @@ A capture lives only until the next `run`: a plain one clears `$stderr`, so the 
 
 #### String assertions
 
-| Function Name                | Description                                        |
-|------------------------------|----------------------------------------------------|
-| `assert_empty`               | Asserts that a string is empty                     |
-| `assert_not_empty`           | Asserts that a string is not empty                 |
-| `assert_equal`               | Asserts that two strings are equal                 |
-| `assert_string_contains`     | Asserts that a string contains a given substring   |
-| `assert_string_not_contains` | Asserts that a string does not contain a substring |
-
-`assert_string_contains` and `assert_string_not_contains` match case-insensitively and treat the needle as a literal string. So do the assertions built on them: `assert_output_contains`, `assert_output_not_contains`, `assert_file_contains` and `assert_file_not_contains`.
+| Function Name                   | Description                                               |
+|---------------------------------|-----------------------------------------------------------|
+| `assert_empty`                  | Asserts that a string is empty                            |
+| `assert_not_empty`              | Asserts that a string is not empty                        |
+| `assert_equal`                  | Asserts that two strings are equal                        |
+| `assert_string_contains`        | Asserts that a string contains a given substring          |
+| `assert_string_not_contains`    | Asserts that a string does not contain a substring        |
+| `assert_string_starts_with`     | Asserts that a string starts with a substring             |
+| `assert_string_not_starts_with` | Asserts that a string does not start with a substring     |
+| `assert_string_ends_with`       | Asserts that a string ends with a substring               |
+| `assert_string_not_ends_with`   | Asserts that a string does not end with a substring       |
+| `assert_string_matches`         | Asserts that a string matches a regular expression        |
+| `assert_string_not_matches`     | Asserts that a string does not match a regular expression |
 
 Every `contains` assertion takes the container first and the string to look for second:
 
@@ -172,6 +181,69 @@ assert_file_contains "${file}" "needle"
 assert_dir_contains_string "${dir}" "needle"
 ```
 
+#### Match modes
+
+A containment assertion reads its needle literally and matches case-insensitively. Options placed before the positional arguments change that:
+
+| Option             | Effect                                                  |
+|--------------------|---------------------------------------------------------|
+| `--literal`        | Read the needle literally. The default                  |
+| `--regex`          | Read the needle as an extended regular expression       |
+| `--format`         | Read the needle as a format string, see below           |
+| `--ignore-case`    | Match case-insensitively. The default                   |
+| `--case-sensitive` | Match case-sensitively                                  |
+| `--`               | End the options, for a needle spelled like one          |
+
+They are taken by `assert_string_contains`, `assert_string_not_contains`, the four prefix and suffix assertions, `assert_output_contains`, `assert_output_not_contains`, `assert_stderr_contains`, `assert_stderr_not_contains`, `assert_file_contains` and `assert_file_not_contains`. The `matches` assertions are the same thing with `--regex` already applied:
+
+```bash
+assert_output_contains --case-sensitive "Error: config file not found"
+assert_output_contains --regex 'Deleted [0-9]+ files'
+assert_output_matches 'Deleted [0-9]+ files'
+assert_string_starts_with --case-sensitive "${line}" "WARNING"
+```
+
+Only an exact spelling of an option is read as one, so a needle that merely starts with a dash needs no escaping. A needle that is exactly one of the six goes after `--`:
+
+```bash
+assert_output_contains "usage: --verbose enables logging"
+assert_output_contains -- "--regex"
+```
+
+**Prefer the literal default.** A literal needle cannot be broken by a character that happens to be a regular expression operator, and its failure report can be read straight against the value it did not match. Reach for `--regex` only for the part of a value that genuinely varies between runs - a timestamp, a PID, a duration, a version - and leave the rest literal. Where the only variation is a number or a word, `--format` says so without a regular expression:
+
+| Placeholder | Matches                                   |
+|-------------|-------------------------------------------|
+| `%d`        | A run of digits                           |
+| `%f`        | A number with an optional fractional part |
+| `%s`        | A run of non-whitespace characters        |
+| `%%`        | A literal `%`                             |
+
+Everything outside a placeholder is matched literally, so a format string escapes nothing of its own:
+
+```bash
+assert_output_contains --format "Deleted %d files in %fs"
+assert_file_contains --format "${log}" "user %s logged in"
+```
+
+The prefix and suffix assertions, and the `^` and `$` anchors of a regular expression, all apply to the whole value rather than to each of its lines:
+
+```bash
+# The whole output is 'Done', not merely one of its lines.
+assert_output_matches '^Done$'
+```
+
+The failure report names the mode and the case sensitivity that were in force, and calls out the case setting when the other one would have decided the assertion the other way:
+
+```text
+String 'some text' does not contain 'SOME'
+match mode: literal
+case: sensitive
+note: it matches with '--ignore-case'
+```
+
+Use `string_match` to make the same comparison without asserting on it, and `string_format_to_regex` to see what a format string expands to.
+
 #### File assertions
 
 | Function Name                    | Description                                            |
@@ -180,6 +252,8 @@ assert_dir_contains_string "${dir}" "needle"
 | `assert_file_not_exists`         | Asserts that a file does not exist                     |
 | `assert_file_contains`           | Checks if a file contains a specific string            |
 | `assert_file_not_contains`       | Checks if a file does not contain a specific string    |
+| `assert_file_matches`            | Checks if a file matches a regular expression          |
+| `assert_file_not_matches`        | Checks if a file does not match a regular expression   |
 | `assert_files_equal`             | Asserts that two files are equal                       |
 | `assert_files_not_equal`         | Asserts that two files are not equal                   |
 | `assert_file_mode`               | Checks the file permission mode                        |
@@ -202,7 +276,7 @@ assert_file_exists "${dir}/*.txt"
 assert_file_not_exists "${dir}/*.rtf"
 ```
 
-`assert_dir_contains_string` and `assert_dir_not_contains_string` search recursively, skip binary files, and always exclude `.git`, `.idea`, `vendor` and `node_modules`. Unlike the string and file assertions, they match case-sensitively and read the string as a `grep` basic regular expression. Set `BATS_HELPERS_ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
+`assert_dir_contains_string` and `assert_dir_not_contains_string` search recursively, skip binary files, and always exclude `.git`, `.idea`, `vendor` and `node_modules`. They take none of the match mode options: they always match case-sensitively and always read the string as a `grep` basic regular expression. Set `BATS_HELPERS_ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
 
 ```bash
 declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=("build" "dist")
@@ -456,6 +530,8 @@ export BATS_HELPERS_STEPS_DEBUG=1
 | `fixture_prepare_dir`     | Creates an empty directory for a fixture, removing any existing content       |
 | `fixture_export_codebase` | Exports the codebase at the latest commit to a destination directory          |
 | `string_random`           | Generates a random alphanumeric string, 8 characters long by default          |
+| `string_match`            | Reports whether a needle matches a haystack, without asserting on it          |
+| `string_format_to_regex`  | Translates a format string into an extended regular expression                |
 | `tui_run`                 | Runs the script named by `SCRIPT_FILE`, feeding it a list of answers on STDIN |
 | `flunk`                   | Fails the test with a message                                                 |
 | `format_error`            | Formats an error message with a border and the captured output and STDERR     |
