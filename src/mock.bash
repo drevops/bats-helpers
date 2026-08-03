@@ -13,7 +13,8 @@
 
 # Creates a mock program
 # Globals:
-#   BATS_MOCK_TMPDIR
+#   BATS_HELPERS_MOCK_TMPDIR
+#   BATS_HELPERS_MOCK_USER
 #   BATS_TEST_TMPDIR
 # Outputs:
 #   STDOUT: Path to the mock
@@ -22,12 +23,19 @@ mock_create() {
 
   # @note: Modification to the original file: the directory is resolved by
   # mock_resolve_tmp(), which allows a custom location and defaults to the
-  # per-test one. BATS_TMPDIR below was changed to BATS_MOCK_TMPDIR.
-  BATS_MOCK_TMPDIR="$(mock_resolve_tmp)" || return 1
+  # per-test one. BATS_TMPDIR below was changed to BATS_HELPERS_MOCK_TMPDIR.
+  BATS_HELPERS_MOCK_TMPDIR="$(mock_resolve_tmp)" || return 1
 
-  index="$(find "${BATS_MOCK_TMPDIR}" -name bats-mock.$$.* | wc -l | tr -d ' ')"
+  # @note: Modification to the original file: the notice for the deprecated
+  # user variable is emitted here rather than from the generated mock, which
+  # runs as a separate process with no file descriptor 3 to write to.
+  if [ -z "${BATS_HELPERS_MOCK_USER-}" ] && [ -n "${_USER-}" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: '_USER' will be removed in the next version. Use 'BATS_HELPERS_MOCK_USER' instead." >&3
+  fi
+
+  index="$(find "${BATS_HELPERS_MOCK_TMPDIR}" -name bats-mock.$$.* | wc -l | tr -d ' ')"
   local mock
-  mock="${BATS_MOCK_TMPDIR}/bats-mock.$$.${index}"
+  mock="${BATS_HELPERS_MOCK_TMPDIR}/bats-mock.$$.${index}"
   echo -n 0 >"${mock}.call_num"
   echo -n 0 >"${mock}.status"
   echo -n '' >"${mock}.output"
@@ -43,7 +51,7 @@ mock="${mock}"
 call_num="\$(( \$(cat "\${mock}.call_num") + 1 ))"
 echo "\${call_num}" > "\${mock}.call_num"
 
-echo "\${_USER:-\$(id -un)}" > "\${mock}.user.\${call_num}"
+echo "\${BATS_HELPERS_MOCK_USER:-\${_USER:-\$(id -un)}}" > "\${mock}.user.\${call_num}"
 
 echo "\$@" > "\${mock}.args.\${call_num}"
 
@@ -260,18 +268,18 @@ mock_setup() {
   #
   # Prepare directory with mock binaries, get it's path, and export it so that
   # bats-mock could use it internally.
-  BATS_MOCK_TMPDIR="$(mock_prepare_tmp)" || return 1
-  export "BATS_MOCK_TMPDIR"
+  BATS_HELPERS_MOCK_TMPDIR="$(mock_prepare_tmp)" || return 1
+  export "BATS_HELPERS_MOCK_TMPDIR"
   # Set the path to temp mocked binaries directory as the first location in
   # PATH to lookup in mock directories first. This change lives only for the
   # duration of the test and will be reset after. It does not modify the PATH
   # outside of the running test.
-  PATH="${BATS_MOCK_TMPDIR}:${PATH}"
+  PATH="${BATS_HELPERS_MOCK_TMPDIR}:${PATH}"
 }
 
 # Resolves the directory that mocks are stored in.
 # Globals:
-#   BATS_MOCK_TMPDIR
+#   BATS_HELPERS_MOCK_TMPDIR
 #   BATS_TEST_TMPDIR
 # Returns:
 #   1: If neither of the globals is set
@@ -279,10 +287,18 @@ mock_setup() {
 #   STDOUT: Path to the directory
 #   STDERR: Corresponding error message
 mock_resolve_tmp() {
-  local dir="${BATS_MOCK_TMPDIR:-${BATS_TEST_TMPDIR-}}"
+  local dir
+  if [ -n "${BATS_HELPERS_MOCK_TMPDIR-}" ]; then
+    dir="${BATS_HELPERS_MOCK_TMPDIR}"
+  elif [ -n "${BATS_MOCK_TMPDIR-}" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'BATS_MOCK_TMPDIR' will be removed in the next version. Use 'BATS_HELPERS_MOCK_TMPDIR' instead." >&3
+    dir="${BATS_MOCK_TMPDIR}"
+  else
+    dir="${BATS_TEST_TMPDIR-}"
+  fi
 
   if [ -z "${dir}" ]; then
-    echo "Unable to resolve the mock directory: BATS_TEST_TMPDIR is not set. Set BATS_MOCK_TMPDIR to a writable directory" >&2
+    echo "Unable to resolve the mock directory: BATS_TEST_TMPDIR is not set. Set BATS_HELPERS_MOCK_TMPDIR to a writable directory" >&2
     return 1
   fi
 

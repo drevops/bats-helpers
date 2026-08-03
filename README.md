@@ -32,7 +32,8 @@
   - [Mocking](#mocking) - Command mocking
   - [Step runner](#step-runner) - Sequential test assertions
   - [Helpers](#helpers) - Utility functions
-  - [Deprecations](#deprecations) - Renamed and reordered functions
+  - [Environment variables](#environment-variables) - Full variable reference
+  - [Deprecations](#deprecations) - Renamed functions and variables
 - [Acknowledgments](#-acknowledgments)
 - [Contributing](#-contributing)
 
@@ -47,7 +48,7 @@
 
 ## 📦 Installation
 
-Requires [bats-core](https://github.com/bats-core/bats-core) `1.10` or newer.
+Requires [bats-core](https://github.com/bats-core/bats-core) `1.10` or newer, and Bash `4.0` or newer. macOS ships Bash `3.2`, so install a current one with `brew install bash`.
 
 ### NPM
 
@@ -154,10 +155,10 @@ assert_file_exists "${dir}/*.txt"
 assert_file_not_exists "${dir}/*.rtf"
 ```
 
-`assert_dir_contains_string` and `assert_dir_not_contains_string` search recursively, skip binary files, and always exclude `.git`, `.idea`, `vendor` and `node_modules`. Unlike the string and file assertions, they match case-sensitively and read the string as a `grep` basic regular expression. Set `ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
+`assert_dir_contains_string` and `assert_dir_not_contains_string` search recursively, skip binary files, and always exclude `.git`, `.idea`, `vendor` and `node_modules`. Unlike the string and file assertions, they match case-sensitively and read the string as a `grep` basic regular expression. Set `BATS_HELPERS_ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
 
 ```bash
-declare -a ASSERT_DIR_EXCLUDE=("build" "dist")
+declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=("build" "dist")
 assert_dir_contains_string "${dir}" "needle"
 ```
 
@@ -243,10 +244,18 @@ This is a very powerful feature that allows to test complex scenarios as unit te
 
 `mock_setup` writes the mocks to `${BATS_TEST_TMPDIR}/bats-mock-tmp` and puts that directory first on `PATH`, so BATS removes the mocks together with the rest of the test sandbox and concurrent runs cannot delete each other's mocks.
 
-Set `BATS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-mock-tmp` directory below it. The guarantees above come from staying within the test sandbox - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
+Set `BATS_HELPERS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-mock-tmp` directory below it. The guarantees above come from staying within the test sandbox - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
 
 ```bash
-export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/mocks"
+export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/mocks"
+```
+
+`mock_setup` also exports `BATS_HELPERS_MOCK_TMPDIR` with the resolved path, so a test can read back where the mocks ended up.
+
+`mock_get_call_user` reports the user each call was made as. It defaults to `id -un`; set `BATS_HELPERS_MOCK_USER` to report a different one:
+
+```bash
+export BATS_HELPERS_MOCK_USER="deploy"
 ```
 
 #### Example
@@ -381,10 +390,10 @@ Assert that the output does not contain the specified substring. Starts with `- 
 
 ##### Debugging
 
-Set `RUN_STEPS_DEBUG` to `1` to print the parsing and matching decisions of every step to file descriptor 3:
+Set `BATS_HELPERS_STEPS_DEBUG` to `1` to print the parsing and matching decisions of every step to file descriptor 3:
 
 ```bash
-export RUN_STEPS_DEBUG=1
+export BATS_HELPERS_STEPS_DEBUG=1
 ```
 
 ### Helpers
@@ -404,10 +413,10 @@ export RUN_STEPS_DEBUG=1
 | `flunk`                   | Fails the test with a message                                                 |
 | `format_error`            | Formats an error message with a border and the captured command output        |
 
-`fixture_export_codebase` is a no-op unless `BATS_FIXTURE_EXPORT_CODEBASE_ENABLED` is set to `1`, so an expensive export can be enabled per suite rather than per call:
+`fixture_export_codebase` is a no-op unless `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` is set to `1`, so an expensive export can be enabled per suite rather than per call:
 
 ```bash
-export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 ```
 
 #### Failure reporting
@@ -443,6 +452,25 @@ Use `file_backup_path` to resolve where a given file's backup is stored:
 assert_file_exists "$(file_backup_path "${BATS_TEST_TMPDIR}/.env")"
 ```
 
+### Environment variables
+
+Every variable the library defines, in one place. Each is also covered by the section of the feature that uses it. Variables that belong to bats-core - `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME`, `BATS_VERBOSE_RUN` - are read but not owned here, and are documented by [bats-core](https://bats-core.readthedocs.io/).
+
+`STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the test data a consumer declares right above the call that reads it, so they stay short and unprefixed. Everything the library reads from the wider environment carries the `BATS_HELPERS_` prefix.
+
+| Variable                                       | Read by                                                       | Description                                                                                 |
+|------------------------------------------------|---------------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| `STEPS`                                        | `steps_run`                                                   | Array of steps to process                                                                   |
+| `TEST_CASES`                                   | `dataprovider_run`                                            | Array of test cases, each row ending with its expected value                                |
+| `SCRIPT_FILE`                                  | `tui_run`                                                     | Path to the script to run, relative to the current directory                                |
+| `BATS_HELPERS_STEPS_DEBUG`                     | `steps_run`                                                   | Set to `1` to print every parsing and matching decision to file descriptor 3                |
+| `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              | `assert_dir_contains_string`, `assert_dir_not_contains_string` | Array of directory names to exclude from the search, on top of the always-excluded four     |
+| `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `fixture_export_codebase`                                     | Set to `1` to enable the export; anything else makes the function a no-op                   |
+| `BATS_HELPERS_BACKUP_DIR`                      | `file_add_var`, `file_restore`, `file_backup_path`            | Backup root. Defaults to `${BATS_TEST_TMPDIR}/bats-helpers-backup`                          |
+| `BATS_HELPERS_MOCK_TMPDIR`                     | `mock_setup`, `mock_create`                                   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`, and `mock_setup` exports the resolved path |
+| `BATS_HELPERS_MOCK_USER`                       | `mock_get_call_user`                                          | User a mock call is reported as. Defaults to `id -un`                                       |
+| `BATS_HELPERS_DEPRECATION_QUIET`               | every module                                                  | Set to any non-empty value to silence every deprecation notice                              |
+
 ### Deprecations
 
 These names still work, but print a notice on every call and are removed in the next version:
@@ -462,6 +490,18 @@ These names still work, but print a notice on every call and are removed in the 
 | `add_var_to_file`                | `file_add_var`                |
 | `restore_file`                   | `file_restore`                |
 | `random_string`                  | `string_random`               |
+
+The variables follow the same pattern. The old name is read only when the new one is unset or empty, so setting both to real values leaves the new one in charge:
+
+| Deprecated                             | Use instead                                    |
+|----------------------------------------|------------------------------------------------|
+| `RUN_STEPS_DEBUG`                      | `BATS_HELPERS_STEPS_DEBUG`                     |
+| `ASSERT_DIR_EXCLUDE`                   | `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              |
+| `BATS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` |
+| `BATS_MOCK_TMPDIR`                     | `BATS_HELPERS_MOCK_TMPDIR`                     |
+| `_USER`                                | `BATS_HELPERS_MOCK_USER`                       |
+
+`mock_setup` now exports `BATS_HELPERS_MOCK_TMPDIR` rather than `BATS_MOCK_TMPDIR`. The old name is still read as an input, but it is no longer written, so a test that reads the mock directory back after `mock_setup` has to read the new name. `mock_resolve_tmp` also names the new variable when it cannot resolve a directory, so a test asserting on `Set BATS_MOCK_TMPDIR to a writable directory` has to be updated.
 
 Every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. Apart from the two below, each replacement keeps the arguments, the standard output and the return semantics, so a call is updated by swapping the name alone.
 

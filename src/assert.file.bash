@@ -221,6 +221,35 @@ assert_file_not_contains() {
 }
 
 ##
+# Builds the 'grep' parameters excluding directories from a recursive search.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+#
+# Outputs:
+#   STDOUT: One '--exclude-dir' parameter per line, so that a directory name
+#     containing spaces survives being read back into an array.
+##
+assert_dir_exclude_params() {
+  local -a exclude_dirs=(".git" ".idea" "vendor" "node_modules")
+
+  if [ -n "${BATS_HELPERS_ASSERT_DIR_EXCLUDE+x}" ]; then
+    exclude_dirs+=("${BATS_HELPERS_ASSERT_DIR_EXCLUDE[@]}")
+  elif [ -n "${ASSERT_DIR_EXCLUDE+x}" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'ASSERT_DIR_EXCLUDE' will be removed in the next version. Use 'BATS_HELPERS_ASSERT_DIR_EXCLUDE' instead." >&3
+    exclude_dirs+=("${ASSERT_DIR_EXCLUDE[@]}")
+  fi
+
+  local exclude_dir
+  for exclude_dir in "${exclude_dirs[@]}"; do
+    [ -n "${exclude_dir}" ] && printf '%s\n' "--exclude-dir=${exclude_dir}"
+  done
+
+  return 0
+}
+
+##
 # Asserts that a directory exists and contains a string in one of its files.
 #
 # Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
@@ -231,22 +260,19 @@ assert_file_not_contains() {
 #   2. string: String to search for.
 #
 # Globals:
-#   ASSERT_DIR_EXCLUDE: Additional directory names to exclude from the search.
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
 ##
 assert_dir_contains_string() {
   local dir="${1}"
   local string="${2}"
-  local default_exclude_dirs=(".git" ".idea" "vendor" "node_modules")
 
   assert_dir_exists "${dir}" || return 1
 
-  local exclude_params=""
-  local exclude_dir
-  for exclude_dir in "${default_exclude_dirs[@]}" "${ASSERT_DIR_EXCLUDE[@]-}"; do
-    [ -n "${exclude_dir}" ] && exclude_params+="--exclude-dir=${exclude_dir} "
-  done
+  local -a exclude_params
+  mapfile -t exclude_params < <(assert_dir_exclude_params)
 
-  if grep -rI ${exclude_params} -l "${string}" "${dir}"; then
+  if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
     return 0
   else
     format_error "Directory '${dir}' does not contain string '${string}'" | flunk
@@ -265,22 +291,19 @@ assert_dir_contains_string() {
 #   2. string: String to search for.
 #
 # Globals:
-#   ASSERT_DIR_EXCLUDE: Additional directory names to exclude from the search.
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
 ##
 assert_dir_not_contains_string() {
   local dir="${1}"
   local string="${2}"
-  local default_exclude_dirs=(".git" ".idea" "vendor" "node_modules")
 
   [ ! -d "${dir}" ] && return 0
 
-  local exclude_params=""
-  local exclude_dir
-  for exclude_dir in "${default_exclude_dirs[@]}" "${ASSERT_DIR_EXCLUDE[@]-}"; do
-    [ -n "${exclude_dir}" ] && exclude_params+="--exclude-dir=${exclude_dir} "
-  done
+  local -a exclude_params
+  mapfile -t exclude_params < <(assert_dir_exclude_params)
 
-  if grep -rI ${exclude_params} -l "${string}" "${dir}"; then
+  if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
     format_error "Directory '${dir}' contains string '${string}', but should not" | flunk
   else
     return 0

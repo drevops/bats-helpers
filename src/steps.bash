@@ -40,7 +40,7 @@
 #
 # Globals:
 #   STEPS: Array of steps to process.
-#   RUN_STEPS_DEBUG: Set to '1' to enable debug output.
+#   BATS_HELPERS_STEPS_DEBUG: Set to '1' to enable debug output.
 #
 # Outputs:
 #   STDOUT: The created mocks, in the 'setup' phase only.
@@ -51,6 +51,10 @@ steps_run() {
 
   local phase="${1:-${PHASE_ASSERT}}"
   local mocked_commands_var="${2-}"
+
+  if [ -z "${BATS_HELPERS_STEPS_DEBUG-}" ] && [ -n "${RUN_STEPS_DEBUG-}" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'RUN_STEPS_DEBUG' will be removed in the next version. Use 'BATS_HELPERS_STEPS_DEBUG' instead." >&3
+  fi
 
   if [ -z "${STEPS+x}" ]; then
     flunk "STEPS array is empty."
@@ -266,10 +270,12 @@ steps_debug_sub() {
 #   2. message: Message to print.
 #
 # Globals:
-#   RUN_STEPS_DEBUG: Set to '1' to enable debug output.
+#   BATS_HELPERS_STEPS_DEBUG: Set to '1' to enable debug output.
 ##
 steps_debug_write() {
-  if [ "${RUN_STEPS_DEBUG-}" = "1" ]; then
+  local debug="${BATS_HELPERS_STEPS_DEBUG:-${RUN_STEPS_DEBUG-}}"
+
+  if [ "${debug}" = "1" ]; then
     echo "${1}${2}" >&3
   fi
 }

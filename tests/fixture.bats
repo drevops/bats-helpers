@@ -14,7 +14,7 @@ load _test_helper
 }
 
 @test "Codebase export enabled" {
-  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
   fixture_prepare_dir "${build_dir}"
@@ -23,7 +23,7 @@ load _test_helper
 }
 
 @test "Codebase export - missing destination directory" {
-  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/non-existing"
 
@@ -34,7 +34,7 @@ load _test_helper
 }
 
 @test "Codebase export - missing destination directory - caller recovers" {
-  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/non-existing"
 
@@ -45,7 +45,7 @@ load _test_helper
 }
 
 @test "Codebase export - export fails" {
-  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
   fixture_prepare_dir "${build_dir}"
@@ -61,7 +61,7 @@ load _test_helper
 }
 
 @test "Codebase export - export fails - caller recovers" {
-  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
   fixture_prepare_dir "${build_dir}"
@@ -77,7 +77,7 @@ load _test_helper
 }
 
 @test "Codebase export - source is not a git repository" {
-  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
   fixture_prepare_dir "${build_dir}"
@@ -92,7 +92,7 @@ load _test_helper
 }
 
 @test "Codebase export - source is not a git repository - caller recovers" {
-  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
   fixture_prepare_dir "${build_dir}"

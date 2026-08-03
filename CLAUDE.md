@@ -75,6 +75,17 @@ Two exceptions:
 - **The `assert_*` family** keeps the verb first, because there the verb is already the namespace and it matches bats-assert and bats-file exactly. Shape: `assert_<subject>_<predicate>`, e.g. `assert_file_not_exists`. An assertion a module owns still takes the module's prefix: `mock_assert_call_args`.
 - **`flunk` and `format_error`** are bare verbs, mirroring bats-support's `fail`.
 
+### Variable Naming
+Every variable the library reads from the wider environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`. This holds in `src/mock.bash` too: a variable that reaches the consumer is the library's whichever upstream it came from, so it reads `BATS_HELPERS_MOCK_TMPDIR` and `BATS_HELPERS_MOCK_USER`.
+
+`STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the three exceptions and stay unprefixed. They are not environment configuration but the test data itself, written on the lines directly above the call that reads them, so the declaration and its use are read together and a long prefix costs more in daily ergonomics than the collision risk costs in rare confusion. `STEPS` and `TEST_CASES` are arrays declared with `declare -a`; `SCRIPT_FILE` is a scalar path.
+
+A deprecated name is read only when its replacement is unset **or empty**, so exporting the replacement as an empty string falls back rather than taking precedence. Every fallback in the library follows that one rule.
+
+The prefix rule covers what the library provides, not what it consumes - bats-core's own `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME` and `BATS_VERBOSE_RUN` keep their names.
+
+A renamed variable is resolved into a local at the top of the function that owns it, preferring the prefixed name and falling back to the old one with a deprecation notice. The chain is written out in full at each site, for the same reason the function aliases are.
+
 ### Assertion Functions
 All assertion functions follow the pattern of checking conditions and calling `flunk()` with formatted error messages on failure.
 
@@ -120,7 +131,8 @@ File headers and function docblocks follow one house style so the library reads 
 #   2. string: String to search for.
 #
 # Globals:
-#   ASSERT_DIR_EXCLUDE: Additional directory names to exclude from the search.
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
 ##
 ```
 

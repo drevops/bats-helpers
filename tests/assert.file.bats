@@ -2,7 +2,7 @@
 #
 # Tests for file and directory assertions.
 #
-# shellcheck disable=SC2129,SC2030,SC2031
+# shellcheck disable=SC2129,SC2030,SC2031,SC2034
 
 load _test_helper
 
@@ -232,7 +232,9 @@ load _test_helper
   # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
-  export ASSERT_DIR_EXCLUDE=(vendor2)
+  mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor three"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor three/2.txt"
+  declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2 "vendor three")
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
 }
@@ -266,7 +268,9 @@ load _test_helper
   # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
-  export ASSERT_DIR_EXCLUDE=(vendor2)
+  mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor three"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor three/2.txt"
+  declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2 "vendor three")
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
 }
 

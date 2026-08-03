@@ -905,7 +905,7 @@ load _test_helper
 
 @test "Debug output" {
   debug="${BATS_TEST_TMPDIR}/debug.txt"
-  export RUN_STEPS_DEBUG=1
+  export BATS_HELPERS_STEPS_DEBUG=1
 
   declare -a STEPS=(
     "@curl example.com # 0 # Some Substring"

@@ -5,9 +5,15 @@
 # Each test asserts that the old name still works and still warns. File
 # descriptor 3 is redirected per call so the notice can be asserted on.
 #
-# shellcheck disable=SC2034,SC2129
+# shellcheck disable=SC2030,SC2031,SC2034,SC2129
 
 load _test_helper
+
+fixture_add() {
+  local num1="${1}"
+  local num2="${2}"
+  echo $((num1 + num2))
+}
 
 @test "assert_not_git_repo" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
@@ -87,7 +93,7 @@ load _test_helper
 
   setup_mock 3>"${notice}"
 
-  assert_dir_exists "${BATS_MOCK_TMPDIR}"
+  assert_dir_exists "${BATS_HELPERS_MOCK_TMPDIR}"
   assert_file_contains "${notice}" "Deprecated: 'setup_mock' will be removed in the next version. Use 'mock_setup' instead."
 }
 
@@ -139,6 +145,100 @@ load _test_helper
 
   assert_file_not_contains "${BATS_TEST_TMPDIR}/.env" "VAR=value"
   assert_file_contains "${notice}" "Deprecated: 'restore_file' will be removed in the next version. Use 'file_restore' instead."
+}
+
+@test "RUN_STEPS_DEBUG" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  export RUN_STEPS_DEBUG=1
+
+  run echo "Some Substring"
+  declare -a STEPS=(
+    "Some Substring"
+  )
+  steps_run "assert" 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'RUN_STEPS_DEBUG' will be removed in the next version. Use 'BATS_HELPERS_STEPS_DEBUG' instead."
+  assert_file_contains "${notice}" "  > Total steps : 1"
+}
+
+@test "ASSERT_DIR_EXCLUDE" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/1.txt"
+  declare -a ASSERT_DIR_EXCLUDE=(vendor2)
+
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing" 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'ASSERT_DIR_EXCLUDE' will be removed in the next version. Use 'BATS_HELPERS_ASSERT_DIR_EXCLUDE' instead."
+}
+
+@test "BATS_MOCK_TMPDIR" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  BATS_HELPERS_MOCK_TMPDIR=""
+  export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom"
+
+  run mock_prepare_tmp 3>"${notice}"
+
+  assert_success
+  assert_output "${BATS_TEST_TMPDIR}/custom/bats-mock-tmp"
+  assert_file_contains "${notice}" "Deprecated: 'BATS_MOCK_TMPDIR' will be removed in the next version. Use 'BATS_HELPERS_MOCK_TMPDIR' instead."
+}
+
+@test "_USER" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  export _USER="someoneelse"
+
+  mock_curl="$(mock_command "curl" 3>"${notice}")"
+  curl example.com
+
+  assert_equal "someoneelse" "$(mock_get_call_user "${mock_curl}")"
+  assert_file_contains "${notice}" "Deprecated: '_USER' will be removed in the next version. Use 'BATS_HELPERS_MOCK_USER' instead."
+}
+
+@test "BATS_FIXTURE_EXPORT_CODEBASE_ENABLED" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/build"
+
+  fixture_export_codebase "${BATS_TEST_TMPDIR}/build" 3>"${notice}"
+
+  assert_file_exists "${BATS_TEST_TMPDIR}/build/README.md"
+  assert_file_contains "${notice}" "Deprecated: 'BATS_FIXTURE_EXPORT_CODEBASE_ENABLED' will be removed in the next version. Use 'BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED' instead."
+}
+
+@test "Prefixed variables take precedence and emit no notices" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+
+  export RUN_STEPS_DEBUG=1
+  export BATS_HELPERS_STEPS_DEBUG=0
+  run echo "Some Substring"
+  declare -a STEPS=("Some Substring")
+  steps_run "assert" 3>"${notice}"
+
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/1.txt"
+  declare -a ASSERT_DIR_EXCLUDE=(other)
+  declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2)
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing" 3>>"${notice}"
+
+  export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+  export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=0
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/build"
+  fixture_export_codebase "${BATS_TEST_TMPDIR}/build" 3>>"${notice}"
+  assert_file_not_exists "${BATS_TEST_TMPDIR}/build/README.md"
+
+  export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/deprecated"
+  export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/prefixed"
+  export _USER="deprecateduser"
+  export BATS_HELPERS_MOCK_USER="prefixeduser"
+  mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}"
+  mock_curl="$(mock_command "curl" 3>>"${notice}")"
+  PATH="${BATS_HELPERS_MOCK_TMPDIR}:${PATH}" curl example.com
+  assert_equal "${BATS_TEST_TMPDIR}/prefixed" "$(dirname "${mock_curl}")"
+  assert_equal "prefixeduser" "$(mock_get_call_user "${mock_curl}")"
+
+  assert_file_exists "${notice}"
+  assert_empty "$(cat "${notice}")"
 }
 
 @test "Assertions calling other assertions emit no notices" {
