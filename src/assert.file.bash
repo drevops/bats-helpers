@@ -187,7 +187,9 @@ assert_file_mode() {
 # Asserts that a needle matches the contents of a file.
 #
 # A negated assertion passes for a file that does not exist, which cannot hold
-# the needle; a positive one asserts that the file exists first.
+# the needle; a positive one asserts that the file exists first. Only a regular
+# file has contents to read, so a directory or a glob is rejected rather than
+# handed to 'cat'.
 #
 # Arguments:
 #   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
@@ -210,6 +212,11 @@ file_assert_match() {
     [ ! -f "${file}" ] && return 0
   else
     assert_file_exists "${file}" || return 1
+
+    if [ ! -f "${file}" ]; then
+      format_error "File '${file}' is not a regular file" | flunk
+      return 1
+    fi
   fi
 
   local contents

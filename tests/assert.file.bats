@@ -167,6 +167,15 @@ load _test_helper
   run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
   assert_failure
   assert_output_contains "A file and a string are required."
+
+  # Only a regular file has contents to read.
+  run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert" "some existing text"
+  assert_failure
+  assert_output_contains "is not a regular file"
+
+  run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/*.txt" "some existing text"
+  assert_failure
+  assert_output_contains "is not a regular file"
 }
 
 @test "assert_file_contains_case" {

@@ -351,6 +351,11 @@ load _test_helper
   assert_failure
   assert_output_contains "Invalid regular expression '['."
 
+  # An unusable expression is an error, so the negated form fails on it too.
+  run assert_string_not_matches "some needle" "["
+  assert_failure
+  assert_output_contains "Invalid regular expression '['."
+
   run assert_string_matches_format "some needle" "%z"
   assert_failure
   assert_output_contains "Unknown format placeholder '%z'."

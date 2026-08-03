@@ -195,9 +195,9 @@ assert_string_not_matches_format_case() {
 ##
 ## Prefix and suffix assertions.
 ##
-## The needle is matched against the start or the end of the whole string
-## rather than of each of its lines.
-##
+
+# The needle is matched against the start or the end of the whole string rather
+# than of each of its lines.
 
 ##
 # Asserts that a string starts with a substring, ignoring case.
