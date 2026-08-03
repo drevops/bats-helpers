@@ -34,7 +34,6 @@ dataprovider_run() {
     return
   fi
 
-  # Verify that func_name is a valid function that can be called.
   if ! type -t "${func_name}" | grep -q 'function'; then
     flunk "Function '${func_name}' is not a valid function."
     return
@@ -47,25 +46,21 @@ dataprovider_run() {
     return
   fi
 
-  # Check that TEST_CASES is not empty.
   if [ -z "${TEST_CASES+x}" ]; then
     flunk "TEST_CASES array is empty."
     return
   fi
 
-  # Ensure args_per_row is less than or equal to the total number of elements in TEST_CASES.
   if [ "${args_per_row}" -gt ${#TEST_CASES[@]} ]; then
     flunk "Number of arguments per test case is greater than the total elements in TEST_CASES."
     return
   fi
 
-  # Ensure that TEST_CASES has a multiple of args_per_row elements.
   if [ "$((${#TEST_CASES[@]} % args_per_row))" -ne 0 ]; then
     flunk "Total elements in TEST_CASES must be a multiple of ${args_per_row}."
     return
   fi
 
-  # Ensure that the last argument in each row (i.e., "expected" value) is not empty.
   local i
   local data_set_idx
   for ((i = args_per_row - 1, data_set_idx = 0; i < ${#TEST_CASES[@]}; i += args_per_row, data_set_idx++)); do

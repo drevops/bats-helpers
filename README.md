@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://bats-helpers.drevops.com" rel="noopener">
- <img width=200px height=200px src="https://placehold.jp/000000/ffffff/200x200.png?text=BATS%20helpers&css=%7B%22border-radius%22%3A%22%20100px%22%7D" alt="Project logo"></a>
+ <img width=200px height=200px src="https://placehold.jp/000000/ffffff/200x200.png?text=BATS%20helpers&css=%7B%22border-radius%22%3A%22%20100px%22%7D" alt="BATS helpers logo"></a>
 </p>
 
 <h1 align="center">BATS helpers</h1>
@@ -23,18 +23,29 @@
 
 ## Table of Contents
 
-- [Installation](#installation)
-- [Usage](#usage)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Usage](#-usage)
   - [Load library](#load-library)
   - [Assertions](#assertions) - Command run, String, File, Git
-  - [Data Provider](#data-provider) - Parameterized tests
+  - [Data provider](#data-provider) - Parameterized tests
   - [Mocking](#mocking) - Command mocking
-  - [Step Runner](#step-runner) - Sequential test assertions
+  - [Step runner](#step-runner) - Sequential test assertions
   - [Helpers](#helpers) - Utility functions
   - [Deprecations](#deprecations) - Renamed and reordered functions
-- [Maintenance](#maintenance)
+- [Acknowledgments](#-acknowledgments)
+- [Contributing](#-contributing)
 
-## Installation
+## ✨ Features
+
+- Assertions for command output, strings, files, directories and git repositories.
+- Command mocking with per-call output, exit status and side effects.
+- Step runner for sequences of mocked calls and output assertions.
+- Data provider for running one function over many test cases.
+- Fixture and file utilities for building and restoring test sandboxes.
+- TUI helper for driving interactive scripts with scripted answers.
+
+## 📦 Installation
 
 Requires [bats-core](https://github.com/bats-core/bats-core) `1.10` or newer.
 
@@ -48,12 +59,10 @@ This will also install `bats-core`.
 
 ### From source
 
-1. Click `Code` -> `Download ZIP` in
-   the [GitHub UI](https://github.com/drevops/bats-helpers).
-2. Extract files to a desired location. Usually, next to where `bats-core` is
-   located.
+1. Click `Code` -> `Download ZIP` in the [GitHub UI](https://github.com/drevops/bats-helpers).
+2. Extract files to a desired location. Usually, next to where `bats-core` is located.
 
-## Usage
+## 🚀 Usage
 
 ### Load library
 
@@ -105,6 +114,8 @@ Use these after running a command with `run`.
 | `assert_string_contains`     | Asserts that a string contains a given substring   |
 | `assert_string_not_contains` | Asserts that a string does not contain a substring |
 
+`assert_string_contains` and `assert_string_not_contains` match case-insensitively and treat the needle as a literal string. So do the assertions built on them: `assert_output_contains`, `assert_output_not_contains`, `assert_file_contains` and `assert_file_not_contains`.
+
 Every `contains` assertion takes the container first and the string to look for second:
 
 ```bash
@@ -136,6 +147,13 @@ assert_dir_contains_string "${dir}" "needle"
 | `assert_symlink_exists`          | Asserts that a symbolic link exists                    |
 | `assert_symlink_not_exists`      | Asserts that a symbolic link does not exist            |
 
+`assert_dir_contains_string` and `assert_dir_not_contains_string` search recursively, skip binary files, and always exclude `.git`, `.idea`, `vendor` and `node_modules`. Unlike the string and file assertions, they match case-sensitively and read the string as a `grep` basic regular expression. Set `ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
+
+```bash
+declare -a ASSERT_DIR_EXCLUDE=("build" "dist")
+assert_dir_contains_string "${dir}" "needle"
+```
+
 #### Git assertions
 
 | Function Name                 | Description                                      |
@@ -147,16 +165,16 @@ assert_dir_contains_string "${dir}" "needle"
 | `assert_git_file_tracked`     | Checks if a file is tracked in git               |
 | `assert_git_file_not_tracked` | Checks if a file is not tracked in git           |
 
-### Data Provider
+`assert_git_file_tracked` and `assert_git_file_not_tracked` report through the exit status alone and print no message.
+
+### Data provider
 
 Run multiple test cases for a given function (aka "data provider").
 
 Arguments:
 
 1. `func_name`: The name of the function to be tested.
-2. `args_per_row`: (Optional) The number of arguments in each row of the
-   `TEST_CASES` array, defaults to `1`. Last argument is always the expected
-   value.
+2. `args_per_row`: (Optional) The number of arguments in each row of the `TEST_CASES` array, defaults to `1`. Last argument is always the expected value.
 
 Global Variables:
 
@@ -164,8 +182,7 @@ Global Variables:
 
 **Examples:**
 
-To run a function `add_numbers` with `TEST_CASES` containing three arguments per
-row, you can call `dataprovider_run` like so:
+To run a function `add_numbers` with `TEST_CASES` containing three arguments per row, you can call `dataprovider_run` like so:
 
 ```bash
 # Function to test.
@@ -175,7 +192,7 @@ add_numbers() {
 
 @test "Test add_numbers" {
   # Numbers: first two are inputs, last is expected output.
-  TEST_CASES=(
+  declare -a TEST_CASES=(
     1 2 3
     4 5 9
   )
@@ -189,12 +206,10 @@ This Bats helper library provides command mocking functionality for BATS.
 
 It allows to mock commands and check how they were called.
 
-This is a very powerful feature that allows to test complex scenarios as unit
-tests.
+This is a very powerful feature that allows to test complex scenarios as unit tests.
 
 > [!NOTE]
-> To run multiple mock assertions in a more convenient way, check out
-> the [Step Runner](#step-runner) helper.
+> To run multiple mock assertions in a more convenient way, check out the [Step runner](#step-runner) helper.
 
 #### Setup functions
 
@@ -209,12 +224,13 @@ tests.
 
 #### Assertion functions
 
-| Function             | Description                                | Arguments                          | Returns          |
-|----------------------|--------------------------------------------|------------------------------------|------------------|
-| `mock_get_call_args` | Returns arguments the mock was called with | `mock`, `[call_index]`             | Arguments string |
-| `mock_get_call_num`  | Returns number of times mock was called    | `mock`                             | Call count       |
-| `mock_get_call_user` | Returns user the mock was called with      | `mock`, `[call_index]`             | User name        |
-| `mock_get_call_env`  | Returns env variable value from mock call  | `mock`, `var_name`, `[call_index]` | Variable value   |
+| Function                | Description                                                                    | Arguments                               | Returns          |
+|-------------------------|--------------------------------------------------------------------------------|-----------------------------------------|------------------|
+| `mock_get_call_args`    | Returns arguments the mock was called with                                     | `mock`, `[call_index]`                  | Arguments string |
+| `mock_get_call_num`     | Returns number of times mock was called                                        | `mock`                                  | Call count       |
+| `mock_get_call_user`    | Returns user the mock was called with                                          | `mock`, `[call_index]`                  | User name        |
+| `mock_get_call_env`     | Returns env variable value from mock call                                      | `mock`, `var_name`, `[call_index]`      | Variable value   |
+| `mock_assert_call_args` | Checks the arguments the mock was called with, where `*` matches any arguments | `mock`, `expected_args`, `[call_index]` | `0` when matched |
 
 #### Example
 
@@ -223,14 +239,14 @@ setup() {
   mock_setup
 }
 
-# Example to test the notify.sh script that uses curl to send a notification to external system.
+# Test notify.sh, which uses curl to notify an external system.
 @test "Notify" {
   app_id="9876543210"
 
   # Mock curl command.
   mock_curl="$(mock_command "curl")"
 
-  # Setup mock responses for curl call with specific arguments in notify.sh.
+  # Setup mock responses for the curl calls made by notify.sh.
   mock_set_output "${mock_curl}" "12345678910-1234567890-${app_id}-12345" 1
   mock_set_output "${mock_curl}" "201" 2
 
@@ -238,28 +254,24 @@ setup() {
   assert_success
 
   # Single line mock assertion example.
-  assert_equal "-s -X GET https://api.example.com/v2/applications.json" "$(mock_get_call_args "${mock_curl}" 1)"
+  assert_equal "-s -X GET https://api.example.com/v2/applications.json" \
+    "$(mock_get_call_args "${mock_curl}" 1)"
+
   # Multi-line mock assertion example.
-  assert_equal '-X POST https://api.example.com/v2/applications/9876543210/deployments.json -d {
-  "deployment": {
-    "description": "example description",
+  url="https://api.example.com/v2/applications/${app_id}/deployments.json"
+  assert_equal "-X POST ${url} -d {
+  \"deployment\": {
+    \"description\": \"example description\",
   }
-}' "$(mock_get_call_args "${mock_curl}" 2)"
+}" "$(mock_get_call_args "${mock_curl}" 2)"
 }
 ```
 
-### Step Runner
+### Step runner
 
-When working with mocks, you would have to setup a mock for each command call
-with the expected argument numbers, return value, possible output and an index
-of the call. Then, you would run the code to be tested and run assertions for
-each of the
-mocked commands. For large scripts maintaining both parts becomes a tedious
-task.
+When working with mocks, you would have to setup a mock for each command call with the expected argument numbers, return value, possible output and an index of the call. Then, you would run the code to be tested and run assertions for each of the mocked commands. For large scripts maintaining both parts becomes a tedious task.
 
-The Step Runner allows to setup and process a sequence of string and mocked
-command
-assertions. It helps to make maintenance of complex tests easier.
+The step runner allows to setup and process a sequence of string and mocked command assertions. It helps to make maintenance of complex tests easier.
 
 Consider this example:
 
@@ -278,12 +290,12 @@ declare -a STEPS=(
 
   # Mock command with exit status, output, AND side effect.
   # Side effect creates a file when the mock is called.
-  "@drush cache-rebuild # 0 # Cache rebuilt # touch /tmp/cache-cleared"
+  "@drush cache-rebuild # 0 # Rebuilt # touch ${BATS_TEST_TMPDIR}/done"
 
   # Mock command with wildcard (*) - accepts any arguments.
   "@git * # 0 # Git operation successful"
 
-  # Mock command with escaped hash (\#) in URL - use \# for literal # in arguments.
+  # Escaped hash: use \# for a literal # in arguments.
   "@curl https://example.com/page\#anchor # 0 # Response body"
 
   # Assert that the output contains the substring "Hello world".
@@ -301,7 +313,7 @@ mocks="$(steps_run "setup")"
 run ./my-script.sh
 
 # Assert phase: verifies mocks were called correctly and output assertions pass.
-steps_run "assert" "$mocks"
+steps_run "assert" "${mocks}"
 ```
 
 #### Step types
@@ -336,6 +348,8 @@ Mock a command with the given status, optional output, and optional side effect.
   - Use `${BATS_TEST_TMPDIR}` for temporary files
   - Each invocation of the same command can have different side effects
 
+A step may contain at most three `#` characters and no consecutive `##`. Escape a literal `#` in the arguments as `\#`.
+
 ##### Substring presence
 
 `<substring>`
@@ -346,25 +360,38 @@ Assert that the output contains the given substring.
 
 `- <substring>`
 
-Assert that the output does not contain the specified substring.
-Starts with `- ` (minus followed by a space).
+Assert that the output does not contain the specified substring. Starts with `- ` (minus followed by a space).
+
+##### Debugging
+
+Set `RUN_STEPS_DEBUG` to `1` to print the parsing and matching decisions of every step to file descriptor 3:
+
+```bash
+export RUN_STEPS_DEBUG=1
+```
 
 ### Helpers
 
 | Function Name             | Description                                                                   |
 |---------------------------|-------------------------------------------------------------------------------|
-| `file_add_var`            | Adds a variable assignment to a file and creates a backup                     |
-| `file_restore`            | Restores a file from its backup created by file_add_var                       |
-| `file_backup_path`        | Returns the sandbox path of a file's backup                                   |
-| `file_read_env`           | Reads .env file and evaluates variable expressions in that context            |
-| `format_error`            | Formats error messages with decorative borders and includes command output    |
-| `flunk`                   | Causes a test to fail with an optional error message                          |
-| `file_mktouch`            | Creates a file and any necessary parent directories                           |
-| `fixture_export_codebase` | Export codebase source code at the latest commit to the destination directory |
-| `fixture_prepare_dir`     | Prepares a directory for fixture use by removing existing content             |
-| `string_random`           | Generates a random alphanumeric string of specified length                    |
-| `file_trim`               | Removes the last line from a file                                             |
-| `tui_run`                 | Runs a TUI script with predefined answers, simulating user input              |
+| `file_mktouch`            | Creates a file and any missing parent directories                             |
+| `file_trim`               | Removes the last line of a file in place                                      |
+| `file_read_env`           | Evaluates an expression with the variables from the `./.env` file in scope    |
+| `file_backup_path`        | Resolves the backup location of a file                                        |
+| `file_add_var`            | Appends a variable assignment to a file, backing the file up first            |
+| `file_restore`            | Restores a file from the backup taken by `file_add_var`                       |
+| `fixture_prepare_dir`     | Creates an empty directory for a fixture, removing any existing content       |
+| `fixture_export_codebase` | Exports the codebase at the latest commit to a destination directory          |
+| `string_random`           | Generates a random alphanumeric string, 8 characters long by default          |
+| `tui_run`                 | Runs the script named by `SCRIPT_FILE`, feeding it a list of answers on STDIN |
+| `flunk`                   | Fails the test with a message                                                 |
+| `format_error`            | Formats an error message with a border and the captured command output        |
+
+`fixture_export_codebase` is a no-op unless `BATS_FIXTURE_EXPORT_CODEBASE_ENABLED` is set to `1`, so an expensive export can be enabled per suite rather than per call:
+
+```bash
+export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
+```
 
 #### Failure reporting
 
@@ -372,7 +399,8 @@ Helpers report a failure by writing a message to STDERR and returning a non-zero
 
 ```bash
 # Recover from a failure and carry on.
-fixture_export_codebase "${build_dir}" || echo "Export failed - continuing with an empty codebase."
+fixture_export_codebase "${build_dir}" \
+  || echo "Export failed - continuing without a codebase."
 
 # Capture the status and the message.
 run tui_run "${answers[@]}"
@@ -402,23 +430,23 @@ assert_file_exists "$(file_backup_path "${BATS_TEST_TMPDIR}/.env")"
 
 These names still work, but print a notice on every call and are removed in the next version:
 
-| Deprecated                       | Use instead                    |
-|----------------------------------|--------------------------------|
-| `assert_not_git_repo`            | `assert_git_not_repo`          |
-| `assert_git_file_is_tracked`     | `assert_git_file_tracked`      |
-| `assert_git_file_is_not_tracked` | `assert_git_file_not_tracked`  |
-| `assert_contains`                | `assert_string_contains`       |
-| `assert_not_contains`            | `assert_string_not_contains`   |
-| `run_steps`                      | `steps_run`                    |
-| `setup_mock`                     | `mock_setup`                   |
-| `mktouch`                        | `file_mktouch`                 |
-| `trim_file`                      | `file_trim`                    |
-| `read_env`                       | `file_read_env`                |
-| `add_var_to_file`                | `file_add_var`                 |
-| `restore_file`                   | `file_restore`                 |
-| `random_string`                  | `string_random`                |
+| Deprecated                       | Use instead                   |
+|----------------------------------|-------------------------------|
+| `assert_not_git_repo`            | `assert_git_not_repo`         |
+| `assert_git_file_is_tracked`     | `assert_git_file_tracked`     |
+| `assert_git_file_is_not_tracked` | `assert_git_file_not_tracked` |
+| `assert_contains`                | `assert_string_contains`      |
+| `assert_not_contains`            | `assert_string_not_contains`  |
+| `run_steps`                      | `steps_run`                   |
+| `setup_mock`                     | `mock_setup`                  |
+| `mktouch`                        | `file_mktouch`                |
+| `trim_file`                      | `file_trim`                   |
+| `read_env`                       | `file_read_env`               |
+| `add_var_to_file`                | `file_add_var`                |
+| `restore_file`                   | `file_restore`                |
+| `random_string`                  | `string_random`               |
 
-The eight names below the assertion aliases were renamed to put the subject first, so every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. The replacement keeps the arguments, the standard output and the return semantics, so a call is updated by swapping the name alone. The deprecated alias additionally writes its notice to file descriptor 3.
+Every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. Apart from the two below, each replacement keeps the arguments, the standard output and the return semantics, so a call is updated by swapping the name alone.
 
 `assert_contains` and `assert_not_contains` take the needle first, while their replacements take the haystack first, so a call has to swap its arguments as well as change its name:
 
@@ -440,28 +468,13 @@ Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence every not
 export BATS_HELPERS_DEPRECATION_QUIET=1
 ```
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
-The mocking functionality is based on
-the [bats-mock](https://github.com/grayhemp/bats-mock) project.
-A special thank you to the contributors for their original work.
+The mocking functionality is based on the [bats-mock](https://github.com/grayhemp/bats-mock) project. A special thank you to the contributors for their original work.
 
-## Maintenance
+## 🤝 Contributing
 
-    npm install
-
-    npm run lint
-
-    npm run test
-
-### Publishing
-
-    npm version minor
-
-    git push
-
-    npm publish
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for local development setup, the linting and testing commands, and the release procedure.
 
 ---
-_This repository was created using the [Scaffold](https://getscaffold.dev/)
-project template_
+_This repository was created using the [Scaffold](https://getscaffold.dev/) project template_

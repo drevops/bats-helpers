@@ -4,6 +4,5 @@
 /.gitignore           export-ignore
 /.npmignore           export-ignore
 /CLAUDE.md            export-ignore
-/lint.sh              export-ignore
 /renovate.json        export-ignore
 /tests                export-ignore
