@@ -239,6 +239,16 @@ This is a very powerful feature that allows to test complex scenarios as unit te
 | `mock_get_call_env`     | Returns env variable value from mock call                                      | `mock`, `var_name`, `[call_index]`      | Variable value   |
 | `mock_assert_call_args` | Checks the arguments the mock was called with, where `*` matches any arguments | `mock`, `expected_args`, `[call_index]` | `0` when matched |
 
+#### Mock sandbox
+
+`mock_setup` writes the mocks to `${BATS_TEST_TMPDIR}/bats-mock-tmp` and puts that directory first on `PATH`, so BATS removes the mocks together with the rest of the test sandbox and concurrent runs cannot delete each other's mocks.
+
+Set `BATS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-mock-tmp` directory below it. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
+
+```bash
+export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/mocks"
+```
+
 #### Example
 
 ```bash

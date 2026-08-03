@@ -121,7 +121,31 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Mock: BATS_MOCK_TMPDIR with spaces" {
+@test "Mock: default temporary directory" {
+  assert_equal "${BATS_TEST_TMPDIR}/bats-mock-tmp" "${BATS_MOCK_TMPDIR}"
+
+  mock_curl=$(mock_command "curl")
+
+  assert_equal "${BATS_MOCK_TMPDIR}" "$(dirname "${mock_curl}")"
+  assert_symlink_exists "${BATS_MOCK_TMPDIR}/curl"
+}
+
+@test "Mock: custom temporary directory" {
+  export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom"
+
+  run mock_prepare_tmp
+  assert_success
+  assert_output "${BATS_TEST_TMPDIR}/custom/bats-mock-tmp"
+
+  # A trailing slash does not produce a double separator.
+  export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom/"
+
+  run mock_prepare_tmp
+  assert_success
+  assert_output "${BATS_TEST_TMPDIR}/custom/bats-mock-tmp"
+}
+
+@test "Mock: custom temporary directory with spaces" {
   export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/bats mock with spaces"
   mkdir -p "${BATS_MOCK_TMPDIR}"
   mock_curl=$(mock_command "curl")
@@ -129,6 +153,30 @@ load _test_helper
   PATH="${BATS_MOCK_TMPDIR}":${PATH} run curl example.com
 
   assert_success
+}
+
+@test "Mock: temporary directory without a sandbox" {
+  local original="${BATS_TEST_TMPDIR}"
+
+  BATS_MOCK_TMPDIR=""
+  BATS_TEST_TMPDIR=""
+  run mock_prepare_tmp
+  BATS_TEST_TMPDIR="${original}"
+
+  assert_failure
+  assert_output_contains "Set BATS_MOCK_TMPDIR to a writable directory"
+}
+
+@test "Mock: create without a sandbox" {
+  local original="${BATS_TEST_TMPDIR}"
+
+  BATS_MOCK_TMPDIR=""
+  BATS_TEST_TMPDIR=""
+  run mock_create
+  BATS_TEST_TMPDIR="${original}"
+
+  assert_failure
+  assert_output_contains "Set BATS_MOCK_TMPDIR to a writable directory"
 }
 
 @test "Mock: call environment" {
