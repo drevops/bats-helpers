@@ -52,7 +52,7 @@ mock_log_line() {
   local line="${name}"
   local argument
 
-  for argument in ${@+"$@"}; do
+  for argument in "$@"; do
     line="${line} $(mock_log_quote "${argument}")"
   done
 
@@ -158,7 +158,7 @@ mock_log_filtered() {
   while IFS= read -r line; do
     skip=0
 
-    for candidate in ${excluded[@]+"${excluded[@]}"}; do
+    for candidate in "${excluded[@]}"; do
       [ "${line%% *}" = "${candidate}" ] && skip=1
     done
 
@@ -212,7 +212,7 @@ mock_assert_calls() {
   echo -n '' >"${expected_file}"
 
   local expected_call
-  for expected_call in ${@+"$@"}; do
+  for expected_call in "$@"; do
     printf '%s\n' "${expected_call}" >>"${expected_file}"
   done
 

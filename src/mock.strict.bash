@@ -146,7 +146,7 @@ mock_verify() {
   fi
 
   local mock
-  for mock in ${mocks[@]+"${mocks[@]}"}; do
+  for mock in "${mocks[@]}"; do
     if [ ! -e "${mock}.call_num" ]; then
       flunk "Mock '${mock}' does not exist. Create it with 'mock_command' first."
       return 1
@@ -156,7 +156,7 @@ mock_verify() {
   local -a problems=()
   local problem
 
-  for mock in ${mocks[@]+"${mocks[@]}"}; do
+  for mock in "${mocks[@]}"; do
     while IFS= read -r problem; do
       problems+=("${problem}")
     done < <(mock_verify_mock "${mock}")

@@ -286,7 +286,7 @@ mock_match_index() {
 
   local i
   for ((i = 1; i <= spec_num; i++)); do
-    if mock_spec_matches "${mock}.spec.${i}" ${@+"$@"}; then
+    if mock_spec_matches "${mock}.spec.${i}" "$@"; then
       echo "${i}"
       return 0
     fi
@@ -352,9 +352,9 @@ mock_spec_matches() {
     fi
 
     if [ "${position}" = "*" ]; then
-      mock_match_any "${matcher}" "${value}" "${negate}" ${@+"$@"} || return 1
+      mock_match_any "${matcher}" "${value}" "${negate}" "$@" || return 1
     else
-      mock_match_at "${position}" "${matcher}" "${value}" "${negate}" ${@+"$@"} || return 1
+      mock_match_at "${position}" "${matcher}" "${value}" "${negate}" "$@" || return 1
     fi
   done
 
@@ -412,7 +412,7 @@ mock_match_any() {
     [ "$#" -gt 0 ] && matched=1
   else
     local argument
-    for argument in ${@+"$@"}; do
+    for argument in "$@"; do
       if mock_match_value "${argument}" "${matcher}" "${value}"; then
         matched=1
         break
@@ -636,7 +636,7 @@ mock_forward_exec() {
 
   # A builtin resolves to a bare name, which 'exec' looks up on PATH, where the
   # mock directory would otherwise still come first.
-  PATH="${forward_path}" exec "${real}" ${@+"$@"}
+  PATH="${forward_path}" exec "${real}" "$@"
 }
 
 ##
@@ -656,13 +656,13 @@ mock_forward_path() {
   IFS=':' read -ra entries <<<"${PATH}"
 
   local entry
-  for entry in ${entries[@]+"${entries[@]}"}; do
+  for entry in "${entries[@]}"; do
     [ "${entry}" = "${dir}" ] && continue
     kept+=("${entry}")
   done
 
   local joined
-  printf -v joined '%s:' ${kept[@]+"${kept[@]}"}
+  printf -v joined '%s:' "${kept[@]}"
 
   echo "${joined%:}"
 }
