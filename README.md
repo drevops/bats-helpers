@@ -243,7 +243,7 @@ This is a very powerful feature that allows to test complex scenarios as unit te
 
 `mock_setup` writes the mocks to `${BATS_TEST_TMPDIR}/bats-mock-tmp` and puts that directory first on `PATH`, so BATS removes the mocks together with the rest of the test sandbox and concurrent runs cannot delete each other's mocks.
 
-Set `BATS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-mock-tmp` directory below it. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
+Set `BATS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-mock-tmp` directory below it. The guarantees above come from staying within the test sandbox - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
 
 ```bash
 export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/mocks"
