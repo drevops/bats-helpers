@@ -48,7 +48,7 @@
 
 ## 📦 Installation
 
-Requires [bats-core](https://github.com/bats-core/bats-core) `1.10` or newer, and Bash `4.0` or newer. macOS ships Bash `3.2`, so install a current one with `brew install bash`.
+Requires [bats-core](https://github.com/bats-core/bats-core) `1.13` or newer, and Bash `4.0` or newer. macOS ships Bash `3.2`, so install a current one with `brew install bash`.
 
 ### NPM
 
@@ -150,7 +150,7 @@ Error: config file not found
 ----------------------------------------
 ```
 
-`run --separate-stderr` sets `$stderr` for the remainder of the test and no later `run` clears it, so a plain `run` after one leaves the previous value in place. Pass `--separate-stderr` to every `run` whose STDERR is asserted on.
+A capture lives only until the next `run`: a plain one clears `$stderr`, so the assertions always read the most recent `run --separate-stderr`. Pass the option to the `run` whose STDERR is being asserted on, and assert directly after it.
 
 #### String assertions
 
