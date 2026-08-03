@@ -356,7 +356,11 @@ load _test_helper
   assert_output_contains "Unknown format placeholder '%z'."
 }
 
+# 'format_error' appends the previous capture to every report, so each case
+# clears it first. Without that, an assertion below could be satisfied by the
+# text of an earlier failure rather than by the one it names.
 @test "Failure report names the match mode and the case sensitivity" {
+  output=""
   run assert_string_contains_case "some text" "SOME"
   assert_failure
   assert_output_contains "String 'some text' does not contain 'SOME'"
@@ -364,46 +368,53 @@ load _test_helper
   assert_output_contains "case: sensitive"
   assert_output_contains "note: it matches without the '_case' suffix"
 
+  output=""
   run assert_string_not_contains "some text" "SOME"
   assert_failure
   assert_output_contains "String 'some text' contains 'SOME', but should not"
   assert_output_contains "case: insensitive"
   assert_output_contains "note: it does not match with the '_case' suffix"
 
-  # Case did not decide the outcome, so it is not called out. The previous
-  # capture is cleared because 'format_error' appends it to the report.
+  # Case did not decide the outcome, so it is not called out.
   output=""
   run assert_string_contains "some text" "absent"
   assert_failure
   assert_output_contains "case: insensitive"
   assert_output_not_contains "note:"
 
+  output=""
   run assert_string_matches "some text" '^absent'
   assert_failure
   assert_output_contains "String 'some text' does not match '^absent'"
   assert_output_contains "match mode: regex"
 
+  output=""
   run assert_string_not_matches "some text" '^some'
   assert_failure
   assert_output_contains "String 'some text' matches '^some', but should not"
 
+  output=""
   run assert_string_matches_format "Deleted some files" "Deleted %d files"
   assert_failure
   assert_output_contains "String 'Deleted some files' does not match 'Deleted %d files'"
   assert_output_contains "match mode: format"
 
+  output=""
   run assert_string_starts_with "some text" "text"
   assert_failure
   assert_output_contains "String 'some text' does not start with 'text'"
 
+  output=""
   run assert_string_not_starts_with "some text" "some"
   assert_failure
   assert_output_contains "String 'some text' starts with 'some', but should not"
 
+  output=""
   run assert_string_ends_with "some text" "some"
   assert_failure
   assert_output_contains "String 'some text' does not end with 'some'"
 
+  output=""
   run assert_string_not_ends_with "some text" "text"
   assert_failure
   assert_output_contains "String 'some text' ends with 'text', but should not"

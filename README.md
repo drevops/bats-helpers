@@ -110,7 +110,7 @@ Use these after running a command with `run`.
 | `assert_output_matches_format`     | Checks if output matches a format string         |
 | `assert_output_not_matches_format` | Checks if output does not match a format string  |
 
-Each also has a `_case` twin that matches case-sensitively - `assert_output_contains_case`, `assert_output_not_matches_format_case` and so on. See [Match modes](#match-modes).
+The six `contains`, `matches` and `matches_format` assertions each have a `_case` twin that matches case-sensitively - `assert_output_contains_case`, `assert_output_not_matches_format_case` and so on. See [Match modes](#match-modes).
 
 #### Standard error assertions
 
@@ -126,7 +126,7 @@ Each also has a `_case` twin that matches case-sensitively - `assert_output_cont
 | `assert_stderr_empty`        | Asserts that a command wrote nothing to STDERR              |
 | `assert_stderr_captured`     | Asserts that STDERR was captured separately from the output |
 
-Each of the five matching assertions also has a `_case` twin. See [Match modes](#match-modes).
+The six `contains`, `matches` and `matches_format` assertions each have a `_case` twin that matches case-sensitively. See [Match modes](#match-modes).
 
 `run` merges STDERR into `$output`, so on its own it cannot tell which stream a message went to. Pass `--separate-stderr` to capture the two apart: `$output` then holds STDOUT alone, and the assertions above read the captured STDERR.
 
@@ -183,7 +183,7 @@ A capture lives only until the next `run`: a plain one clears `$stderr`, so the 
 | `assert_string_matches_format`     | Asserts that a string matches a format string          |
 | `assert_string_not_matches_format` | Asserts that a string does not match a format string   |
 
-Each also has a `_case` twin that matches case-sensitively - `assert_string_contains_case`, `assert_string_not_starts_with_case` and so on. See [Match modes](#match-modes).
+Every assertion below `assert_equal` has a `_case` twin that matches case-sensitively - `assert_string_contains_case`, `assert_string_not_starts_with_case` and so on. `assert_empty`, `assert_not_empty` and `assert_equal` compare exactly and have no twin. See [Match modes](#match-modes).
 
 Every `contains` assertion takes the container first and the string to look for second:
 
@@ -305,6 +305,8 @@ string_format_to_regex "Deleted %d files"
 | `assert_dirs_equal`              | Asserts that two directories are equal                 |
 | `assert_symlink_exists`          | Asserts that a symbolic link exists                    |
 | `assert_symlink_not_exists`      | Asserts that a symbolic link does not exist            |
+
+The six `contains`, `matches` and `matches_format` assertions each have a `_case` twin that matches case-sensitively - `assert_file_contains_case`, `assert_file_not_matches_format_case` and so on. See [Match modes](#match-modes).
 
 `assert_file_exists` and `assert_file_not_exists` accept a glob. Only the first match decides the outcome, and the failure is reported once however many paths the glob expands to:
 

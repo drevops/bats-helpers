@@ -72,6 +72,7 @@ bats_require_minimum_version 1.13.0
   run assert_output_contains_case "some EXISTING text"
   assert_failure
 
+  run echo "some existing text"
   run assert_output_contains_case "non-existing"
   assert_failure
 }
