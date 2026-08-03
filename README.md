@@ -153,7 +153,7 @@ actual:   127 (command not found)
 Command failed with exit status 137 (killed by SIGKILL)
 ```
 
-A status of `127` is what a shell returns for a command it could not find, so a test that passes because the binary under test is missing is caught rather than counted. A status above `128` is a process a signal killed rather than one that chose its own status, and the signal is named from the running platform's own table.
+A status of `127` is what a shell returns for a command it could not find, so a test that passes because the binary under test is missing is caught rather than counted. A status above `128` is how a shell reports a process a signal killed, and the signal is named from the running platform's own table. A program is free to exit with such a status of its own accord, so the name says which signal the number stands for, not that a signal was necessarily involved.
 
 Where a missing command *is* the expected outcome, assert it as such:
 
