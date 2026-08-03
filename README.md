@@ -267,7 +267,17 @@ case: sensitive
 note: it matches without the '_case' suffix
 ```
 
-Use `string_match` to make the same comparison without asserting on it, and `string_format_to_regex` to see what a format string expands to.
+Use `string_match` to make the same comparison without asserting on it, and `string_format_to_regex` to see what a format string expands to. Both take plain values rather than any of the names above:
+
+```bash
+# Haystack, needle, mode, case sensitivity, anchor.
+string_match "Deleted 12 files" "deleted" "literal" 0 "start"
+
+# Prints 'Deleted [0-9]+ files'.
+string_format_to_regex "Deleted %d files"
+```
+
+`string_match` returns `0` when the needle matches, `1` when it does not, and `2` when the needle is not a usable regular expression. It reports through the exit status alone and prints nothing.
 
 #### File assertions
 

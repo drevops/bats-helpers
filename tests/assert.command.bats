@@ -430,6 +430,8 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "command_assert_match" {
+  # The first 'run' supplies the output the assertion reads, before the second
+  # replaces it with the failure report.
   run echo "some existing text"
   run assert_output_contains "some" "extra"
   assert_failure
