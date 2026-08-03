@@ -451,6 +451,15 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "is not available to forward to"
 }
 
+@test "mock_set_forward - real command is a shell builtin" {
+  mock_echo="$(mock_command "echo")"
+  mock_set_forward "${mock_echo}"
+
+  run -127 mock_forward_exec "${mock_echo}" "echo" "text"
+  assert_failure --status 127
+  assert_output_contains "Command 'echo' is not available to forward to"
+}
+
 @test "mock_forward_path" {
   PATH="/one:${BATS_HELPERS_MOCK_TMPDIR}:/two" run mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}"
   assert_success

@@ -621,7 +621,9 @@ mock_forward_exec() {
   local real
   real="$(PATH="$(mock_forward_path "${mock%/*}")" command -v "${name}")" || real=""
 
-  if [ -z "${real}" ]; then
+  # A name that does not resolve to a path is a builtin or a function, and
+  # 'exec' would search PATH for it and find the mock again.
+  if [ "${real#/}" = "${real}" ]; then
     echo "Command '${name}' is not available to forward to" >&2
     exit 127
   fi
