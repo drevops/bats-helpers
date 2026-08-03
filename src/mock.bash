@@ -26,6 +26,13 @@ mock_create() {
   # per-test one. BATS_TMPDIR below was changed to BATS_HELPERS_MOCK_TMPDIR.
   BATS_HELPERS_MOCK_TMPDIR="$(mock_resolve_tmp)" || return 1
 
+  # @note: Modification to the original file: the mock sources the modules it
+  # needs at call time, so it has to be told where they are. The path is
+  # resolved to an absolute one because the code under test may run the mock
+  # from any working directory.
+  local src_dir
+  src_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
   # @note: Modification to the original file: the notice for the deprecated
   # user variable is emitted here rather than from the generated mock, which
   # runs as a separate process with no file descriptor 3 to write to.
@@ -41,12 +48,27 @@ mock_create() {
   echo -n '' >"${mock}.output"
   echo -n '' >"${mock}.side_effect"
 
+  # @note: Modification to the original file: the call log names the command
+  # rather than the mock file, and the strictness is fixed when the mock is
+  # created so that a suite-wide default does not have to be exported to reach
+  # the mock's own process.
+  echo -n "${mock##*/}" >"${mock}.name"
+  echo -n "${BATS_HELPERS_MOCK_STRICT:-1}" >"${mock}.strict"
+
+  # @note: Modification to the original file: the mock records every call in the
+  # shared ordered log, and resolves its response through an argument
+  # specification before falling back to the per-call and default responses.
   cat <<EOF >"${mock}"
 #!/usr/bin/env bash
 
 set -e
 
 mock="${mock}"
+
+source "${src_dir}/assert.string.bash"
+source "${src_dir}/mock.log.bash"
+source "${src_dir}/mock.match.bash"
+source "${src_dir}/mock.strict.bash"
 
 call_num="\$(( \$(cat "\${mock}.call_num") + 1 ))"
 echo "\${call_num}" > "\${mock}.call_num"
@@ -59,23 +81,28 @@ for var in \$(compgen -e); do
   declare -p "\${var}"
 done > "\${mock}.env.\${call_num}"
 
-if [[ -e "\${mock}.output.\${call_num}" ]]; then
-  cat "\${mock}.output.\${call_num}"
-else
-  cat "\${mock}.output"
+name="\$(cat "\${mock}.name")"
+line="\$(mock_log_line "\${name}" "\$@")"
+mock_log_append "${BATS_HELPERS_MOCK_TMPDIR}/mock.log" "\${line}"
+
+if spec="\$(mock_match_index "\${mock}" "\$@")"; then
+  mock_match_hit "\${mock}" "\${spec}"
+elif ! mock_response_ordinal_exists "\${mock}" "\${call_num}"; then
+  if mock_forward_enabled "\${mock}"; then
+    mock_forward_exec "\${mock}" "\${name}" "\$@"
+  fi
+
+  if ! mock_strict_accepts "\${mock}"; then
+    mock_strict_reject "\${mock}" "\${name}" "\${line}"
+    exit 1
+  fi
 fi
 
-if [[ -e "\${mock}.side_effect.\${call_num}" ]]; then
-  source "\${mock}.side_effect.\${call_num}"
-else
-  source "\${mock}.side_effect"
-fi
+cat "\$(mock_response_file "\${mock}" 'output' "\${call_num}" "\${spec}")"
 
-if [[ -e "\${mock}.status.\${call_num}" ]]; then
-  exit "\$(cat "\${mock}.status.\${call_num}")"
-else
-  exit "\$(cat "\${mock}.status")"
-fi
+source "\$(mock_response_file "\${mock}" 'side_effect' "\${call_num}" "\${spec}")"
+
+exit "\$(cat "\$(mock_response_file "\${mock}" 'status' "\${call_num}" "\${spec}")")"
 EOF
   chmod +x "${mock}"
 
@@ -224,10 +251,15 @@ mock_set_property() {
     property_value="$(cat -)"
   fi
 
+  # @note: Modification to the original file: a response carrying a call index
+  # is an expectation that the call arrives, and one without it is a catch-all
+  # that answers every call the expectations do not cover.
   if [[ -n ${n} ]]; then
     echo -e "${property_value}" >"${mock}.${property_name}.${n}"
+    mock_expect_ordinal "${mock}" "${n}"
   else
     echo -e "${property_value}" >"${mock}.${property_name}"
+    echo -n '' >"${mock}.default"
   fi
 }
 
@@ -328,7 +360,53 @@ mock_command() {
   local mock_path="${mock%/*}"
   local mock_file="${mock##*/}"
   ln -sf "${mock_path}/${mock_file}" "${mock_path}/${mocked_command}"
+  # @note: Modification to the original file: the call log and the name-based
+  # assertions read the mocked command from here.
+  echo -n "${mocked_command}" >"${mock}.name"
   echo "${mock}"
+}
+
+##
+## Registry.
+##
+
+##
+# Prints the mocks created by the test.
+#
+# Outputs:
+#   STDOUT: One mock path per line.
+##
+mock_paths() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  local name_file
+  for name_file in "${dir}"/*.name; do
+    [ -e "${name_file}" ] || continue
+    echo "${name_file%.name}"
+  done
+
+  return 0
+}
+
+##
+# Prints the commands mocked by the test.
+#
+# Outputs:
+#   STDOUT: One command name per line.
+##
+mock_names() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  local name_file
+  for name_file in "${dir}"/*.name; do
+    [ -e "${name_file}" ] || continue
+    cat "${name_file}"
+    echo
+  done
+
+  return 0
 }
 
 ##
