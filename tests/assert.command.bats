@@ -19,6 +19,16 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Command failed with exit status 1"
   assert_output_not_contains "stderr:"
 
+  status=127
+  run assert_success
+  [ "${status}" -eq 1 ]
+  assert_output_contains "Command failed with exit status 127 (command not found)"
+
+  status=137
+  run assert_success
+  [ "${status}" -eq 1 ]
+  assert_output_contains "Command failed with exit status 137 (killed by SIGKILL)"
+
   stderr="stderr needle"
   status=1
   run assert_success
@@ -41,6 +51,138 @@ bats_require_minimum_version 1.13.0
   run assert_failure
   [ "${status}" -eq 1 ]
   assert_output_contains "stderr needle"
+
+  status=2
+  assert_failure --status 2
+
+  output="some output"
+  status=2
+  assert_failure --status 2 "some output"
+
+  status=2
+  run assert_failure --status 3
+  assert_failure
+  assert_output_contains "expected: 3"
+  assert_output_contains "actual:   2"
+
+  status=2
+  run assert_failure --status
+  assert_failure
+  assert_output_contains "Option '--status' requires an exit status."
+
+  status=2
+  run assert_failure --status 0
+  assert_failure
+  assert_output_contains "A failure cannot have exit status 0. Use 'assert_success' instead."
+
+  # The command succeeded, so only validating the option first surfaces the
+  # malformed value rather than the failure that did not happen.
+  status=0
+  run assert_failure --status two
+  assert_failure
+  assert_output_contains "Exit status 'two' is not an integer between 0 and 255."
+}
+
+@test "assert_status" {
+  status=0
+  assert_status 0
+
+  status=2
+  assert_status 2
+
+  # A real signal death, so that the 128 offset is asserted end to end and not
+  # only against a status the test wrote itself.
+  run bash -c 'kill -KILL $$'
+  assert_status 137
+
+  status=2
+  run assert_status 3
+  assert_failure
+  assert_output_contains "Command exited with an unexpected status"
+  assert_output_contains "expected: 3"
+  assert_output_contains "actual:   2"
+
+  status=127
+  run assert_status 2
+  assert_failure
+  assert_output_contains "actual:   127 (command not found)"
+
+  status=137
+  run assert_status 2
+  assert_failure
+  assert_output_contains "actual:   137 (killed by SIGKILL)"
+
+  status=2
+  run assert_status
+  assert_failure
+  assert_output_contains "An expected exit status is required."
+
+  status=2
+  run assert_status two
+  assert_failure
+  assert_output_contains "Exit status 'two' is not an integer between 0 and 255."
+
+  status=2
+  run assert_status 256
+  assert_failure
+  assert_output_contains "Exit status '256' is not an integer between 0 and 255."
+}
+
+@test "assert_status_general_error" {
+  status=1
+  assert_status_general_error
+
+  status=2
+  run assert_status_general_error
+  assert_failure
+  assert_output_contains "expected: 1"
+  assert_output_contains "actual:   2"
+}
+
+@test "assert_status_command_not_found" {
+  # The status is asserted by 'run' as well, so the case proves that a missing
+  # command is 127 on this platform before the library is asked about it.
+  run -127 this-command-does-not-exist
+  assert_status_command_not_found
+
+  status=1
+  run assert_status_command_not_found
+  assert_failure
+  assert_output_contains "expected: 127"
+  assert_output_contains "actual:   1"
+}
+
+@test "command_describe_status" {
+  run command_describe_status 0
+  assert_success
+  assert_output "0"
+
+  run command_describe_status 3
+  assert_success
+  assert_output "3"
+
+  run command_describe_status 127
+  assert_success
+  assert_output "127 (command not found)"
+
+  # Only the two signals every supported platform numbers the same way.
+  run command_describe_status 137
+  assert_success
+  assert_output "137 (killed by SIGKILL)"
+
+  run command_describe_status 143
+  assert_success
+  assert_output "143 (killed by SIGTERM)"
+
+  # The offset leaves signal zero, which is not a signal.
+  run command_describe_status 128
+  assert_success
+  assert_output "128"
+
+  # No supported platform numbers a signal this high.
+  run command_describe_status 255
+  assert_success
+  assert_output "255"
 }
 
 @test "assert_output" {

@@ -27,7 +27,7 @@
 - [Installation](#-installation)
 - [Usage](#-usage)
   - [Load library](#load-library)
-  - [Assertions](#assertions) - Command run, Standard error, String, Match modes, File, Git
+  - [Assertions](#assertions) - Command run, Exit statuses, Standard error, String, Match modes, File, Git
   - [Data provider](#data-provider) - Parameterized tests
   - [Mocking](#mocking) - Command mocking
   - [Step runner](#step-runner) - Sequential test assertions
@@ -39,7 +39,7 @@
 
 ## ✨ Features
 
-- Assertions for command output, standard error, strings, files, directories and git repositories.
+- Assertions for command output, exit status, standard error, strings, files, directories and git repositories.
 - Literal, regular expression and format matching, with case sensitivity as an explicit choice.
 - Command mocking with per-call output, exit status and side effects.
 - Step runner for sequences of mocked calls and output assertions.
@@ -111,6 +111,59 @@ Use these after running a command with `run`.
 | `assert_output_not_matches_format` | Checks if output does not match a format string  |
 
 The six `contains`, `matches` and `matches_format` assertions each have a `_case` twin that matches case-sensitively - `assert_output_contains_case`, `assert_output_not_matches_format_case` and so on. See [Match modes](#match-modes).
+
+#### Exit statuses
+
+| Function Name                     | Description                                             |
+|-----------------------------------|---------------------------------------------------------|
+| `assert_status`                   | Asserts that a command exits with an exact status       |
+| `assert_status_general_error`     | Asserts that a command exits with status `1`            |
+| `assert_status_command_not_found` | Asserts that a command exits with status `127`          |
+
+`assert_success` and `assert_failure` divide the world into zero and non-zero, which is not enough for a tool that separates a usage error from a runtime failure by exiting `2` rather than `1`. Assert the status itself:
+
+```bash
+run ./script.sh --nonsense
+
+assert_status 2
+```
+
+`assert_failure` takes the same expectation through a `--status` option, so that one call still covers both the failure and the status it failed with:
+
+```bash
+run ./script.sh --nonsense
+
+assert_failure --status 2
+assert_failure --status 2 "Usage: script.sh [--verbose] <path>"
+```
+
+The option is recognised only as the first argument, and everything after it and its value is the exact output, as before. An output that is itself the string `--status` is asserted with `assert_output` instead.
+
+##### Statuses that mean more than a failure
+
+Two statuses mean something other than the code under test deciding to fail, and both satisfy a bare `assert_failure` exactly as well as the intended error path does. Every report that prints a status names them:
+
+```text
+Command exited with an unexpected status
+expected: 2
+actual:   127 (command not found)
+```
+
+```text
+Command failed with exit status 137 (killed by SIGKILL)
+```
+
+A status of `127` is what a shell returns for a command it could not find, so a test that passes because the binary under test is missing is caught rather than counted. A status above `128` is how a shell reports a process a signal killed, and the signal is named from the running platform's own table. A program is free to exit with such a status of its own accord, so the name says which signal the number stands for, not that a signal was necessarily involved.
+
+Where a missing command *is* the expected outcome, assert it as such:
+
+```bash
+# 'run -127' stops bats warning about the status it would otherwise read as a
+# mistake in the test.
+run -127 ./wrapper.sh
+
+assert_status_command_not_found
+```
 
 #### Standard error assertions
 

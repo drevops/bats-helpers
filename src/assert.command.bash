@@ -16,7 +16,7 @@
 assert_success() {
   # shellcheck disable=SC2154
   if [ "${status-}" -ne 0 ]; then
-    format_error "Command failed with exit status ${status}" | flunk
+    format_error "Command failed with exit status $(command_describe_status "${status}")" | flunk
   elif [ "$#" -gt 0 ]; then
     assert_output "${1}"
   fi
@@ -26,18 +26,149 @@ assert_success() {
 # Asserts that the last command failed.
 #
 # Arguments:
-#   1. output: Exact output to additionally assert on. Optional.
+#   1. --status expected: Exact exit status to assert on, as two arguments.
+#      Optional, recognised only in first position.
+#   2. output: Exact output to additionally assert on. Optional.
 #
 # Globals:
 #   status: Exit status of the last 'run' call.
 ##
 assert_failure() {
+  local expected=""
+
+  if [ "${1-}" = "--status" ]; then
+    if [ "$#" -lt 2 ]; then
+      flunk "Option '--status' requires an exit status."
+      return 1
+    fi
+
+    command_validate_status "${2}" || return 1
+
+    if [ "${2}" -eq 0 ]; then
+      flunk "A failure cannot have exit status 0. Use 'assert_success' instead."
+      return 1
+    fi
+
+    expected="${2}"
+    shift 2
+  fi
+
   # shellcheck disable=SC2154
   if [ "${status-}" -eq 0 ]; then
     format_error "Command succeeded, but should have failed" | flunk
-  elif [ "$#" -gt 0 ]; then
+    return 1
+  fi
+
+  if [ "${expected}" != "" ]; then
+    assert_status "${expected}" || return 1
+  fi
+
+  if [ "$#" -gt 0 ]; then
     assert_output "${1}"
   fi
+}
+
+##
+## Exit status assertions.
+##
+
+##
+# Asserts that the last command exited with an exact status.
+#
+# Arguments:
+#   1. expected: Expected exit status.
+#
+# Globals:
+#   status: Exit status of the last 'run' call.
+##
+assert_status() {
+  if [ "$#" -eq 0 ]; then
+    flunk "An expected exit status is required."
+    return 1
+  fi
+
+  command_validate_status "${1}" || return 1
+
+  # shellcheck disable=SC2154
+  if [ "${status-}" -eq "${1}" ]; then
+    return 0
+  fi
+
+  local message="Command exited with an unexpected status"
+  message="${message}"$'\n'"expected: ${1}"
+  message="${message}"$'\n'"actual:   $(command_describe_status "${status}")"
+
+  format_error "${message}" | flunk
+}
+
+##
+# Asserts that the last command exited with the general error status.
+#
+# Globals:
+#   status: Exit status of the last 'run' call.
+##
+assert_status_general_error() {
+  assert_status 1
+}
+
+##
+# Asserts that the last command exited with the command not found status.
+#
+# Globals:
+#   status: Exit status of the last 'run' call.
+##
+assert_status_command_not_found() {
+  assert_status 127
+}
+
+##
+# Validates a value given as an expected exit status.
+#
+# Arguments:
+#   1. expected: Value to validate.
+##
+command_validate_status() {
+  if ! [[ ${1-} =~ ^[0-9]+$ ]] || [ "${1}" -gt 255 ]; then
+    flunk "Exit status '${1-}' is not an integer between 0 and 255."
+    return 1
+  fi
+}
+
+##
+# Describes an exit status, naming the ones that mean more than a failure.
+#
+# A status of 127 is what a shell returns for a command it could not find, and a
+# status above 128 is how it reports a process a signal killed rather than one
+# that chose its own status. Either reads as an ordinary failure of the code
+# under test unless it is named.
+#
+# Arguments:
+#   1. status: Exit status to describe.
+#
+# Outputs:
+#   STDOUT: The status, followed by what it means when it means something.
+##
+command_describe_status() {
+  local code="${1}"
+
+  if [ "${code}" -eq 127 ]; then
+    printf '%s (command not found)\n' "${code}"
+    return 0
+  fi
+
+  local signal=$((code - 128))
+
+  if [ "${signal}" -ge 1 ]; then
+    local name
+    # A number the platform does not name is not one of its signals, so the
+    # status is left to stand for itself rather than named as one.
+    if name="$(kill -l "${signal}" 2>/dev/null)" && [ "${name}" != "" ]; then
+      printf '%s (killed by SIG%s)\n' "${code}" "${name}"
+      return 0
+    fi
+  fi
+
+  printf '%s\n' "${code}"
 }
 
 ##
