@@ -2,7 +2,7 @@
 #
 # Tests for mocking helpers.
 #
-# shellcheck disable=SC2129
+# shellcheck disable=SC2129,SC2030,SC2031
 
 load _test_helper
 
