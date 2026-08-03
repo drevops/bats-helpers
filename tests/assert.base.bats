@@ -30,9 +30,11 @@ load _test_helper
 }
 
 @test "format_error" {
-  # 'format_error' appends the captured output of the last 'run', so each case
-  # sets it explicitly rather than inheriting it from an earlier assertion.
+  # 'format_error' appends the output and the standard error captured by the
+  # last 'run', so each case sets both explicitly rather than inheriting them
+  # from an earlier assertion.
   output=""
+  stderr=""
   run format_error "Some message"
   assert_success
   assert_output_contains "BEGIN ERROR MESSAGE"
@@ -41,10 +43,26 @@ load _test_helper
   assert_output_not_contains "----------------------------------------"
 
   output="Some captured output"
+  stderr=""
   run format_error "Some message"
   assert_success
   assert_output_contains "Some message"
   assert_output_contains "----------------------------------------"
   assert_output_contains "${BATS_TEST_TMPDIR}"
   assert_output_contains "Some captured output"
+
+  # A command that wrote nothing to STDERR adds no block of its own.
+  output=""
+  stderr=""
+  run format_error "Some message"
+  assert_success
+  assert_output_not_contains "stderr:"
+  assert_output_not_contains "----------------------------------------"
+
+  output=""
+  stderr="Some captured stderr"
+  run format_error "Some message"
+  assert_success
+  assert_output_contains "stderr:"
+  assert_output_contains "Some captured stderr"
 }

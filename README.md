@@ -27,7 +27,7 @@
 - [Installation](#-installation)
 - [Usage](#-usage)
   - [Load library](#load-library)
-  - [Assertions](#assertions) - Command run, String, File, Git
+  - [Assertions](#assertions) - Command run, Standard error, String, File, Git
   - [Data provider](#data-provider) - Parameterized tests
   - [Mocking](#mocking) - Command mocking
   - [Step runner](#step-runner) - Sequential test assertions
@@ -39,7 +39,7 @@
 
 ## ✨ Features
 
-- Assertions for command output, strings, files, directories and git repositories.
+- Assertions for command output, standard error, strings, files, directories and git repositories.
 - Command mocking with per-call output, exit status and side effects.
 - Step runner for sequences of mocked calls and output assertions.
 - Data provider for running one function over many test cases.
@@ -48,7 +48,7 @@
 
 ## 📦 Installation
 
-Requires [bats-core](https://github.com/bats-core/bats-core) `1.10` or newer, and Bash `4.0` or newer. macOS ships Bash `3.2`, so install a current one with `brew install bash`.
+Requires [bats-core](https://github.com/bats-core/bats-core) `1.13` or newer, and Bash `4.0` or newer. macOS ships Bash `3.2`, so install a current one with `brew install bash`.
 
 ### NPM
 
@@ -104,6 +104,53 @@ Use these after running a command with `run`.
 | `assert_output`              | Asserts that a command outputs an exact string      |
 | `assert_output_contains`     | Checks if output contains a specific string         |
 | `assert_output_not_contains` | Checks if output does not contain a specific string |
+
+#### Standard error assertions
+
+| Function Name                | Description                                                 |
+|------------------------------|-------------------------------------------------------------|
+| `assert_stderr`              | Asserts that a command writes an exact string to STDERR     |
+| `assert_stderr_contains`     | Checks if STDERR contains a specific string                 |
+| `assert_stderr_not_contains` | Checks if STDERR does not contain a specific string         |
+| `assert_stderr_empty`        | Asserts that a command wrote nothing to STDERR              |
+| `assert_stderr_captured`     | Asserts that STDERR was captured separately from the output |
+
+`run` merges STDERR into `$output`, so on its own it cannot tell which stream a message went to. Pass `--separate-stderr` to capture the two apart: `$output` then holds STDOUT alone, and the assertions above read the captured STDERR.
+
+```bash
+bats_require_minimum_version 1.13.0
+
+@test "the script warns without polluting stdout" {
+  run --separate-stderr ./script.sh
+
+  assert_success
+  assert_output "the result"
+  assert_stderr_contains "Warning:"
+}
+```
+
+Without a `bats_require_minimum_version` declaration of `1.5.0` or newer, bats-core prints a `BW02` warning for every `run` that carries a flag.
+
+Each of these assertions fails when `--separate-stderr` is missing, instead of comparing against a value that was never captured:
+
+```text
+Stderr was not captured. Run the command with 'run --separate-stderr'.
+```
+
+The check matters most for `assert_stderr_empty`, which would otherwise pass for a command that did write to STDERR - the stream having simply never been captured. Use `assert_stderr_captured` to make the same check on its own.
+
+A captured STDERR that is not empty is appended to failure reports, so a command that failed shows why rather than only that it did:
+
+```text
+Command failed with exit status 3
+
+----------------------------------------
+stderr:
+Error: config file not found
+----------------------------------------
+```
+
+A capture lives only until the next `run`: a plain one clears `$stderr`, so the assertions always read the most recent `run --separate-stderr`. Pass the option to the `run` whose STDERR is being asserted on, and assert directly after it.
 
 #### String assertions
 
@@ -411,7 +458,7 @@ export BATS_HELPERS_STEPS_DEBUG=1
 | `string_random`           | Generates a random alphanumeric string, 8 characters long by default          |
 | `tui_run`                 | Runs the script named by `SCRIPT_FILE`, feeding it a list of answers on STDIN |
 | `flunk`                   | Fails the test with a message                                                 |
-| `format_error`            | Formats an error message with a border and the captured command output        |
+| `format_error`            | Formats an error message with a border and the captured output and STDERR     |
 
 `fixture_export_codebase` is a no-op unless `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` is set to `1`, so an expensive export can be enabled per suite rather than per call:
 

@@ -99,3 +99,100 @@ assert_output_not_contains() {
   # shellcheck disable=SC2154
   assert_string_not_contains "${output-}" "${expected}"
 }
+
+##
+# Asserts that standard error was captured separately from the output.
+#
+# Only 'run --separate-stderr' populates 'stderr'. The check is that the
+# variable is set rather than that it holds text, so that a command which wrote
+# nothing to standard error is told apart from one whose standard error was
+# never captured at all.
+#
+# Globals:
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+##
+assert_stderr_captured() {
+  if [ -z "${stderr+set}" ]; then
+    flunk "Stderr was not captured. Run the command with 'run --separate-stderr'."
+    return 1
+  fi
+}
+
+##
+# Asserts that the standard error of the last command equals a string.
+#
+# Arguments:
+#   1. expected: Expected standard error. Optional, read from STDIN when
+#      omitted.
+#
+# Globals:
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+##
+assert_stderr() {
+  assert_stderr_captured || return 1
+
+  local expected
+  if [ "$#" -eq 0 ]; then
+    expected="$(cat -)"
+  else
+    expected="${1}"
+  fi
+
+  assert_equal "${expected}" "${stderr}"
+}
+
+##
+# Asserts that the standard error of the last command contains a string.
+#
+# Arguments:
+#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#
+# Globals:
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+##
+assert_stderr_contains() {
+  assert_stderr_captured || return 1
+
+  local expected
+  if [ "$#" -eq 0 ]; then
+    expected="$(cat -)"
+  else
+    expected="${1}"
+  fi
+
+  assert_string_contains "${stderr}" "${expected}"
+}
+
+##
+# Asserts that the standard error of the last command does not contain a string.
+#
+# Arguments:
+#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#
+# Globals:
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+##
+assert_stderr_not_contains() {
+  assert_stderr_captured || return 1
+
+  local expected
+  if [ "$#" -eq 0 ]; then
+    expected="$(cat -)"
+  else
+    expected="${1}"
+  fi
+
+  assert_string_not_contains "${stderr}" "${expected}"
+}
+
+##
+# Asserts that the last command wrote nothing to standard error.
+#
+# Globals:
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+##
+assert_stderr_empty() {
+  assert_stderr_captured || return 1
+
+  assert_empty "${stderr}"
+}

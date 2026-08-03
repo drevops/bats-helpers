@@ -26,7 +26,7 @@
         "lint-fix": "shfmt -i 2 -ci -s -w src/*.bash load.bash tests/*.bats"
     },
     "dependencies": {
-        "bats": "^1.10"
+        "bats": "^1.13"
     },
     "keywords": [
         "bats",
