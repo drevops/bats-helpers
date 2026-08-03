@@ -75,6 +75,13 @@ Two exceptions:
 - **The `assert_*` family** keeps the verb first, because there the verb is already the namespace and it matches bats-assert and bats-file exactly. Shape: `assert_<subject>_<predicate>`, e.g. `assert_file_not_exists`. An assertion a module owns still takes the module's prefix: `mock_assert_call_args`.
 - **`flunk` and `format_error`** are bare verbs, mirroring bats-support's `fail`.
 
+### Variable Naming
+Every variable the library reads from the environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global such as `STEPS` or `SCRIPT_FILE` would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`.
+
+`BATS_MOCK_TMPDIR` is the one exception. It is upstream grayhemp/bats-mock's own name, and `mock_setup` exports it for the consumer to read back, so it is an output as well as an input and cannot be aliased one way.
+
+A renamed variable is resolved into a local at the top of the function that owns it, preferring the prefixed name and falling back to the old one with a deprecation notice. The chain is written out in full at each site, for the same reason the function aliases are.
+
 ### Assertion Functions
 All assertion functions follow the pattern of checking conditions and calling `flunk()` with formatted error messages on failure.
 
@@ -120,7 +127,8 @@ File headers and function docblocks follow one house style so the library reads 
 #   2. string: String to search for.
 #
 # Globals:
-#   ASSERT_DIR_EXCLUDE: Additional directory names to exclude from the search.
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
 ##
 ```
 
@@ -161,4 +169,4 @@ Both shapes below work for a positive case, so the split is settled here rather 
 
 - **Call the helper bare for a positive case**: `steps_run "assert" "${mocks[@]}"`. The helper's `flunk` returns non-zero, which fails the test under BATS errexit and reports the specific reason against the calling line. The `run` wrapper needs a follow-up `assert_success`, and omitting it discards the result without failing anything.
 - **Wrap the call for a negative case**: `run steps_run "assert" "${mocks[@]}"` followed by `assert_failure`. The bare form would abort the test at the `flunk` before reaching the assertion.
-- **Declare test data arrays with `declare -a`**: `declare -a STEPS=( ... )`, `declare -a TEST_CASES=( ... )`, `declare -a answers=( ... )`. Helpers read these arrays through BASH dynamic scoping, so the declaration marks the array as an input to the call that follows it.
+- **Declare test data arrays with `declare -a`**: `declare -a BATS_HELPERS_STEPS=( ... )`, `declare -a BATS_HELPERS_TEST_CASES=( ... )`, `declare -a answers=( ... )`. Helpers read these arrays through BASH dynamic scoping, so the declaration marks the array as an input to the call that follows it.
