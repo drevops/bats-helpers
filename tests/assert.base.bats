@@ -34,6 +34,7 @@ load _test_helper
   # last 'run', so each case sets both explicitly rather than inheriting them
   # from an earlier assertion.
   output=""
+  stderr=""
   run format_error "Some message"
   assert_success
   assert_output_contains "BEGIN ERROR MESSAGE"
@@ -42,6 +43,7 @@ load _test_helper
   assert_output_not_contains "----------------------------------------"
 
   output="Some captured output"
+  stderr=""
   run format_error "Some message"
   assert_success
   assert_output_contains "Some message"

@@ -94,11 +94,14 @@ bats_require_minimum_version 1.5.0
   assert_output_contains "run --separate-stderr"
 }
 
+# Each negative case re-captures: a plain 'run' clears 'stderr', so a case that
+# reused an earlier capture would only ever reach the guard.
 @test "assert_stderr" {
   run --separate-stderr bash -c 'echo "some output"; echo "some error" >&2'
   assert_stderr "some error"
   assert_output "some output"
 
+  run --separate-stderr bash -c 'echo "some error" >&2'
   run assert_stderr "some other error"
   assert_failure
 
@@ -114,6 +117,7 @@ bats_require_minimum_version 1.5.0
   assert_stderr_contains "some EXISTING error"
   assert_stderr_contains "existing"
 
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
   run assert_stderr_contains "non-existing"
   assert_failure
 
@@ -127,12 +131,15 @@ bats_require_minimum_version 1.5.0
   run --separate-stderr bash -c 'echo "some existing error" >&2'
   assert_stderr_not_contains "non-existing"
 
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
   run assert_stderr_not_contains "some existing error"
   assert_failure
 
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
   run assert_stderr_not_contains "some EXISTING error"
   assert_failure
 
+  run --separate-stderr bash -c 'echo "some existing error" >&2'
   run assert_stderr_not_contains "existing"
   assert_failure
 
