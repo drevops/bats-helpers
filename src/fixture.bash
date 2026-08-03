@@ -12,11 +12,19 @@
 #   2. src: Repository to export. Optional, defaults to the current directory.
 #
 # Globals:
-#   BATS_FIXTURE_EXPORT_CODEBASE_ENABLED: Set to '1' to enable the export.
-#     Anything else makes this function a no-op.
+#   BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED: Set to '1' to enable the
+#     export. Anything else makes this function a no-op.
 ##
 fixture_export_codebase() {
-  if [ "${BATS_FIXTURE_EXPORT_CODEBASE_ENABLED-}" != "1" ]; then
+  local enabled
+  if [ -n "${BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED-}" ]; then
+    enabled="${BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED}"
+  elif [ -n "${BATS_FIXTURE_EXPORT_CODEBASE_ENABLED-}" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'BATS_FIXTURE_EXPORT_CODEBASE_ENABLED' will be removed in the next version. Use 'BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED' instead." >&3
+    enabled="${BATS_FIXTURE_EXPORT_CODEBASE_ENABLED}"
+  fi
+
+  if [ "${enabled-}" != "1" ]; then
     return
   fi
 

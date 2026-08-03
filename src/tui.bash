@@ -15,16 +15,23 @@
 #      prompts for them.
 #
 # Globals:
-#   SCRIPT_FILE: Path to the script to run, relative to the current directory.
+#   BATS_HELPERS_SCRIPT_FILE: Path to the script to run, relative to the
+#     current directory.
 ##
 tui_run() {
-  if [ -z "${SCRIPT_FILE-}" ]; then
-    flunk "SCRIPT_FILE is not set."
+  local script_file
+  if [ -n "${BATS_HELPERS_SCRIPT_FILE-}" ]; then
+    script_file="${BATS_HELPERS_SCRIPT_FILE}"
+  elif [ -n "${SCRIPT_FILE-}" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'SCRIPT_FILE' will be removed in the next version. Use 'BATS_HELPERS_SCRIPT_FILE' instead." >&3
+    script_file="${SCRIPT_FILE}"
+  else
+    flunk "BATS_HELPERS_SCRIPT_FILE is not set."
     return 1
   fi
 
-  if [ ! -f "${SCRIPT_FILE}" ]; then
-    flunk "SCRIPT_FILE does not exist."
+  if [ ! -f "${script_file}" ]; then
+    flunk "BATS_HELPERS_SCRIPT_FILE does not exist."
     return 1
   fi
 
@@ -39,5 +46,5 @@ tui_run() {
     input="${input-}""${val}"
   done
 
-  run bash -c "printf '${input}' | ./${SCRIPT_FILE}"
+  run bash -c "printf '${input}' | ./${script_file}"
 }
