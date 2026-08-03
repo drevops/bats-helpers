@@ -147,6 +147,13 @@ assert_dir_contains_string "${dir}" "needle"
 | `assert_symlink_exists`          | Asserts that a symbolic link exists                    |
 | `assert_symlink_not_exists`      | Asserts that a symbolic link does not exist            |
 
+`assert_file_exists` and `assert_file_not_exists` accept a glob. Only the first match decides the outcome, and the failure is reported once however many paths the glob expands to:
+
+```bash
+assert_file_exists "${dir}/*.txt"
+assert_file_not_exists "${dir}/*.rtf"
+```
+
 `assert_dir_contains_string` and `assert_dir_not_contains_string` search recursively, skip binary files, and always exclude `.git`, `.idea`, `vendor` and `node_modules`. Unlike the string and file assertions, they match case-sensitively and read the string as a `grep` basic regular expression. Set `ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
 
 ```bash

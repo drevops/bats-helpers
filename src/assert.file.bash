@@ -19,9 +19,8 @@ assert_file_exists() {
   for f in ${file}; do
     if [ -e "${f}" ]; then
       return 0
-    else
-      format_error "File '${file}' does not exist" | flunk
     fi
+
     # Only the first match decides the outcome.
     break
   done
@@ -43,10 +42,14 @@ assert_file_not_exists() {
   for f in ${file}; do
     if [ -e "${f}" ]; then
       format_error "File '${file}' exists, but should not" | flunk
-    else
-      return 0
+      return 1
     fi
+
+    # Only the first match decides the outcome.
+    break
   done
+
+  return 0
 }
 
 ##
