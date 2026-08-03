@@ -244,10 +244,18 @@ This is a very powerful feature that allows to test complex scenarios as unit te
 
 `mock_setup` writes the mocks to `${BATS_TEST_TMPDIR}/bats-mock-tmp` and puts that directory first on `PATH`, so BATS removes the mocks together with the rest of the test sandbox and concurrent runs cannot delete each other's mocks.
 
-Set `BATS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-mock-tmp` directory below it. The guarantees above come from staying within the test sandbox - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
+Set `BATS_HELPERS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-mock-tmp` directory below it. The guarantees above come from staying within the test sandbox - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
 
 ```bash
-export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/mocks"
+export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/mocks"
+```
+
+`mock_setup` also exports `BATS_HELPERS_MOCK_TMPDIR` with the resolved path, so a test can read back where the mocks ended up.
+
+`mock_get_call_user` reports the user each call was made as. It defaults to `id -un`; set `BATS_HELPERS_MOCK_USER` to report a different one:
+
+```bash
+export BATS_HELPERS_MOCK_USER="deploy"
 ```
 
 #### Example
@@ -457,10 +465,9 @@ Every variable the library defines, in one place. Each is also covered by the se
 | `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              | `assert_dir_contains_string`, `assert_dir_not_contains_string` | Array of directory names to exclude from the search, on top of the always-excluded four     |
 | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `fixture_export_codebase`                                     | Set to `1` to enable the export; anything else makes the function a no-op                   |
 | `BATS_HELPERS_BACKUP_DIR`                      | `file_add_var`, `file_restore`, `file_backup_path`            | Backup root. Defaults to `${BATS_TEST_TMPDIR}/bats-helpers-backup`                          |
+| `BATS_HELPERS_MOCK_TMPDIR`                     | `mock_setup`, `mock_create`                                   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`, and `mock_setup` exports the resolved path |
+| `BATS_HELPERS_MOCK_USER`                       | `mock_get_call_user`                                          | User a mock call is reported as. Defaults to `id -un`                                       |
 | `BATS_HELPERS_DEPRECATION_QUIET`               | every module                                                  | Set to any non-empty value to silence every deprecation notice                              |
-| `BATS_MOCK_TMPDIR`                             | `mock_setup`, `mock_create`                                   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`                    |
-
-`BATS_MOCK_TMPDIR` is the one variable without the `BATS_HELPERS_` prefix. It is [bats-mock](https://github.com/grayhemp/bats-mock)'s own name, and `mock_setup` exports it for the test to read back, so it is both an input and an output.
 
 ### Deprecations
 
@@ -492,8 +499,12 @@ The variables follow the same pattern. The old name is read only when the new on
 | `SCRIPT_FILE`                          | `BATS_HELPERS_SCRIPT_FILE`                     |
 | `ASSERT_DIR_EXCLUDE`                   | `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              |
 | `BATS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` |
+| `BATS_MOCK_TMPDIR`                     | `BATS_HELPERS_MOCK_TMPDIR`                     |
+| `_USER`                                | `BATS_HELPERS_MOCK_USER`                       |
 
 Failure messages name the new variable, so a test asserting on `TEST_CASES array is empty.` or `SCRIPT_FILE is not set.` has to be updated even while the old variable still works.
+
+`mock_setup` now exports `BATS_HELPERS_MOCK_TMPDIR` rather than `BATS_MOCK_TMPDIR`. The old name is still read as an input, but it is no longer written, so a test that reads the mock directory back after `mock_setup` has to read the new name.
 
 Every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - and every variable the library owns shares the `BATS_HELPERS_` prefix, matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. Apart from the two below, each replacement keeps the arguments, the standard output and the return semantics, so a call is updated by swapping the name alone.
 

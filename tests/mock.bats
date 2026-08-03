@@ -121,24 +121,36 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
+@test "Mock: call user" {
+  mock_curl=$(mock_command "curl")
+
+  curl example.com
+  assert_equal "$(id -un)" "$(mock_get_call_user "${mock_curl}")"
+
+  export BATS_HELPERS_MOCK_USER="someoneelse"
+  curl example.com
+
+  assert_equal "someoneelse" "$(mock_get_call_user "${mock_curl}" 2)"
+}
+
 @test "Mock: default temporary directory" {
-  assert_equal "${BATS_TEST_TMPDIR}/bats-mock-tmp" "${BATS_MOCK_TMPDIR}"
+  assert_equal "${BATS_TEST_TMPDIR}/bats-mock-tmp" "${BATS_HELPERS_MOCK_TMPDIR}"
 
   mock_curl=$(mock_command "curl")
 
-  assert_equal "${BATS_MOCK_TMPDIR}" "$(dirname "${mock_curl}")"
-  assert_symlink_exists "${BATS_MOCK_TMPDIR}/curl"
+  assert_equal "${BATS_HELPERS_MOCK_TMPDIR}" "$(dirname "${mock_curl}")"
+  assert_symlink_exists "${BATS_HELPERS_MOCK_TMPDIR}/curl"
 }
 
 @test "Mock: custom temporary directory" {
-  export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom"
+  export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom"
 
   run mock_prepare_tmp
   assert_success
   assert_output "${BATS_TEST_TMPDIR}/custom/bats-mock-tmp"
 
   # A trailing slash does not produce a double separator.
-  export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom/"
+  export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom/"
 
   run mock_prepare_tmp
   assert_success
@@ -146,18 +158,18 @@ load _test_helper
 }
 
 @test "Mock: custom temporary directory with spaces" {
-  export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/bats mock with spaces"
-  mkdir -p "${BATS_MOCK_TMPDIR}"
+  export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/bats mock with spaces"
+  mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}"
   mock_curl=$(mock_command "curl")
 
-  PATH="${BATS_MOCK_TMPDIR}":${PATH} run curl example.com
+  PATH="${BATS_HELPERS_MOCK_TMPDIR}":${PATH} run curl example.com
 
   assert_success
 }
 
 @test "Mock: temporary directory that cannot be created" {
   touch "${BATS_TEST_TMPDIR}/regular_file"
-  export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/regular_file/custom"
+  export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/regular_file/custom"
 
   run mock_prepare_tmp
   assert_failure
@@ -166,25 +178,25 @@ load _test_helper
 @test "Mock: temporary directory without a sandbox" {
   local original="${BATS_TEST_TMPDIR}"
 
-  BATS_MOCK_TMPDIR=""
+  BATS_HELPERS_MOCK_TMPDIR=""
   BATS_TEST_TMPDIR=""
   run mock_prepare_tmp
   BATS_TEST_TMPDIR="${original}"
 
   assert_failure
-  assert_output_contains "Set BATS_MOCK_TMPDIR to a writable directory"
+  assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
 @test "Mock: create without a sandbox" {
   local original="${BATS_TEST_TMPDIR}"
 
-  BATS_MOCK_TMPDIR=""
+  BATS_HELPERS_MOCK_TMPDIR=""
   BATS_TEST_TMPDIR=""
   run mock_create
   BATS_TEST_TMPDIR="${original}"
 
   assert_failure
-  assert_output_contains "Set BATS_MOCK_TMPDIR to a writable directory"
+  assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
 @test "Mock: call environment" {
