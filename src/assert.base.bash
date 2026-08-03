@@ -30,13 +30,15 @@ flunk() {
 }
 
 ##
-# Formats an error message with a border and the captured command output.
+# Formats an error message with a border and the captured output and stderr.
 #
 # Arguments:
 #   1. message: Message to format.
 #
 # Globals:
 #   output: Output captured by the last 'run' call. Appended when not empty.
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+#     Appended when not empty.
 #
 # Outputs:
 #   STDOUT: The formatted message.
@@ -58,6 +60,13 @@ format_error() {
     echo "----------------------------------------"
     echo "${BATS_TEST_TMPDIR}"
     echo "${output}"
+    echo "----------------------------------------"
+  fi
+
+  if [ "${stderr-}" != "" ]; then
+    echo "----------------------------------------"
+    echo "stderr:"
+    echo "${stderr}"
     echo "----------------------------------------"
   fi
 }
