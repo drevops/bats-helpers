@@ -1477,7 +1477,7 @@ mock_sandbox_deny() {
     printf 'denied %s\n' "${name}" >>"${BATS_HELPERS_MOCK_SANDBOX_REPORT}"
   fi
 
-  printf "Command '%s' is not mocked and the mock sandbox is enabled.\n" "${name}" >&2
+  printf "Command '%s' is not mocked and the mock sandbox is enabled\n" "${name}" >&2
 
   return 127
 }

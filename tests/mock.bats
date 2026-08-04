@@ -1056,7 +1056,7 @@ bats_require_minimum_version 1.13.0
   mock_sandbox_disable
 
   assert_failure --status 127
-  assert_output_contains "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox is enabled."
+  assert_output_contains "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox is enabled"
 }
 
 @test "mock_sandbox_enable - the library keeps working inside the sandbox" {
@@ -1211,7 +1211,7 @@ bats_require_minimum_version 1.13.0
   # Without a report to write to, the diagnostic still names the command.
   run -127 mock_sandbox_deny "curl"
   assert_failure --status 127
-  assert_output_contains "Command 'curl' is not mocked and the mock sandbox is enabled."
+  assert_output_contains "Command 'curl' is not mocked and the mock sandbox is enabled"
 
   mock_sandbox_enable
 
@@ -1265,7 +1265,7 @@ bats_require_minimum_version 1.13.0
   mock_sandbox_disable
 
   assert_failure --status 127
-  assert_output_contains "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox is enabled."
+  assert_output_contains "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox is enabled"
 
   run mock_sandbox_report 'denied'
   assert_success

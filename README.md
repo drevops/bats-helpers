@@ -868,7 +868,7 @@ setup() {
   run ./deploy.sh
 
   # 'curl' is answered by its mock. An unmocked 'aws' fails the call with
-  # "Command 'aws' is not mocked and the mock sandbox is enabled." instead of
+  # "Command 'aws' is not mocked and the mock sandbox is enabled" instead of
   # reaching the real one.
 }
 ```
