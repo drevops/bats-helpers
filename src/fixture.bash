@@ -102,17 +102,17 @@ fixture_create_dir() {
     path="${paths[index]}"
     target="${dir}/${path}"
 
+    fixture_validate_target "${dir}" "${path}" || return 1
+
     if [ -d "${target}" ]; then
       flunk "Fixture path '${path}' exists as a directory."
       return 1
     fi
 
-    if ! file_mktouch "${target}"; then
+    if ! file_mktouch "${target}" || ! printf '%s' "${contents[index]}" >"${target}"; then
       flunk "Unable to create fixture file '${path}'."
       return 1
     fi
-
-    printf '%s' "${contents[index]}" >"${target}"
   done
 
   return 0
@@ -186,12 +186,14 @@ fixture_assert_dir() {
   local -a contents=()
   fixture_read_archive || return 1
 
+  local listing
+  listing="$(fixture_list_files "${dir}")" || return 1
+
   ##
   ## Expected files.
   ##
 
-  # The paths are held as one newline-delimited value so that a path is matched
-  # as a whole word without becoming an array subscript.
+  local actual=$'\n'"${listing}"$'\n'
   local expected=$'\n'
   local summary=""
   local report=""
@@ -206,8 +208,16 @@ fixture_assert_dir() {
     expected="${expected}${path}"$'\n'
     target="${dir}/${path}"
 
-    if [ ! -f "${target}" ]; then
-      summary="${summary}missing: ${path}"$'\n'
+    # The listing decides what the directory holds, so a symlink standing where
+    # the archive names a regular file is a difference rather than something to
+    # read through.
+    if ! fixture_list_holds "${actual}" "${path}"; then
+      if [ -L "${target}" ]; then
+        summary="${summary}not a regular file: ${path}"$'\n'
+      else
+        summary="${summary}missing: ${path}"$'\n'
+      fi
+
       differences=$((differences + 1))
       continue
     fi
@@ -223,18 +233,13 @@ fixture_assert_dir() {
   ## Unexpected files.
   ##
 
-  local listing
-  listing="$(fixture_list_files "${dir}")" || return 1
-
   local file
   while IFS= read -r file; do
     [ -n "${file}" ] || continue
 
-    case "${expected}" in
-      *$'\n'"${file}"$'\n'*)
-        continue
-        ;;
-    esac
+    if fixture_list_holds "${expected}" "${file}"; then
+      continue
+    fi
 
     summary="${summary}unexpected: ${file}"$'\n'
     differences=$((differences + 1))
@@ -270,8 +275,6 @@ fixture_read_archive() {
   # A content line carrying the escape loses one backslash, so a line that is
   # marker-shaped after the removal is the one to unescape.
   local escaped_marker='^\\+-- .* --$'
-  # The declared paths are held as one newline-delimited value so that a path is
-  # matched as a whole word without becoming an array subscript.
   local declared=$'\n'
   local index=-1
   local line
@@ -292,12 +295,10 @@ fixture_read_archive() {
 
       fixture_validate_path "${path}" || return 1
 
-      case "${declared}" in
-        *$'\n'"${path}"$'\n'*)
-          flunk "Fixture path '${path}' is declared more than once."
-          return 1
-          ;;
-      esac
+      if fixture_list_holds "${declared}" "${path}"; then
+        flunk "Fixture path '${path}' is declared more than once."
+        return 1
+      fi
 
       declared="${declared}${path}"$'\n'
       index=$((index + 1))
@@ -379,7 +380,73 @@ fixture_validate_path() {
       flunk "Fixture path '${path}' contains a '.' component, but must be a plain relative path."
       return 1
       ;;
+    *//*)
+      flunk "Fixture path '${path}' contains an empty component, but must be a plain relative path."
+      return 1
+      ;;
   esac
 
   return 0
+}
+
+##
+# Validates that no component of a path below a directory is a symlink.
+#
+# A path is validated against what is already on disk, rather than against the
+# archive, because a symlink left by an earlier fixture or by the code under
+# test would send the write outside the directory.
+#
+# Arguments:
+#   1. dir: Directory the path is relative to.
+#   2. path: Path to walk.
+##
+fixture_validate_target() {
+  local dir="${1}"
+  local path="${2}"
+
+  local remainder="${path}"
+  local walked="${dir}"
+  local component
+
+  while [ -n "${remainder}" ]; do
+    component="${remainder%%/*}"
+
+    if [ "${component}" = "${remainder}" ]; then
+      remainder=""
+    else
+      remainder="${remainder#*/}"
+    fi
+
+    walked="${walked}/${component}"
+
+    if [ -L "${walked}" ]; then
+      flunk "Fixture path '${path}' leads through the symlink '${walked}'."
+      return 1
+    fi
+  done
+
+  return 0
+}
+
+##
+# Reports whether a newline-delimited list holds a path.
+#
+# The list is matched as text rather than held as an array, so that a path of
+# '@' or '*' stays an ordinary value instead of becoming a subscript.
+#
+# Arguments:
+#   1. list: Newline-delimited list, opened and closed by a newline.
+#   2. path: Path to look for.
+#
+# Returns:
+#   0 when the list holds the path, 1 when it does not.
+##
+fixture_list_holds() {
+  case "${1}" in
+    *$'\n'"${2}"$'\n'*)
+      return 0
+      ;;
+  esac
+
+  return 1
 }

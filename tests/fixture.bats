@@ -262,6 +262,47 @@ FIXTURE
   assert_output_contains "contains a '.' component"
 }
 
+@test "fixture_create_dir with an empty path component" {
+  run fixture_create_dir "${BATS_TEST_TMPDIR}/tree" <<'FIXTURE'
+-- src//app.sh --
+x
+FIXTURE
+  assert_failure
+  assert_output_contains "contains an empty component"
+}
+
+@test "fixture_create_dir with a symlinked parent" {
+  dir="${BATS_TEST_TMPDIR}/tree"
+  mkdir -p "${dir}"
+  mkdir -p "${BATS_TEST_TMPDIR}/outside"
+  ln -s "${BATS_TEST_TMPDIR}/outside" "${dir}/src"
+
+  run fixture_create_dir "${dir}" <<'FIXTURE'
+-- src/app.sh --
+x
+FIXTURE
+  assert_failure
+  assert_output_contains "leads through the symlink"
+
+  assert_file_not_exists "${BATS_TEST_TMPDIR}/outside/app.sh"
+}
+
+@test "fixture_create_dir with a symlinked file" {
+  dir="${BATS_TEST_TMPDIR}/tree"
+  mkdir -p "${dir}"
+  echo "outside" >"${BATS_TEST_TMPDIR}/outside.txt"
+  ln -s "${BATS_TEST_TMPDIR}/outside.txt" "${dir}/app.sh"
+
+  run fixture_create_dir "${dir}" <<'FIXTURE'
+-- app.sh --
+x
+FIXTURE
+  assert_failure
+  assert_output_contains "leads through the symlink"
+
+  assert_file_contains "${BATS_TEST_TMPDIR}/outside.txt" "outside"
+}
+
 @test "fixture_create_dir with a directory path" {
   run fixture_create_dir "${BATS_TEST_TMPDIR}/tree" <<'FIXTURE'
 -- src/ --
@@ -484,6 +525,22 @@ FIXTURE
 FIXTURE
   assert_failure
   assert_output_contains "unexpected: src/app.sh"
+}
+
+@test "fixture_assert_dir with a symlink in place of a file" {
+  dir="${BATS_TEST_TMPDIR}/tree"
+  mkdir -p "${dir}"
+  echo "# Project" >"${BATS_TEST_TMPDIR}/outside.md"
+  ln -s "${BATS_TEST_TMPDIR}/outside.md" "${dir}/README.md"
+
+  # The content behind the symlink matches, but the directory does not hold the
+  # regular file the archive names.
+  run fixture_assert_dir "${dir}" <<'FIXTURE'
+-- README.md --
+# Project
+FIXTURE
+  assert_failure
+  assert_output_contains "not a regular file: README.md"
 }
 
 @test "fixture_assert_dir with an empty archive" {
