@@ -31,6 +31,8 @@ answer1="${answer}"
 ask "Answer2" "default answer2"
 answer2="${answer}"
 
-echo "${answer1}"
-echo "${answer2}"
+# Printed with 'printf' because 'echo' would read an answer of '-n', '-e' or
+# '-E' as one of its own flags and swallow it.
+printf '%s\n' "${answer1}"
+printf '%s\n' "${answer2}"
 # LCOV_EXCL_STOP
