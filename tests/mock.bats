@@ -24,6 +24,16 @@ bats_require_minimum_version 1.13.0
   assert_equal "example.com" "$(mock_get_call_args "${mock_curl}" 2)"
 }
 
+# 'echo' would read a leading '-n', '-e' or '-E' as one of its own flags and
+# swallow it, losing the argument from the record.
+@test "Mock: calls and arguments that look like echo flags" {
+  mock_curl=$(mock_command "curl")
+
+  curl -n -e -E "trailing"
+
+  assert_equal "-n -e -E trailing" "$(mock_get_call_args "${mock_curl}" 1)"
+}
+
 @test "Mock: output" {
   mock_curl=$(mock_command "curl")
   mock_set_output "${mock_curl}" "testoutput1" 1

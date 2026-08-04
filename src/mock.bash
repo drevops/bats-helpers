@@ -292,9 +292,9 @@ source ${src_dir_quoted}/mock.bash
 call_num="\$(( \$(cat "\${mock}.call_num") + 1 ))"
 echo "\${call_num}" > "\${mock}.call_num"
 
-echo "\${BATS_HELPERS_MOCK_USER:-\${_USER:-\$(id -un)}}" > "\${mock}.user.\${call_num}"
+printf '%s\n' "\${BATS_HELPERS_MOCK_USER:-\${_USER:-\$(id -un)}}" > "\${mock}.user.\${call_num}"
 
-echo "\$@" > "\${mock}.args.\${call_num}"
+printf '%s\n' "\$*" > "\${mock}.args.\${call_num}"
 
 for var in \$(compgen -e); do
   declare -p "\${var}"
@@ -1843,7 +1843,7 @@ mock_get_call_env() {
 
   source "${mock}.env.${n}"
 
-  echo "${!var}"
+  printf '%s\n' "${!var}"
 }
 
 ##

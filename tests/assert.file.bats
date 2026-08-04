@@ -30,6 +30,13 @@ load _test_helper
 
   run assert_file_exists "${BATS_TEST_TMPDIR}/other*"
   assert_failure
+
+  # The glob expansion is unquoted, so a literal path has to be tried first.
+  file_mktouch "${BATS_TEST_TMPDIR}/some file.txt"
+  assert_file_exists "${BATS_TEST_TMPDIR}/some file.txt"
+
+  run assert_file_not_exists "${BATS_TEST_TMPDIR}/some file.txt"
+  assert_failure
 }
 
 @test "assert_file_not_exists" {
@@ -81,6 +88,10 @@ load _test_helper
 
   run assert_dir_exists "some dir"
   assert_failure
+}
+
+@test "assert_dir_exists defaults to the current directory" {
+  assert_dir_exists
 }
 
 @test "assert_dir_not_exists" {
@@ -617,4 +628,29 @@ load _test_helper
   # Assert non-existing dirs are failing.
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t61" "${BATS_TEST_TMPDIR}/t62"
   assert_failure
+}
+
+@test "assert_dirs_equal with paths containing a space" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/first dir/sub dir"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/second dir/sub dir"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/first dir/sub dir/some file.txt"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/second dir/sub dir/some file.txt"
+
+  assert_dirs_equal "${BATS_TEST_TMPDIR}/first dir" "${BATS_TEST_TMPDIR}/second dir"
+
+  echo "some other text" >"${BATS_TEST_TMPDIR}/second dir/sub dir/some file.txt"
+  run assert_dirs_equal "${BATS_TEST_TMPDIR}/first dir" "${BATS_TEST_TMPDIR}/second dir"
+  assert_failure
+}
+
+@test "assert_dirs_equal names both directories when a counterpart is missing" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/t71"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/t72"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/t71/only.txt"
+
+  run assert_dirs_equal "${BATS_TEST_TMPDIR}/t71" "${BATS_TEST_TMPDIR}/t72"
+  assert_failure
+  assert_output_contains "-- Directory holds a file the other directory does not --"
+  assert_output_contains "directory       : \${BATS_TEST_TMPDIR}/t71"
+  assert_output_contains "other directory : \${BATS_TEST_TMPDIR}/t72"
 }

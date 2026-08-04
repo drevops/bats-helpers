@@ -49,8 +49,10 @@ file_trim() {
 ##
 file_read_env() {
   local t
+  # The snapshot lives in the per-test sandbox so that bats removes it even when
+  # the restore below never runs.
   # shellcheck disable=SC1090,SC1091
-  [ -f "./.env" ] && t=$(mktemp) && export -p >"${t}" && set -a && . "./.env" && set +a && . "${t}" && rm "${t}" && unset t
+  [ -f "./.env" ] && t=$(mktemp "${BATS_TEST_TMPDIR}/bats-helpers-env.XXXXXX") && export -p >"${t}" && set -a && . "./.env" && set +a && . "${t}" && rm "${t}" && unset t
 
   # shellcheck disable=SC2294
   eval echo "$@"

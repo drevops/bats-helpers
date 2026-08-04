@@ -16,6 +16,10 @@ assert_file_exists() {
   local file="${1}"
   local f
 
+  # The literal path is tried first, because the glob expansion below is
+  # unquoted and would word-split a path that contains a space.
+  [ -e "${file}" ] && return 0
+
   for f in ${file}; do
     if [ -e "${f}" ]; then
       return 0
@@ -39,6 +43,13 @@ assert_file_not_exists() {
   local file="${1}"
   local f
 
+  # The literal path is tried first, because the glob expansion below is
+  # unquoted and would word-split a path that contains a space.
+  if [ -e "${file}" ]; then
+    format_error "File exists, but should not" "file" "${file}" | flunk
+    return 1
+  fi
+
   for f in ${file}; do
     if [ -e "${f}" ]; then
       format_error "File exists, but should not" "file" "${file}" | flunk
@@ -56,10 +67,10 @@ assert_file_not_exists() {
 # Asserts that a directory exists.
 #
 # Arguments:
-#   1. dir: Path to check.
+#   1. dir: Path to check. Optional, defaults to the current directory.
 ##
 assert_dir_exists() {
-  local dir="${1}"
+  local dir="${1:-$(pwd)}"
 
   if [ -d "${dir}" ]; then
     return 0
@@ -605,18 +616,41 @@ assert_binary_files_not_equal() {
 assert_dirs_equal() {
   local dir1="${1}"
   local dir2="${2}"
-  local file
 
   assert_dir_exists "${dir1}" || return 1
   assert_dir_exists "${dir2}" || return 1
 
-  for file in $(find "${dir1}/" -type f); do
-    assert_binary_files_equal "${file}" "${file/${dir1}/${dir2}}" || return 1
-  done
+  file_dirs_equal_one_way "${dir1}" "${dir2}" || return 1
+  file_dirs_equal_one_way "${dir2}" "${dir1}" || return 1
 
-  for file in $(find "${dir2}/" -type f); do
-    assert_binary_files_equal "${file}" "${file/${dir2}/${dir1}}" || return 1
-  done
+  return 0
+}
+
+##
+# Asserts that every file of one directory has an equal counterpart in another.
+#
+# Arguments:
+#   1. dir: Directory to walk.
+#   2. other: Directory the counterpart is expected in.
+##
+file_dirs_equal_one_way() {
+  local dir="${1}"
+  local other="${2}"
+
+  local file
+  while IFS= read -r -d '' file; do
+    local counterpart="${other}/${file#"${dir}/"}"
+
+    if [ ! -e "${counterpart}" ]; then
+      format_error "Directory holds a file the other directory does not" \
+        "file" "${file}" \
+        "directory" "${dir}" \
+        "other directory" "${other}" | flunk
+      return 1
+    fi
+
+    assert_binary_files_equal "${file}" "${counterpart}" || return 1
+  done < <(find "${dir}/" -type f -print0)
 
   return 0
 }
