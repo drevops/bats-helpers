@@ -19,8 +19,8 @@ assert_success() {
   # shellcheck disable=SC2154
   if [ "${status-}" -ne 0 ]; then
     local -a rows=("status" "$(command_describe_status "${status}")")
-    [ "${output-}" = "" ] || rows+=("output" "${output}")
-    [ "${stderr-}" = "" ] || rows+=("stderr" "${stderr}")
+    [ -z "${output-}" ] || rows+=("output" "${output}")
+    [ -z "${stderr-}" ] || rows+=("stderr" "${stderr}")
 
     format_error "Command failed" "${rows[@]}" | flunk
   elif [ "$#" -gt 0 ]; then
@@ -67,14 +67,14 @@ assert_failure() {
   # shellcheck disable=SC2154
   if [ "${status-}" -eq 0 ]; then
     local -a rows=()
-    [ "${output-}" = "" ] || rows+=("output" "${output}")
-    [ "${stderr-}" = "" ] || rows+=("stderr" "${stderr}")
+    [ -z "${output-}" ] || rows+=("output" "${output}")
+    [ -z "${stderr-}" ] || rows+=("stderr" "${stderr}")
 
     format_error "Command succeeded, but should have failed" "${rows[@]}" | flunk
     return 1
   fi
 
-  if [ "${expected}" != "" ]; then
+  if [ -n "${expected}" ]; then
     assert_status "${expected}" || return 1
   fi
 
@@ -206,7 +206,7 @@ command_describe_status() {
     local name
     # A number the platform does not name is not one of its signals, so the
     # status is left to stand for itself rather than named as one.
-    if name="$(kill -l "${signal}" 2>/dev/null)" && [ "${name}" != "" ]; then
+    if name="$(kill -l "${signal}" 2>/dev/null)" && [ -n "${name}" ]; then
       printf '%s (killed by SIG%s)\n' "${code}" "${name}"
       return 0
     fi

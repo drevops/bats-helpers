@@ -105,7 +105,7 @@ assert_dir_empty() {
   local dir="${1:-$(pwd)}"
   assert_dir_exists "${dir}" || return 1
 
-  if [ "$(ls -A "${dir}")" ]; then
+  if [ -n "$(ls -A "${dir}")" ]; then
     format_error "Directory is not empty" "directory" "${dir}" | flunk
   else
     return 0
@@ -122,7 +122,7 @@ assert_dir_not_empty() {
   local dir="${1:-$(pwd)}"
   assert_dir_exists "${dir}" || return 1
 
-  if [ "$(ls -A "${dir}")" ]; then
+  if [ -n "$(ls -A "${dir}")" ]; then
     return 0
   else
     format_error "Directory is empty, but should not be" "directory" "${dir}" | flunk

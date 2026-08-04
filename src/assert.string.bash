@@ -11,7 +11,7 @@
 #   1. string: String to check.
 ##
 assert_empty() {
-  if [ "${1-}" = "" ]; then
+  if [ -z "${1-}" ]; then
     return 0
   else
     format_error "String is not empty" "string" "${1}" | flunk
@@ -25,10 +25,10 @@ assert_empty() {
 #   1. string: String to check.
 ##
 assert_not_empty() {
-  if [ "${1-}" = "" ]; then
-    format_error "String is empty, but should not be" | flunk
-  else
+  if [ -n "${1-}" ]; then
     return 0
+  else
+    format_error "String is empty, but should not be" | flunk
   fi
 }
 
@@ -40,7 +40,9 @@ assert_not_empty() {
 #   2. actual: Actual string.
 ##
 assert_equal() {
-  if [ "${1-}" != "${2-}" ]; then
+  if [ "${1-}" = "${2-}" ]; then
+    return 0
+  else
     format_error "Strings are not equal" "expected" "${1-}" "actual" "${2-}" | flunk
   fi
 }

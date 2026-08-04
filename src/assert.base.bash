@@ -34,7 +34,7 @@ flunk() {
   local trace
   trace="$(report_stack_trace)"
 
-  if [ "${trace}" != "" ]; then
+  if [ -n "${trace}" ]; then
     message="${message}"$'\n\n'"$(report_decorate "stack trace" "${trace}")"
   fi
 
@@ -180,7 +180,7 @@ report_banner() {
 report_decorate() {
   printf -- '-- %s --\n' "${1}"
 
-  if [ "${2-}" != "" ]; then
+  if [ -n "${2-}" ]; then
     printf '%s\n' "${2}"
   fi
 
@@ -262,7 +262,7 @@ report_color_enabled() {
 
   [ "${override}" = "0" ] && return 1
 
-  if [ "${override}" != "1" ] && [ "${NO_COLOR-}" != "" ]; then
+  if [ "${override}" != "1" ] && [ -n "${NO_COLOR-}" ]; then
     return 1
   fi
 
@@ -311,13 +311,13 @@ report_stack_trace() {
 
     # The outermost frame is entered from the command line rather than from a
     # file, and there is nothing above it to walk to.
-    [ "${source}" = "" ] && break
+    [ -z "${source}" ] && break
 
     if [[ ${source} == "${root}"/* ]]; then
       continue
     fi
 
-    if [ "${bats_root}" != "" ] && [[ ${source} == "${bats_root}"/* ]]; then
+    if [ -n "${bats_root}" ] && [[ ${source} == "${bats_root}"/* ]]; then
       continue
     fi
 
@@ -347,7 +347,7 @@ report_stack_trace() {
 report_normalize_paths() {
   local text="${1}"
 
-  if [ "${BATS_TEST_SOURCE-}" != "" ] && [ "${BATS_TEST_FILENAME-}" != "" ]; then
+  if [ -n "${BATS_TEST_SOURCE-}" ] && [ -n "${BATS_TEST_FILENAME-}" ]; then
     text="${text//"${BATS_TEST_SOURCE}"/${BATS_TEST_FILENAME}}"
   fi
 
@@ -360,7 +360,7 @@ report_normalize_paths() {
 
     # The root directory is a prefix of every path, so rewriting it would leave
     # nothing readable behind.
-    if [ "${value}" = "" ] || [ "${value}" = "/" ]; then
+    if [ -z "${value}" ] || [ "${value}" = "/" ]; then
       continue
     fi
 

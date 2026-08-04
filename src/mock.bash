@@ -1864,12 +1864,12 @@ mock_assert_call_args() {
   local expected_args="${2?'Expected arguments must be specified'}"
   local n="${3-}"
 
-  [[ ${expected_args} == "*" ]] && return 0
+  [ "${expected_args}" = "*" ] && return 0
 
   local actual_args
   actual_args="$(mock_get_call_args "${mock}" "${n}")" || return 1
 
-  [[ ${expected_args} == "${actual_args}" ]]
+  [ "${expected_args}" = "${actual_args}" ]
 }
 
 ##

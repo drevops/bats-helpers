@@ -194,7 +194,7 @@ dataprovider_case() {
 
   local description="${BATS_HELPERS_DATAPROVIDER_INDEX}"
 
-  if [ "${label}" != "" ]; then
+  if [ -n "${label}" ]; then
     description="'${label}'"
     BATS_HELPERS_DATAPROVIDER_LABELLED=1
   fi
