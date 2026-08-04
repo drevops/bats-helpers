@@ -971,16 +971,21 @@ line_assert_index_equal() {
   fi
 
   local title
+  local -a rows=("line" "$(line_label "${given}" "${index}")")
+
+  # The line the assertion asked for is what it was compared against, so a
+  # failed comparison names both sides; a negated one has only the one value.
   if [ "${negate}" = "1" ]; then
     title="Line equals string, but should not"
+    rows+=("string" "${expected}")
   else
     title="Line does not equal string"
+    rows+=("expected" "${expected}" "actual" "${lines[index]}")
   fi
 
-  format_error "${title}" \
-    "line" "$(line_label "${given}" "${index}")" \
-    "string" "${expected}" \
-    "context" "$(line_context "${index}")" | flunk
+  rows+=("context" "$(line_context "${index}")")
+
+  format_error "${title}" "${rows[@]}" | flunk
 }
 
 ##

@@ -48,8 +48,10 @@ capture_formatted_mixed() {
   assert_output_contains "-- Line does not equal string --
 line (1 line):
 0
-string (1 line):
+expected (1 line):
 Reading config
+actual (1 line):
+Usage: tool.sh
 context (3 lines):
 > 0: Usage: tool.sh
   1: Reading config
@@ -85,7 +87,11 @@ context (3 lines):
   capture
   run assert_line_not 0 "Usage: tool.sh"
   assert_failure
-  assert_output_contains "-- Line equals string, but should not --"
+  assert_output_contains "-- Line equals string, but should not --
+line (1 line):
+0
+string (1 line):
+Usage: tool.sh"
   assert_output_contains "> 0: Usage: tool.sh"
 }
 
