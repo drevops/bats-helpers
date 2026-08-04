@@ -1312,7 +1312,7 @@ A script that asks questions is driven by naming it in `SCRIPT_FILE` and handing
 | `tui_assert_prompts`      | Asserts the prompts appeared in order, ignoring case                 | `[prompts...]` | None    |
 | `tui_assert_prompts_case` | Asserts the prompts appeared in order, case-sensitively              | `[prompts...]` | None    |
 
-Each answer is submitted followed by a newline, and an empty answer submits a blank line, so a prompt is left at its default by passing `""`. Answers reach the script byte for byte: an apostrophe, a `%` directive, a backslash escape or a space is not decoded on the way in.
+Each answer is submitted followed by a newline, and an empty answer submits a blank line, so a prompt is left at its default by passing `""`. Every other answer reaches the script byte for byte: an apostrophe, a `%` directive, a backslash escape or a space is not decoded on the way in. The one exception is the deprecated `nothing`, which is still read as a request for a blank line rather than as those seven characters.
 
 `tui_run` fills `output`, `status` and `lines` the way `run` does, so the script is asserted on with the usual command assertions.
 
@@ -1640,7 +1640,7 @@ assert_contains "needle" "some needle in a haystack"
 assert_string_contains "some needle in a haystack" "needle"
 ```
 
-The `nothing` answer to `tui_run` is deprecated in the same way. An empty string is what sends a blank line now, which makes the literal string `nothing` answerable again:
+The `nothing` answer to `tui_run` is deprecated in the same way. An empty string is what sends a blank line now, and `nothing` still sends one while printing a notice, so the literal string becomes answerable once it is removed:
 
 ```bash
 tui_run "My site" "nothing" "yes"
