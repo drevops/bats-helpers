@@ -14,10 +14,7 @@ This is a BATS (Bash Automated Testing System) helpers library that provides ass
 - **src/**: Contains all helper modules:
   - `assert.*.bash`: Various assertion helpers (base, command, string, file, git)
   - `file.bash`: File utilities for creating, trimming, backing up and restoring files
-  - `mock.bash`: Command mocking functionality
-  - `mock.log.bash`: Ordered log of every mocked call, and its assertions
-  - `mock.match.bash`: Argument specifications that select a mock's response
-  - `mock.strict.bash`: Verification of the expectations declared on a mock
+  - `mock.bash`: Command mocking - the sandbox, mock creation, responses, argument specifications, strictness, the ordered call log and its assertions
   - `steps.bash`: Step runner for sequential command and string assertions
   - `dataprovider.bash`: Data provider utilities for parameterized tests
   - `fixture.bash`: Test fixture management
@@ -162,6 +159,8 @@ File headers and function docblocks follow one house style so the library reads 
 
 ### Mocking System
 The mocking system creates temporary mock executables that record calls and can return configured outputs/exit codes.
+
+Everything mock-related lives in one `src/mock.bash`, in the same way the `assert.*` family splits by subject but each subject stays whole. The one rule the single file has to carry itself is the process boundary: the generated mock is a separate script that sources `assert.string.bash` and `mock.bash` and then runs in its own process, where `assert.base.bash` is *not* loaded. Every function that mock reaches at call time - the log writers, the whole matching engine, the response resolution, forwarding, and the strictness accept and reject pair - therefore must never call `flunk`, which would die as an unknown command under the mock's `set -e`. Each of those functions says so in its docblock; add a `flunk` to one and the mock breaks at run time rather than at lint time, so the docblock line is the only guard.
 
 ### Step Runner
 The `steps.bash` module provides a DSL for defining test sequences with both command mocking and string assertions:

@@ -7,6 +7,10 @@
 # the command it stands in for. Every call it receives is recorded, appended to
 # the shared call log, and answered from the responses the test configured.
 #
+# That generated script runs as its own process and sources this file, where the
+# assertion helpers are not loaded. Every function it reaches at that point says
+# so in its docblock and must never call 'flunk'.
+#
 # shellcheck disable=SC1090
 
 ##
@@ -206,9 +210,7 @@ set -e
 mock=${mock_quoted}
 
 source ${src_dir_quoted}/assert.string.bash
-source ${src_dir_quoted}/mock.log.bash
-source ${src_dir_quoted}/mock.match.bash
-source ${src_dir_quoted}/mock.strict.bash
+source ${src_dir_quoted}/mock.bash
 
 call_num="\$(( \$(cat "\${mock}.call_num") + 1 ))"
 echo "\${call_num}" > "\${mock}.call_num"
@@ -345,7 +347,1048 @@ mock_set_property() {
 }
 
 ##
-## Calls.
+## Argument specifications.
+##
+
+##
+# Adds an argument specification to a mock.
+#
+# A specification selects the response for the calls its matchers accept. The
+# first specification whose every matcher accepts a call wins, in the order the
+# specifications were added, and a call that no specification accepts falls
+# through to the per-call and default responses.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#
+# Outputs:
+#   STDOUT: Path prefix identifying the specification, to pass to the other
+#           'mock_spec_' functions.
+##
+mock_spec_add() {
+  local mock="${1?'Mock must be specified'}"
+
+  if [ ! -e "${mock}" ]; then
+    flunk "Mock '${mock}' does not exist. Create it with 'mock_command' first."
+    return 1
+  fi
+
+  local spec_num=0
+  [ -e "${mock}.spec_num" ] && spec_num="$(cat "${mock}.spec_num")"
+
+  spec_num=$((spec_num + 1))
+  echo -n "${spec_num}" >"${mock}.spec_num"
+
+  local spec="${mock}.spec.${spec_num}"
+  echo -n 0 >"${spec}.arg_num"
+  echo -n 0 >"${spec}.hits"
+
+  echo "${spec}"
+}
+
+##
+# Constrains one argument position of a specification.
+#
+# Arguments:
+#   1. spec: Specification returned by 'mock_spec_add'.
+#   2. position: One-based argument position, or '*' to require that some
+#      argument satisfies the matcher.
+#   3. matcher: One of 'equals', 'starts_with', 'ends_with', 'contains',
+#      'matches' or 'present', each of which may carry a 'not_' prefix. At '*'
+#      a prefixed matcher requires that no argument satisfies it.
+#   4. value: Value to match against. Required by every matcher except
+#      'present' and 'not_present', which take none.
+##
+mock_spec_arg() {
+  local spec="${1?'Specification must be specified'}"
+  local position="${2?'Position must be specified'}"
+  local matcher="${3?'Matcher must be specified'}"
+  local value="${4-}"
+
+  if [ ! -e "${spec}.arg_num" ]; then
+    flunk "Specification '${spec}' does not exist. Create it with 'mock_spec_add' first."
+    return 1
+  fi
+
+  if [ "${position}" != "*" ] && ! [[ ${position} =~ ^[1-9][0-9]*$ ]]; then
+    flunk "Position '${position}' is not a positive integer or '*'."
+    return 1
+  fi
+
+  case "${matcher}" in
+    equals | not_equals | starts_with | not_starts_with | ends_with | not_ends_with | contains | not_contains | matches | not_matches | present | not_present) ;;
+    *)
+      flunk "Matcher '${matcher}' is not known. Use 'equals', 'starts_with', 'ends_with', 'contains', 'matches' or 'present', optionally prefixed with 'not_'."
+      return 1
+      ;;
+  esac
+
+  if [ "${matcher}" = "present" ] || [ "${matcher}" = "not_present" ]; then
+    if [ "$#" -gt 3 ]; then
+      flunk "Matcher '${matcher}' takes no value."
+      return 1
+    fi
+  elif [ "$#" -lt 4 ]; then
+    flunk "Matcher '${matcher}' requires a value."
+    return 1
+  fi
+
+  if [ "${matcher}" = "matches" ] || [ "${matcher}" = "not_matches" ]; then
+    local match_status=0
+    string_match "" "${value}" "regex" 1 "anywhere" || match_status=$?
+
+    if [ "${match_status}" -eq 2 ]; then
+      flunk "Invalid regular expression '${value}'."
+      return 1
+    fi
+  fi
+
+  local arg_num
+  arg_num="$(cat "${spec}.arg_num")"
+
+  # A numeric position constrained twice would make the specification depend on
+  # which of the two constraints was consulted first.
+  if [ "${position}" != "*" ]; then
+    local i
+    for ((i = 1; i <= arg_num; i++)); do
+      if [ "$(cat "${spec}.arg.${i}.position")" = "${position}" ]; then
+        flunk "Position '${position}' is already constrained by this specification."
+        return 1
+      fi
+    done
+  fi
+
+  arg_num=$((arg_num + 1))
+  echo -n "${arg_num}" >"${spec}.arg_num"
+
+  echo -n "${position}" >"${spec}.arg.${arg_num}.position"
+  echo -n "${matcher}" >"${spec}.arg.${arg_num}.matcher"
+  printf '%s' "${value}" >"${spec}.arg.${arg_num}.value"
+}
+
+##
+# Pins the number of arguments a specification accepts.
+#
+# Arguments:
+#   1. spec: Specification returned by 'mock_spec_add'.
+#   2. count: Number of arguments.
+##
+mock_spec_count() {
+  local spec="${1?'Specification must be specified'}"
+  local count="${2?'Count must be specified'}"
+
+  if [ ! -e "${spec}.arg_num" ]; then
+    flunk "Specification '${spec}' does not exist. Create it with 'mock_spec_add' first."
+    return 1
+  fi
+
+  if ! [[ ${count} =~ ^[0-9]+$ ]]; then
+    flunk "Count '${count}' is not a non-negative integer."
+    return 1
+  fi
+
+  echo -n "${count}" >"${spec}.argc"
+}
+
+##
+# Sets the exit status a specification responds with.
+#
+# Arguments:
+#   1. spec: Specification returned by 'mock_spec_add'.
+#   2. status: Status.
+##
+mock_spec_set_status() {
+  local spec="${1?'Specification must be specified'}"
+  local status="${2?'Status must be specified'}"
+
+  mock_spec_set_property "${spec}" 'status' "${status}"
+}
+
+##
+# Sets the output a specification responds with.
+#
+# Arguments:
+#   1. spec: Specification returned by 'mock_spec_add'.
+#   2. output: Output or '-' for STDIN.
+#
+# Inputs:
+#   STDIN: Output if 2 is '-'.
+##
+mock_spec_set_output() {
+  local spec="${1?'Specification must be specified'}"
+  local output="${2?'Output must be specified'}"
+
+  mock_spec_set_property "${spec}" 'output' "${output}"
+}
+
+##
+# Sets the side effect a specification runs.
+#
+# Arguments:
+#   1. spec: Specification returned by 'mock_spec_add'.
+#   2. side_effect: Side effect or '-' for STDIN.
+#
+# Inputs:
+#   STDIN: Side effect if 2 is '-'.
+##
+mock_spec_set_side_effect() {
+  local spec="${1?'Specification must be specified'}"
+  local side_effect="${2?'Side effect must be specified'}"
+
+  mock_spec_set_property "${spec}" 'side_effect' "${side_effect}"
+}
+
+##
+# Sets a specific property of a specification.
+#
+# Arguments:
+#   1. spec: Specification returned by 'mock_spec_add'.
+#   2. property_name: Property name.
+#   3. property_value: Property value or '-' for STDIN.
+#
+# Inputs:
+#   STDIN: Property value if 3 is '-'.
+##
+mock_spec_set_property() {
+  local spec="${1}"
+  local property_name="${2}"
+  local property_value="${3}"
+
+  if [ ! -e "${spec}.arg_num" ]; then
+    flunk "Specification '${spec}' does not exist. Create it with 'mock_spec_add' first."
+    return 1
+  fi
+
+  if [[ ${property_value} == '-' ]]; then
+    property_value="$(cat -)"
+  fi
+
+  # The value is written with 'printf' because 'echo' would read a value of
+  # '-n', '-e' or '-E' as one of its own flags and swallow it.
+  printf '%s\n' "${property_value}" >"${spec}.${property_name}"
+}
+
+##
+# Runs the real command for calls that no specification accepts.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#   2. enabled: '1' to forward, '0' to stop forwarding. Optional, defaults
+#      to '1'.
+##
+mock_set_forward() {
+  local mock="${1?'Mock must be specified'}"
+  local enabled="${2:-1}"
+
+  if [ ! -e "${mock}" ]; then
+    flunk "Mock '${mock}' does not exist. Create it with 'mock_command' first."
+    return 1
+  fi
+
+  if [ "${enabled}" != "0" ] && [ "${enabled}" != "1" ]; then
+    flunk "Forwarding must be '0' or '1', got '${enabled}'."
+    return 1
+  fi
+
+  if [ "${enabled}" = "0" ]; then
+    rm -f "${mock}.forward"
+    return 0
+  fi
+
+  echo -n 1 >"${mock}.forward"
+}
+
+##
+## Matching.
+##
+
+##
+# Reports which specification accepts a call.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#   2+. Arguments the command was called with.
+#
+# Outputs:
+#   STDOUT: Index of the first accepting specification.
+#
+# Returns:
+#   0 when a specification accepts the call, 1 when none does.
+##
+mock_match_index() {
+  local mock="${1}"
+  shift
+
+  [ -e "${mock}.spec_num" ] || return 1
+
+  local spec_num
+  spec_num="$(cat "${mock}.spec_num")"
+
+  local i
+  for ((i = 1; i <= spec_num; i++)); do
+    if mock_spec_matches "${mock}.spec.${i}" "$@"; then
+      echo "${i}"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+##
+# Records that a specification accepted a call.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#   2. index: Index of the specification.
+##
+mock_match_hit() {
+  local mock="${1}"
+  local index="${2}"
+  local spec="${mock}.spec.${index}"
+
+  local hits
+  hits="$(cat "${spec}.hits")"
+
+  echo -n "$((hits + 1))" >"${spec}.hits"
+}
+
+##
+# Reports whether a specification accepts a call.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. spec: Path prefix of the specification.
+#   2+. Arguments the command was called with.
+#
+# Returns:
+#   0 when every matcher accepts the call, 1 when one of them does not.
+##
+mock_spec_matches() {
+  local spec="${1}"
+  shift
+
+  if [ -e "${spec}.argc" ]; then
+    [ "$#" -eq "$(cat "${spec}.argc")" ] || return 1
+  fi
+
+  local arg_num
+  arg_num="$(cat "${spec}.arg_num")"
+
+  local i
+  local position
+  local matcher
+  local value
+  local negate
+
+  for ((i = 1; i <= arg_num; i++)); do
+    position="$(cat "${spec}.arg.${i}.position")"
+    matcher="$(cat "${spec}.arg.${i}.matcher")"
+    value="$(cat "${spec}.arg.${i}.value")"
+
+    negate=0
+    if [ "${matcher#not_}" != "${matcher}" ]; then
+      negate=1
+      matcher="${matcher#not_}"
+    fi
+
+    if [ "${position}" = "*" ]; then
+      mock_match_any "${matcher}" "${value}" "${negate}" "$@" || return 1
+    else
+      mock_match_at "${position}" "${matcher}" "${value}" "${negate}" "$@" || return 1
+    fi
+  done
+
+  return 0
+}
+
+##
+# Reports whether the argument at a position satisfies a matcher.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. position: One-based argument position.
+#   2. matcher: Matcher without its 'not_' prefix.
+#   3. value: Value to match against.
+#   4. negate: '1' to require that the argument does not satisfy the matcher.
+#   5+. Arguments the command was called with.
+##
+mock_match_at() {
+  local position="${1}"
+  local matcher="${2}"
+  local value="${3}"
+  local negate="${4}"
+  shift 4
+
+  local matched=0
+
+  if [ "${matcher}" = "present" ]; then
+    [ "${position}" -le "$#" ] && matched=1
+  elif [ "${position}" -le "$#" ]; then
+    mock_match_value "${!position}" "${matcher}" "${value}" && matched=1
+  fi
+
+  [ "${negate}" = "1" ] && matched=$((1 - matched))
+
+  [ "${matched}" = "1" ]
+}
+
+##
+# Reports whether some argument satisfies a matcher.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. matcher: Matcher without its 'not_' prefix.
+#   2. value: Value to match against.
+#   3. negate: '1' to require that no argument satisfies the matcher.
+#   4+. Arguments the command was called with.
+##
+mock_match_any() {
+  local matcher="${1}"
+  local value="${2}"
+  local negate="${3}"
+  shift 3
+
+  local matched=0
+
+  if [ "${matcher}" = "present" ]; then
+    [ "$#" -gt 0 ] && matched=1
+  else
+    local argument
+    for argument in "$@"; do
+      if mock_match_value "${argument}" "${matcher}" "${value}"; then
+        matched=1
+        break
+      fi
+    done
+  fi
+
+  [ "${negate}" = "1" ] && matched=$((1 - matched))
+
+  [ "${matched}" = "1" ]
+}
+
+##
+# Reports whether one value satisfies a matcher.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. value: Value to test.
+#   2. matcher: Matcher without its 'not_' prefix.
+#   3. needle: Value to match against.
+#
+# Returns:
+#   0 when the value satisfies the matcher, 1 when it does not or the matcher
+#   is not known.
+##
+mock_match_value() {
+  local value="${1}"
+  local matcher="${2}"
+  local needle="${3}"
+
+  case "${matcher}" in
+    equals)
+      [ "${value}" = "${needle}" ]
+      ;;
+    starts_with)
+      string_match "${value}" "${needle}" "literal" 1 "start"
+      ;;
+    ends_with)
+      string_match "${value}" "${needle}" "literal" 1 "end"
+      ;;
+    contains)
+      string_match "${value}" "${needle}" "literal" 1 "anywhere"
+      ;;
+    matches)
+      string_match "${value}" "${needle}" "regex" 1 "anywhere"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+##
+# Writes what a specification requires of a call.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. spec: Path prefix of the specification.
+#
+# Outputs:
+#   STDOUT: The requirements, comma-separated.
+##
+mock_spec_describe() {
+  local spec="${1}"
+  local description=""
+
+  local arg_num
+  arg_num="$(cat "${spec}.arg_num")"
+
+  local i
+  local position
+  local matcher
+  local value
+
+  for ((i = 1; i <= arg_num; i++)); do
+    position="$(cat "${spec}.arg.${i}.position")"
+    matcher="$(cat "${spec}.arg.${i}.matcher")"
+    value="$(cat "${spec}.arg.${i}.value")"
+
+    [ -n "${description}" ] && description="${description}, "
+
+    if [ "${position}" = "*" ]; then
+      description="${description}some argument ${matcher}"
+    else
+      description="${description}argument ${position} ${matcher}"
+    fi
+
+    case "${matcher}" in
+      present | not_present) ;;
+      *)
+        description="${description} '${value}'"
+        ;;
+    esac
+  done
+
+  if [ -e "${spec}.argc" ]; then
+    [ -n "${description}" ] && description="${description}, "
+    description="${description}$(cat "${spec}.argc") argument(s)"
+  fi
+
+  [ -z "${description}" ] && description="any call"
+
+  echo "${description}"
+}
+
+##
+# Writes what each specification of a mock requires of a call.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#
+# Outputs:
+#   STDOUT: One indented line per specification, and nothing when the mock has
+#           none.
+##
+mock_spec_describe_all() {
+  local mock="${1}"
+
+  [ -e "${mock}.spec_num" ] || return 0
+
+  local spec_num
+  spec_num="$(cat "${mock}.spec_num")"
+
+  local i
+  for ((i = 1; i <= spec_num; i++)); do
+    echo "  specification ${i}: $(mock_spec_describe "${mock}.spec.${i}")"
+  done
+
+  return 0
+}
+
+##
+# Resolves the file holding a response property for a call.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#   2. property: Property name.
+#   3. call_num: Index of the call.
+#   4. spec: Index of the accepting specification. Optional.
+#
+# Outputs:
+#   STDOUT: Path to the specification's file, else the call's own file, else
+#           the mock's default file.
+##
+mock_response_file() {
+  local mock="${1}"
+  local property="${2}"
+  local call_num="${3}"
+  local spec="${4-}"
+
+  if [ -n "${spec}" ] && [ -e "${mock}.spec.${spec}.${property}" ]; then
+    echo "${mock}.spec.${spec}.${property}"
+    return 0
+  fi
+
+  if [ -e "${mock}.${property}.${call_num}" ]; then
+    echo "${mock}.${property}.${call_num}"
+    return 0
+  fi
+
+  echo "${mock}.${property}"
+}
+
+##
+# Reports whether a call has a response of its own.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#   2. call_num: Index of the call.
+#
+# Returns:
+#   0 when any response property is configured for the call, 1 when none is.
+##
+mock_response_ordinal_exists() {
+  local mock="${1}"
+  local call_num="${2}"
+
+  [ -e "${mock}.status.${call_num}" ] && return 0
+  [ -e "${mock}.output.${call_num}" ] && return 0
+  [ -e "${mock}.side_effect.${call_num}" ] && return 0
+
+  return 1
+}
+
+##
+# Reports whether a mock forwards unaccepted calls to the real command.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+##
+mock_forward_enabled() {
+  local mock="${1}"
+
+  [ -e "${mock}.forward" ]
+}
+
+##
+# Replaces the mock process with the real command.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#   2. name: Command name.
+#   3+. Arguments the command was called with.
+#
+# Outputs:
+#   STDERR: A diagnostic when the real command is not on PATH.
+#
+# Returns:
+#   Never returns to the caller. The process is replaced by the real command,
+#   or exits 127 when the real command is not on PATH.
+##
+mock_forward_exec() {
+  local mock="${1}"
+  local name="${2}"
+  shift 2
+
+  local forward_path
+  forward_path="$(mock_forward_path "${mock%/*}")"
+
+  local real
+  real="$(PATH="${forward_path}" command -v "${name}")" || real=""
+
+  if [ -z "${real}" ]; then
+    echo "Command '${name}' is not available to forward to" >&2
+    exit 127
+  fi
+
+  # A builtin resolves to a bare name, which 'exec' looks up on PATH, where the
+  # mock directory would otherwise still come first.
+  PATH="${forward_path}" exec "${real}" "$@"
+}
+
+##
+# Writes PATH without the directory the mocks are stored in.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. dir: Directory to remove.
+#
+# Outputs:
+#   STDOUT: The remaining PATH entries.
+##
+mock_forward_path() {
+  local dir="${1}"
+  local -a entries=()
+  local -a kept=()
+
+  IFS=':' read -ra entries <<<"${PATH}"
+
+  local entry
+  for entry in "${entries[@]}"; do
+    [ "${entry}" = "${dir}" ] && continue
+    kept+=("${entry}")
+  done
+
+  local joined
+  printf -v joined '%s:' "${kept[@]}"
+
+  echo "${joined%:}"
+}
+
+##
+## Strictness.
+##
+## An expectation is a response configured for one call index or an argument
+## specification. A mock with no expectations records calls without constraining
+## them; a mock with at least one expectation rejects the calls that none of
+## them covers, unless a response set without a call index has declared a
+## catch-all.
+##
+
+##
+# Rejects the calls a mock's expectations do not cover.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#   2. enabled: '1' to reject, '0' to answer every call. Optional, defaults
+#      to '1'.
+##
+mock_set_strict() {
+  local mock="${1?'Mock must be specified'}"
+  local enabled="${2:-1}"
+
+  if [ ! -e "${mock}" ]; then
+    flunk "Mock '${mock}' does not exist. Create it with 'mock_command' first."
+    return 1
+  fi
+
+  if [ "${enabled}" != "0" ] && [ "${enabled}" != "1" ]; then
+    flunk "Strictness must be '0' or '1', got '${enabled}'."
+    return 1
+  fi
+
+  echo -n "${enabled}" >"${mock}.strict"
+}
+
+##
+# Reports whether a mock rejects the calls its expectations do not cover.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+##
+mock_strict_enabled() {
+  local mock="${1}"
+
+  [ -e "${mock}.strict" ] || return 1
+
+  [ "$(cat "${mock}.strict")" = "1" ]
+}
+
+##
+# Records that a response was configured for a call index.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#   2. n: Index of the call.
+##
+mock_expect_ordinal() {
+  local mock="${1}"
+  local n="${2}"
+  local file="${mock}.expect_ordinal"
+
+  local recorded
+  if [ -e "${file}" ]; then
+    while IFS= read -r recorded; do
+      [ "${recorded}" = "${n}" ] && return 0
+    done <"${file}"
+  fi
+
+  printf '%s\n' "${n}" >>"${file}"
+}
+
+##
+# Reports whether a mock has any expectation.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+##
+mock_has_expectations() {
+  local mock="${1}"
+
+  [ -e "${mock}.expect_ordinal" ] && return 0
+  [ -e "${mock}.spec_num" ] && return 0
+
+  return 1
+}
+
+##
+# Reports whether a mock answers a call no expectation covers.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+##
+mock_strict_accepts() {
+  local mock="${1}"
+
+  mock_strict_enabled "${mock}" || return 0
+  [ -e "${mock}.default" ] && return 0
+  mock_has_expectations "${mock}" || return 0
+
+  return 1
+}
+
+##
+# Records a call that no expectation covers.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#   2. name: Command name.
+#   3. line: The call, serialised by 'mock_log_line'.
+#
+# Outputs:
+#   STDERR: A diagnostic naming the call and every specification that turned
+#           it down.
+##
+mock_strict_reject() {
+  local mock="${1}"
+  local name="${2}"
+  local line="${3}"
+
+  echo "Mock '${name}' received a call that no expectation covers: ${line}" >&2
+  mock_spec_describe_all "${mock}" >&2
+
+  printf '%s\n' "${line}" >>"${mock}.unexpected"
+}
+
+##
+## Call log.
+##
+
+##
+# Writes a value in the canonical serialisation of one call argument.
+#
+# The value is wrapped in single quotes so that an empty argument stays visible
+# and one holding whitespace stays a single field. Inside the quotes a
+# backslash reads '\\', a single quote reads '\'', a tab reads '\t' and a
+# newline reads '\n', so every argument occupies exactly one line and no two
+# distinct arguments serialise the same way.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. value: Argument value. Optional, defaults to an empty string.
+#
+# Outputs:
+#   STDOUT: The quoted value.
+##
+mock_log_quote() {
+  local value="${1-}"
+
+  value="${value//\\/\\\\}"
+  value="${value//\'/\\\'}"
+  value="${value//$'\t'/\\t}"
+  value="${value//$'\n'/\\n}"
+
+  printf "'%s'" "${value}"
+}
+
+##
+# Writes one call as a log line.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. name: Command name.
+#   2+. Arguments the command was called with.
+#
+# Outputs:
+#   STDOUT: The command name followed by every argument, each quoted by
+#           'mock_log_quote'.
+##
+mock_log_line() {
+  local name="${1}"
+  shift
+
+  local line="${name}"
+  local argument
+
+  for argument in "$@"; do
+    line="${line} $(mock_log_quote "${argument}")"
+  done
+
+  printf '%s\n' "${line}"
+}
+
+##
+# Appends a line to the call log.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
+# Arguments:
+#   1. log: Path to the log.
+#   2. line: Line to append.
+##
+mock_log_append() {
+  local log="${1}"
+  local line="${2}"
+
+  printf '%s\n' "${line}" >>"${log}"
+}
+
+##
+# Resolves the path to the call log.
+#
+# Globals:
+#   BATS_HELPERS_MOCK_TMPDIR: Directory the mocks are stored in.
+#
+# Outputs:
+#   STDOUT: Path to the log, which does not exist until the first call.
+##
+mock_log_path() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  echo "${dir}/mock.log"
+}
+
+##
+# Prints the call log.
+#
+# Outputs:
+#   STDOUT: Every recorded call, in the order the calls were made, including
+#           the ones excluded from sequence comparisons.
+##
+mock_log_print() {
+  local log
+  log="$(mock_log_path)" || return 1
+
+  [ -e "${log}" ] || return 0
+
+  cat "${log}"
+}
+
+##
+# Excludes commands from sequence comparisons.
+#
+# The calls are still recorded and still visible to 'mock_log_print',
+# 'mock_assert_called' and 'mock_assert_not_called'. Only 'mock_assert_calls'
+# and 'mock_assert_no_calls' skip them.
+#
+# Arguments:
+#   1+. Command names to exclude.
+##
+mock_log_exclude() {
+  if [ "$#" -eq 0 ]; then
+    flunk "At least one command name is required."
+    return 1
+  fi
+
+  local log
+  log="$(mock_log_path)" || return 1
+
+  local name
+  for name in "$@"; do
+    printf '%s\n' "${name}" >>"${log}.excluded"
+  done
+}
+
+##
+# Prints the call log without the excluded commands.
+#
+# Outputs:
+#   STDOUT: Every recorded call that 'mock_log_exclude' did not exclude.
+##
+mock_log_filtered() {
+  local log
+  log="$(mock_log_path)" || return 1
+
+  [ -e "${log}" ] || return 0
+
+  local -a excluded=()
+  local name
+
+  if [ -e "${log}.excluded" ]; then
+    while IFS= read -r name; do
+      [ -n "${name}" ] && excluded+=("${name}")
+    done <"${log}.excluded"
+  fi
+
+  local line
+  local candidate
+  local skip
+
+  while IFS= read -r line; do
+    skip=0
+
+    for candidate in "${excluded[@]}"; do
+      [ "${line%% *}" = "${candidate}" ] && skip=1
+    done
+
+    [ "${skip}" = "1" ] && continue
+
+    printf '%s\n' "${line}"
+  done <"${log}"
+
+  return 0
+}
+
+##
+# Prints the recorded calls of one command.
+#
+# Arguments:
+#   1. name: Command name.
+#
+# Outputs:
+#   STDOUT: Every recorded call of the command, in the order the calls were
+#           made.
+##
+mock_log_calls_of() {
+  local name="${1}"
+  local log
+  log="$(mock_log_path)" || return 1
+
+  [ -e "${log}" ] || return 0
+
+  local line
+  while IFS= read -r line; do
+    [ "${line%% *}" = "${name}" ] && printf '%s\n' "${line}"
+  done <"${log}"
+
+  return 0
+}
+
+##
+# Reports whether a command name belongs to a mock.
+#
+# Arguments:
+#   1. name: Command name.
+#
+# Returns:
+#   0 when a mock is registered under the name, 1 when none is.
+##
+mock_log_registered() {
+  local name="${1}"
+  local registered
+
+  while IFS= read -r registered; do
+    [ "${registered}" = "${name}" ] && return 0
+  done < <(mock_names)
+
+  return 1
+}
+
+##
+## Call inspection.
 ##
 
 ##
@@ -514,6 +1557,190 @@ mock_names() {
     cat "${mock}.name"
     echo
   done <<<"${paths}"
+
+  return 0
+}
+
+##
+## Assertions.
+##
+
+##
+# Asserts that the mocked commands were called in the given order.
+#
+# Arguments:
+#   1+. Expected calls, one per argument, each in the serialisation
+#       'mock_log_quote' documents. No arguments asserts that nothing was
+#       called.
+##
+mock_assert_calls() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  local expected_file="${dir}/mock.log.expected"
+  local actual_file="${dir}/mock.log.actual"
+
+  echo -n '' >"${expected_file}"
+
+  local expected_call
+  for expected_call in "$@"; do
+    printf '%s\n' "${expected_call}" >>"${expected_file}"
+  done
+
+  mock_log_filtered >"${actual_file}" || return 1
+
+  local report
+  report="$(diff -u -L expected -L actual "${expected_file}" "${actual_file}")" && return 0
+
+  format_error "Call log does not match the expected sequence"$'\n'"${report}" | flunk
+}
+
+##
+# Asserts that no mocked command was called.
+##
+mock_assert_no_calls() {
+  local actual
+  actual="$(mock_log_filtered)" || return 1
+
+  [ -z "${actual}" ] && return 0
+
+  format_error "Mocked commands were called, but none should have been"$'\n'"${actual}" | flunk
+}
+
+##
+# Asserts that a command was called.
+#
+# Arguments:
+#   1. name: Command name.
+##
+mock_assert_called() {
+  local name="${1?'Command name must be specified'}"
+
+  mock_log_registered "${name}" || {
+    flunk "Command '${name}' is not mocked. Register it with 'mock_command' first."
+    return 1
+  }
+
+  local matched
+  matched="$(mock_log_calls_of "${name}")" || return 1
+
+  [ -n "${matched}" ] && return 0
+
+  format_error "Command '${name}' was not called" | flunk
+}
+
+##
+# Asserts that a command was not called.
+#
+# Arguments:
+#   1. name: Command name.
+##
+mock_assert_not_called() {
+  local name="${1?'Command name must be specified'}"
+
+  mock_log_registered "${name}" || {
+    flunk "Command '${name}' is not mocked. Register it with 'mock_command' first."
+    return 1
+  }
+
+  local matched
+  matched="$(mock_log_calls_of "${name}")" || return 1
+
+  [ -z "${matched}" ] && return 0
+
+  format_error "Command '${name}' was called, but should not have been"$'\n'"${matched}" | flunk
+}
+
+##
+# Asserts that every expectation of every mock was met.
+#
+# Arguments:
+#   1+. Mocks to verify. Optional, defaults to every mock of the test.
+##
+mock_verify() {
+  local -a mocks=()
+
+  if [ "$#" -gt 0 ]; then
+    mocks=("$@")
+  else
+    mapfile -t mocks < <(mock_paths)
+  fi
+
+  local mock
+  for mock in "${mocks[@]}"; do
+    if [ ! -e "${mock}.call_num" ]; then
+      flunk "Mock '${mock}' does not exist. Create it with 'mock_command' first."
+      return 1
+    fi
+  done
+
+  local -a problems=()
+  local problem
+
+  for mock in "${mocks[@]}"; do
+    while IFS= read -r problem; do
+      problems+=("${problem}")
+    done < <(mock_verify_mock "${mock}")
+  done
+
+  [ "${#problems[@]}" -eq 0 ] && return 0
+
+  local message
+  printf -v message '%s\n' "${problems[@]}"
+
+  format_error "${message%$'\n'}" | flunk
+}
+
+##
+# Prints the unmet expectations of one mock.
+#
+# Arguments:
+#   1. mock: Path to the mock.
+#
+# Outputs:
+#   STDOUT: One line per unmet expectation, and nothing when all of them
+#           were met.
+#
+# Returns:
+#   0 always. An unmet expectation is reported on STDOUT rather than by the
+#   exit status.
+##
+mock_verify_mock() {
+  local mock="${1}"
+
+  local name
+  name="$(cat "${mock}.name")"
+
+  if [ -e "${mock}.unexpected" ]; then
+    local line
+    while IFS= read -r line; do
+      echo "Mock '${name}' received a call that no expectation covers: ${line}"
+    done <"${mock}.unexpected"
+
+    mock_spec_describe_all "${mock}"
+  fi
+
+  local call_num
+  call_num="$(cat "${mock}.call_num")"
+
+  if [ -e "${mock}.expect_ordinal" ]; then
+    local ordinal
+    while IFS= read -r ordinal; do
+      [ "${ordinal}" -le "${call_num}" ] && continue
+      echo "Mock '${name}' has a response configured for call ${ordinal}, but was called ${call_num} time(s)"
+    done <"${mock}.expect_ordinal"
+  fi
+
+  [ -e "${mock}.spec_num" ] || return 0
+
+  local spec_num
+  spec_num="$(cat "${mock}.spec_num")"
+
+  local i
+  for ((i = 1; i <= spec_num; i++)); do
+    [ "$(cat "${mock}.spec.${i}.hits")" = "0" ] || continue
+    echo "Mock '${name}' argument specification ${i} never accepted a call"
+  done
 
   return 0
 }
