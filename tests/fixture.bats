@@ -30,9 +30,9 @@ load _test_helper
   run fixture_export_codebase "${build_dir}"
   assert_failure
   # 'flunk' rewrites the temporary directory path to a literal placeholder.
-  assert_output_contains "-- Directory does not exist --
-directory : \${BATS_TEST_TMPDIR}/non-existing
---"
+  assert_output_contains '-- Directory does not exist --
+directory : ${BATS_TEST_TMPDIR}/non-existing
+--'
 }
 
 @test "Codebase export - missing destination directory - caller recovers" {
@@ -90,9 +90,9 @@ directory : \${BATS_TEST_TMPDIR}/non-existing
   run fixture_export_codebase "${build_dir}" "${src_dir}"
   assert_failure
   # 'flunk' rewrites the temporary directory path to a literal placeholder.
-  assert_output_contains "-- Directory is not a git repository --
-directory : \${BATS_TEST_TMPDIR}/src-not-a-repo
---"
+  assert_output_contains '-- Directory is not a git repository --
+directory : ${BATS_TEST_TMPDIR}/src-not-a-repo
+--'
 }
 
 @test "Codebase export - source is not a git repository - caller recovers" {

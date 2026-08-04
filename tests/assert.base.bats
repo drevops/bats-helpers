@@ -2,7 +2,7 @@
 #
 # Tests for failure reporting.
 #
-# shellcheck disable=SC2129,SC2016
+# shellcheck disable=SC2129,SC2016,SC2034
 
 load _test_helper
 
