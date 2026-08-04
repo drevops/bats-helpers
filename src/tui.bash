@@ -115,8 +115,10 @@ tui_run() {
 # library supports. Both background jobs redirect their own streams and close
 # file descriptor 3, so neither can hold open the capture that 'run' reads from.
 #
-# The watchdog records the overrun only once its signal has been delivered, so a
-# script that finished in the same instant is not reported as having overrun.
+# Monitor mode gives the script a process group of its own, so that the deadline
+# reaches whatever the script started rather than only the script itself. The
+# group is signalled alongside the script rather than instead of it, so a shell
+# that did not honour the request still leaves a bounded run.
 #
 # Arguments:
 #   1. script_path: Script to run.
@@ -142,8 +144,10 @@ tui_exec() {
 
   local start="${SECONDS}"
 
+  set -m
   "${script_path}" <"${input_file}" >"${output_file}" 2>&1 3>&- &
   local script_pid="$!"
+  set +m
 
   # The wait is broken into short sleeps so that killing the watchdog leaves at
   # most a fraction of a second of it behind.
@@ -152,12 +156,16 @@ tui_exec() {
       sleep 0.1
     done
 
-    kill -TERM "${script_pid}" 2>/dev/null || exit 0
+    kill -0 "${script_pid}" 2>/dev/null || exit 0
     printf '%s\n' "$((SECONDS - start))" >"${expiry_file}"
+
+    kill -TERM -- -"${script_pid}" 2>/dev/null || true
+    kill -TERM "${script_pid}" 2>/dev/null || true
 
     # A script that traps the first signal is not given the choice twice.
     sleep 1
-    kill -KILL "${script_pid}" 2>/dev/null
+    kill -KILL -- -"${script_pid}" 2>/dev/null || true
+    kill -KILL "${script_pid}" 2>/dev/null || true
   ) >/dev/null 2>&1 3>&- &
   local watchdog_pid="$!"
 

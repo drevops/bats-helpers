@@ -6,6 +6,10 @@
 
 load _test_helper
 
+process_is_gone() {
+  ! kill -0 "${1}" 2>/dev/null
+}
+
 @test "Interactive" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
@@ -197,6 +201,18 @@ load _test_helper
   assert_output_matches_format "elapsed: %d second(s)"
   assert_output_contains "Static script output"
   assert_output_contains "Answer2 [default answer2]:"
+}
+
+@test "Deadline reaches the processes the script started" {
+  export SCRIPT_FILE="tests/fixtures/tui_script_worker.sh"
+  export WORKER_PID_FILE="${BATS_TEST_TMPDIR}/worker.pid"
+  export BATS_HELPERS_TUI_TIMEOUT=2
+
+  run tui_run "one"
+  assert_failure
+
+  worker_pid="$(cat "${WORKER_PID_FILE}")"
+  retry_run 20 0.1 process_is_gone "${worker_pid}"
 }
 
 @test "Deadline is configurable" {
