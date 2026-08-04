@@ -1174,7 +1174,7 @@ FOO=bar
 FIXTURE
 ```
 
-A line is a marker when it starts with `-- ` and ends with ` --`, and the name between them is trimmed, so markers can be padded to line up. Every other line is content, which is what makes the format safe to hand-edit: there is nothing to get syntactically wrong. An entry holds every line from its marker to the next marker or to the end of the archive, and parent directories are created implicitly.
+A line is a marker when it opens with `--` followed by a space and closes with a space followed by `--`; the name between them is trimmed, so markers can be padded to line up. Every other line is content, which is what makes the format safe to hand-edit: there is nothing to get syntactically wrong. An entry holds every line from its marker to the next marker or to the end of the archive, and parent directories are created implicitly.
 
 Anything before the first marker is a comment and is discarded, so a fixture can carry a note about what it stands for:
 
@@ -1199,7 +1199,7 @@ FIXTURE
 
 A content line that would otherwise be read as a marker carries one leading backslash. Reading removes one backslash from a line that is marker-shaped without it, so `\-- README.md --` is the content `-- README.md --`, and `\\-- README.md --` is the content `\-- README.md --`. A backslash anywhere else is left alone.
 
-An archive path is a plain relative path naming a file. An absolute path, a `..` or `.` component, a trailing slash, a marker naming nothing, and a path declared twice are each rejected with a message naming the path.
+An archive path is a plain relative path naming a file. An absolute path, a `..`, `.` or empty component, a trailing slash, a marker naming nothing, and a path declared twice are each rejected with a message naming the path. `fixture_create_dir` also refuses to write through a symlink already sitting on the path, so a link an earlier fixture or the code under test left behind cannot carry the write outside the directory.
 
 `fixture_dump_dir` prints an existing directory in the same format, ordered by path. It is both a debugging aid - dump what the code under test actually produced and paste it back into the test - and the way to regenerate an expectation:
 
@@ -1235,7 +1235,7 @@ unexpected: src/extra.sh
 +#!/bin/sh
 ```
 
-The format covers text files and nothing else. Binary content, file modes and symlinks are deliberately out of scope - `assert_file_mode`, `file_mktouch` and `ln -s` remain the way to handle those - and `fixture_dump_dir` serialises regular files only, failing on a file that is not text. Because the format is line-based, every file it names ends with a newline: `fixture_dump_dir` adds one to a file that lacks it, and `fixture_assert_dir` compares bytes, so a file with no trailing newline differs from the archive that names it.
+The format covers text files and nothing else. Binary content, file modes and symlinks are deliberately out of scope - `assert_file_mode`, `file_mktouch` and `ln -s` remain the way to handle those - and `fixture_dump_dir` serialises regular files only, failing on a file that is not text. `fixture_assert_dir` compares regular files only for the same reason: a symlink standing where the archive names a file is reported as a difference, and one the archive says nothing about is left alone. Because the format is line-based, every file it names ends with a newline: `fixture_dump_dir` adds one to a file that lacks it, and `fixture_assert_dir` compares bytes, so a file with no trailing newline differs from the archive that names it.
 
 ### Environment variables
 
