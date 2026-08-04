@@ -38,7 +38,7 @@ flunk() {
     message="${message}"$'\n\n'"$(report_decorate "stack trace" "${trace}")"
   fi
 
-  report_normalise_paths "$(report_banner "${message}")" >&2
+  report_normalize_paths "$(report_banner "${message}")" >&2
 
   return 1
 }
@@ -135,7 +135,7 @@ format_error() {
     body="${body}$(printf '%-*s : %s' "${width}" "${keys[i]}" "${values[i]}")"$'\n'
   done
 
-  report_normalise_paths "$(report_decorate "${title}" "${body%$'\n'}")"
+  report_normalize_paths "$(report_decorate "${title}" "${body%$'\n'}")"
 }
 
 ##
@@ -344,7 +344,7 @@ report_stack_trace() {
 # Outputs:
 #   STDOUT: The rewritten text.
 ##
-report_normalise_paths() {
+report_normalize_paths() {
   local text="${1}"
 
   if [ "${BATS_TEST_SOURCE-}" != "" ] && [ "${BATS_TEST_FILENAME-}" != "" ]; then

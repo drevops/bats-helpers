@@ -215,22 +215,22 @@ mock_create() {
 # Creates a mock and puts it on PATH under a command name.
 #
 # Arguments:
-#   1. mocked_command: Name of the command to stand in for.
+#   1. name: Name of the command to stand in for.
 #
 # Outputs:
 #   STDOUT: Path to the mock.
 ##
 mock_command() {
-  local mocked_command="${1?'Mocked command must be specified'}"
+  local name="${1?'Mocked command must be specified'}"
 
   local mock
   mock="$(mock_create)" || return 1
 
   local dir="${mock%/*}"
-  ln -sf "${mock}" "${dir}/${mocked_command}"
+  ln -sf "${mock}" "${dir}/${name}"
 
   # The call log and the name-based assertions read the mocked command here.
-  echo -n "${mocked_command}" >"${mock}.name"
+  printf '%s' "${name}" >"${mock}.name"
 
   echo "${mock}"
 }
@@ -1197,7 +1197,7 @@ mock_expect_ordinal() {
 # Arguments:
 #   1. mock: Path to the mock.
 ##
-mock_has_expectations() {
+mock_expectations_exist() {
   local mock="${1}"
 
   [ -e "${mock}.expect_ordinal" ] && return 0
@@ -1219,7 +1219,7 @@ mock_strict_accepts() {
 
   mock_strict_enabled "${mock}" || return 0
   [ -e "${mock}.default" ] && return 0
-  mock_has_expectations "${mock}" || return 0
+  mock_expectations_exist "${mock}" || return 0
 
   return 1
 }
@@ -1788,26 +1788,6 @@ mock_log_calls_of() {
 }
 
 ##
-# Reports whether a command name belongs to a mock.
-#
-# Arguments:
-#   1. name: Command name.
-#
-# Returns:
-#   0 when a mock is registered under the name, 1 when none is.
-##
-mock_log_registered() {
-  local name="${1}"
-  local registered
-
-  while IFS= read -r registered; do
-    [ "${registered}" = "${name}" ] && return 0
-  done < <(mock_names)
-
-  return 1
-}
-
-##
 ## Call inspection.
 ##
 
@@ -1839,7 +1819,7 @@ mock_get_call_num() {
 mock_get_call_args() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
+  n="$(mock_resolve_n "${mock}" "${2-}")" || return "$?"
 
   cat "${mock}.args.${n}"
 }
@@ -1857,7 +1837,7 @@ mock_get_call_args() {
 mock_get_call_user() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
+  n="$(mock_resolve_n "${mock}" "${2-}")" || return "$?"
 
   cat "${mock}.user.${n}"
 }
@@ -1877,7 +1857,7 @@ mock_get_call_env() {
   local mock="${1?'Mock must be specified'}"
   local var="${2?'Variable name must be specified'}"
   local n
-  n="$(mock_default_n "${mock}" "${3-}")" || return "$?"
+  n="$(mock_resolve_n "${mock}" "${3-}")" || return "$?"
 
   source "${mock}.env.${n}"
 
@@ -1920,7 +1900,7 @@ mock_assert_call_args() {
 # Outputs:
 #   STDOUT: Call index.
 ##
-mock_default_n() {
+mock_resolve_n() {
   local mock="${1?'Mock must be specified'}"
 
   local call_num
@@ -1930,16 +1910,36 @@ mock_default_n() {
   [ "${n}" -eq 0 ] && n=1
 
   if [ "${n}" -gt "${call_num}" ]; then
-    flunk "Mock must be called at least ${n} time(s)."
+    flunk "Mock must be called at least '${n}' time(s)."
     return 1
   fi
 
-  echo "${n}"
+  printf '%s\n' "${n}"
 }
 
 ##
 ## Registry.
 ##
+
+##
+# Reports whether a command name belongs to a mock.
+#
+# Arguments:
+#   1. name: Command name.
+#
+# Returns:
+#   0 when a mock is registered under the name, 1 when none is.
+##
+mock_name_registered() {
+  local name="${1}"
+  local registered
+
+  while IFS= read -r registered; do
+    [ "${registered}" = "${name}" ] && return 0
+  done < <(mock_names)
+
+  return 1
+}
 
 ##
 # Prints the mocks created by the test.
@@ -2032,7 +2032,7 @@ mock_assert_no_calls() {
 mock_assert_called() {
   local name="${1?'Command name must be specified'}"
 
-  mock_log_registered "${name}" || {
+  mock_name_registered "${name}" || {
     flunk "Command '${name}' is not mocked. Register it with 'mock_command' first."
     return 1
   }
@@ -2054,7 +2054,7 @@ mock_assert_called() {
 mock_assert_not_called() {
   local name="${1?'Command name must be specified'}"
 
-  mock_log_registered "${name}" || {
+  mock_name_registered "${name}" || {
     flunk "Command '${name}' is not mocked. Register it with 'mock_command' first."
     return 1
   }

@@ -104,9 +104,9 @@ bats_require_minimum_version 1.13.0
 
   curl example.com
 
-  run mock_default_n "${mock_curl}" 2
+  run mock_resolve_n "${mock_curl}" 2
   assert_failure
-  assert_output_contains "Mock must be called at least 2 time(s)"
+  assert_output_contains "Mock must be called at least '2' time(s)"
 }
 
 @test "Mock: not called enough times - caller recovers" {
@@ -115,7 +115,7 @@ bats_require_minimum_version 1.13.0
   curl example.com
 
   recovered=0
-  mock_default_n "${mock_curl}" 2 2>/dev/null || recovered=1
+  mock_resolve_n "${mock_curl}" 2 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }
@@ -307,7 +307,7 @@ bats_require_minimum_version 1.13.0
 
   run mock_get_call_env "${mock_curl}" "MOCK_TEST_VAR" 2
   assert_failure
-  assert_output_contains "Mock must be called at least 2 time(s)"
+  assert_output_contains "Mock must be called at least '2' time(s)"
 }
 
 @test "Mock: call environment when not called enough times - caller recovers" {
@@ -1024,15 +1024,15 @@ bats_require_minimum_version 1.13.0
   assert_equal 1 "$(grep -c '^1$' "${mock_git}.expect_ordinal")"
 }
 
-@test "mock_has_expectations" {
+@test "mock_expectations_exist" {
   mock_git="$(mock_command "git")"
 
-  run mock_has_expectations "${mock_git}"
+  run mock_expectations_exist "${mock_git}"
   assert_failure
 
   mock_set_status "${mock_git}" 0 1
 
-  mock_has_expectations "${mock_git}"
+  mock_expectations_exist "${mock_git}"
 }
 
 ##
@@ -1411,12 +1411,12 @@ bats_require_minimum_version 1.13.0
   assert_equal "git 'status'" "$(mock_log_calls_of "git")"
 }
 
-@test "mock_log_registered" {
+@test "mock_name_registered" {
   mock_command "curl" >/dev/null
 
-  mock_log_registered "curl"
+  mock_name_registered "curl"
 
-  run mock_log_registered "crul"
+  run mock_name_registered "crul"
   assert_failure
 }
 

@@ -20,7 +20,7 @@ load _test_helper
 # Outputs:
 #   STDOUT: The number of the call.
 ##
-fixture_probe() {
+probe_until() {
   local threshold="${1}"
   local counter="${BATS_TEST_TMPDIR}/probe.count"
 
@@ -47,7 +47,7 @@ fixture_probe() {
 # Outputs:
 #   STDOUT: One delimited argument per line.
 ##
-fixture_echo_args() {
+echo_args() {
   printf '[%s]\n' "$@"
 }
 
@@ -59,7 +59,7 @@ fixture_echo_args() {
 #   2. min: Lowest acceptable value.
 #   3. max: Highest acceptable value.
 ##
-fixture_assert_elapsed() {
+elapsed_within() {
   local elapsed="${1}"
   local min="${2}"
   local max="${3}"
@@ -74,7 +74,7 @@ fixture_assert_elapsed() {
 
   assert_equal 1 "${BATS_HELPERS_RETRY_ATTEMPTS}"
   assert_equal "" "${BATS_HELPERS_RETRY_OUTPUT}"
-  fixture_assert_elapsed "${BATS_HELPERS_RETRY_ELAPSED}" 0 1
+  elapsed_within "${BATS_HELPERS_RETRY_ELAPSED}" 0 1
 
   run retry_run 3 0 false
   assert_failure
@@ -84,7 +84,7 @@ fixture_assert_elapsed() {
   local mock_sleep
   mock_sleep="$(mock_command "sleep")"
 
-  retry_run 5 0.1 fixture_probe 3
+  retry_run 5 0.1 probe_until 3
 
   assert_equal 3 "${BATS_HELPERS_RETRY_ATTEMPTS}"
   assert_equal "probed 3" "${BATS_HELPERS_RETRY_OUTPUT}"
@@ -95,10 +95,10 @@ fixture_assert_elapsed() {
   local mock_sleep
   mock_sleep="$(mock_command "sleep")"
 
-  run retry_run 3 0.1 fixture_probe 99
+  run retry_run 3 0.1 probe_until 99
   assert_failure
   assert_output_contains "-- Command did not succeed within the retry limit --"
-  assert_output_contains "command     : fixture_probe"
+  assert_output_contains "command     : probe_until"
   assert_output_contains "limit       : 3 attempt(s)"
   assert_output_contains "attempts    : 3"
   assert_output_matches_format "elapsed     : %d second(s)"
@@ -128,7 +128,7 @@ fixture_assert_elapsed() {
 
   retry_run 3 5 true
 
-  fixture_assert_elapsed "$((SECONDS - start))" 0 1
+  elapsed_within "$((SECONDS - start))" 0 1
 }
 
 # The only attempt is also the last one, so any wait taken after an attempt
@@ -140,7 +140,7 @@ fixture_assert_elapsed() {
   assert_failure
   assert_output_contains "limit       : 1 attempt(s)"
 
-  fixture_assert_elapsed "$((SECONDS - start))" 0 1
+  elapsed_within "$((SECONDS - start))" 0 1
 }
 
 @test "retry_run with a fractional delay" {
@@ -180,7 +180,7 @@ fixture_assert_elapsed() {
   assert_output_matches "attempts    : [12]"
 
   # The attempt count alone would have taken nine seconds.
-  fixture_assert_elapsed "$((SECONDS - start))" 0 3
+  elapsed_within "$((SECONDS - start))" 0 3
 }
 
 @test "retry_run with a deadline that is not reached" {
@@ -227,7 +227,7 @@ file : ${BATS_TEST_TMPDIR}/late.txt
 }
 
 @test "retry_run passes arguments verbatim" {
-  retry_run 1 0 fixture_echo_args "with space" "" "hash#" "quote'd"
+  retry_run 1 0 echo_args "with space" "" "hash#" "quote'd"
 
   assert_equal "[with space]
 []
@@ -238,7 +238,7 @@ file : ${BATS_TEST_TMPDIR}/late.txt
 @test "retry_run resets its result globals" {
   mock_command "sleep" >/dev/null
 
-  retry_run 5 0.1 fixture_probe 3
+  retry_run 5 0.1 probe_until 3
   assert_equal 3 "${BATS_HELPERS_RETRY_ATTEMPTS}"
   assert_equal "probed 3" "${BATS_HELPERS_RETRY_OUTPUT}"
 
@@ -252,9 +252,9 @@ file : ${BATS_TEST_TMPDIR}/late.txt
 
   mock_command "sleep" >/dev/null
 
-  retry_run 5 0.1 fixture_probe 3 3>"${notice}"
+  retry_run 5 0.1 probe_until 3 3>"${notice}"
 
-  assert_file_matches_format "${notice}" "Retried: 'fixture_probe' succeeded on attempt 3 of 5 after %d seconds."
+  assert_file_matches_format "${notice}" "Retried: 'probe_until' succeeded on attempt 3 of 5 after %d seconds."
 
   # An immediate success is the common case and stays silent.
   retry_run 5 0.1 true 3>"${notice}"
@@ -331,17 +331,17 @@ file : ${BATS_TEST_TMPDIR}/late.txt
 
   run retry_run 3 0.1 true
   assert_failure
-  assert_output_contains "Deadline 'abc' is not a whole number of seconds."
+  assert_output_contains "Timeout 'abc' is not a whole number of seconds."
 
   export BATS_HELPERS_RETRY_TIMEOUT="1.5"
 
   run retry_run 3 0.1 true
   assert_failure
-  assert_output_contains "Deadline '1.5' is not a whole number of seconds."
+  assert_output_contains "Timeout '1.5' is not a whole number of seconds."
 
   export BATS_HELPERS_RETRY_TIMEOUT="-1"
 
   run retry_run 3 0.1 true
   assert_failure
-  assert_output_contains "Deadline '-1' is not a whole number of seconds."
+  assert_output_contains "Timeout '-1' is not a whole number of seconds."
 }

@@ -83,7 +83,7 @@ retry_run() {
   local timeout="${BATS_HELPERS_RETRY_TIMEOUT-}"
 
   if [ -n "${timeout}" ] && ! [[ ${timeout} =~ ^[0-9]+$ ]]; then
-    flunk "Deadline '${timeout}' is not a whole number of seconds."
+    flunk "Timeout '${timeout}' is not a whole number of seconds."
     return 1
   fi
 

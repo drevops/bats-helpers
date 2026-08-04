@@ -9,7 +9,7 @@
 
 load _test_helper
 
-fixture_add() {
+add_numbers() {
   local num1="${1}"
   local num2="${2}"
   echo $((num1 + num2))

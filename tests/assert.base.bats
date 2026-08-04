@@ -297,24 +297,24 @@ Some body
   assert_equal "${probed}" "${reported}"
 }
 
-@test "report_normalise_paths" {
-  run report_normalise_paths "in ${PWD}/src and ${HOME}/somewhere"
+@test "report_normalize_paths" {
+  run report_normalize_paths "in ${PWD}/src and ${HOME}/somewhere"
   assert_success
   assert_output 'in ${PWD}/src and ${HOME}/somewhere'
 
   # The temporary directories nest, so each is rewritten to the closest name
   # rather than to the name of a directory holding it.
-  run report_normalise_paths "${BATS_TEST_TMPDIR}/a ${BATS_FILE_TMPDIR}/b ${BATS_SUITE_TMPDIR}/c ${BATS_RUN_TMPDIR}/d"
+  run report_normalize_paths "${BATS_TEST_TMPDIR}/a ${BATS_FILE_TMPDIR}/b ${BATS_SUITE_TMPDIR}/c ${BATS_RUN_TMPDIR}/d"
   assert_success
   assert_output '${BATS_TEST_TMPDIR}/a ${BATS_FILE_TMPDIR}/b ${BATS_SUITE_TMPDIR}/c ${BATS_RUN_TMPDIR}/d'
 
   # The preprocessed copy bats-core runs is rewritten to the file that was
   # written, so a stack trace names something the consumer can open.
-  run report_normalise_paths "${BATS_TEST_SOURCE}:12"
+  run report_normalize_paths "${BATS_TEST_SOURCE}:12"
   assert_success
   assert_output '${PWD}/tests/assert.base.bats:12'
 
-  run report_normalise_paths "nothing to rewrite"
+  run report_normalize_paths "nothing to rewrite"
   assert_success
   assert_output "nothing to rewrite"
 }

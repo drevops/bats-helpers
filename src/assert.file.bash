@@ -380,7 +380,7 @@ assert_file_not_matches_format_case() {
 #   STDOUT: One '--exclude-dir' parameter per line, so that a directory name
 #     containing spaces survives being read back into an array.
 ##
-assert_dir_exclude_params() {
+file_dir_exclude_params() {
   local -a exclude_dirs=(".git" ".idea" "vendor" "node_modules")
 
   if [ -n "${BATS_HELPERS_ASSERT_DIR_EXCLUDE+x}" ]; then
@@ -419,7 +419,7 @@ assert_dir_contains_string() {
   assert_dir_exists "${dir}" || return 1
 
   local -a exclude_params
-  mapfile -t exclude_params < <(assert_dir_exclude_params)
+  mapfile -t exclude_params < <(file_dir_exclude_params)
 
   if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
     return 0
@@ -450,7 +450,7 @@ assert_dir_not_contains_string() {
   [ ! -d "${dir}" ] && return 0
 
   local -a exclude_params
-  mapfile -t exclude_params < <(assert_dir_exclude_params)
+  mapfile -t exclude_params < <(file_dir_exclude_params)
 
   if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
     format_error "Directory contains string, but should not" "directory" "${dir}" "string" "${string}" | flunk
