@@ -52,6 +52,11 @@ third"
   assert_failure
   assert_output_contains "Cleanup command is required."
 
+  # An empty command would register a line that evaluates to nothing at all.
+  run cleanup_register ""
+  assert_failure
+  assert_output_contains "Cleanup command is required."
+
   assert_file_not_exists "$(cleanup_registry_path)"
 }
 
@@ -148,6 +153,36 @@ two"
   assert_file_exists "${BATS_TEST_TMPDIR}/marker"
 }
 
+@test "cleanup_register when the registry directory cannot be created" {
+  touch "${BATS_TEST_TMPDIR}/regular_file"
+  export BATS_HELPERS_CLEANUP_DIR="${BATS_TEST_TMPDIR}/regular_file/custom"
+
+  run cleanup_register touch "${BATS_TEST_TMPDIR}/marker"
+  assert_failure
+  assert_output_contains "Unable to create the cleanup registry directory"
+
+  assert_file_not_exists "${BATS_TEST_TMPDIR}/marker"
+}
+
+@test "cleanup_run when the registry cannot be drained" {
+  # A read-only directory does not stop root from removing the registry.
+  if [ "$(id -u)" -eq 0 ]; then
+    skip "Test requires a non-root user."
+  fi
+
+  export BATS_HELPERS_CLEANUP_DIR="${BATS_TEST_TMPDIR}/readonly"
+
+  cleanup_register touch "${BATS_TEST_TMPDIR}/marker"
+
+  chmod 500 "${BATS_HELPERS_CLEANUP_DIR}"
+  run cleanup_run
+  chmod 700 "${BATS_HELPERS_CLEANUP_DIR}"
+
+  assert_failure
+  assert_output_contains "Unable to drain the cleanup registry"
+  assert_file_not_exists "${BATS_TEST_TMPDIR}/marker"
+}
+
 @test "cleanup_registry_path without a sandbox" {
   local original="${BATS_TEST_TMPDIR}"
 
@@ -156,6 +191,7 @@ two"
   BATS_TEST_TMPDIR="${original}"
 
   assert_failure
+  assert_output_contains "Set BATS_HELPERS_CLEANUP_DIR to a writable directory"
 }
 
 @test "cleanup_register without a sandbox" {

@@ -14,12 +14,18 @@
 #
 # Outputs:
 #   STDOUT: The registry path.
+#   STDERR: The error message when the directory cannot be resolved.
+#
+# Returns:
+#   1 when neither of the globals is set.
 ##
 cleanup_registry_path() {
   local dir="${BATS_HELPERS_CLEANUP_DIR:-${BATS_TEST_TMPDIR-}}"
 
   if [ -z "${dir}" ]; then
-    format_error "Unable to resolve the cleanup registry: BATS_TEST_TMPDIR is not set. Set BATS_HELPERS_CLEANUP_DIR to a writable directory" | flunk
+    # Written directly rather than through 'flunk', whose path rewriting needs
+    # the non-empty BATS_TEST_TMPDIR that is missing here.
+    echo "Unable to resolve the cleanup registry: BATS_TEST_TMPDIR is not set. Set BATS_HELPERS_CLEANUP_DIR to a writable directory" >&2
     return 1
   fi
 
@@ -38,7 +44,7 @@ cleanup_registry_path() {
 #   2+. args: Arguments to pass to the command. Optional.
 ##
 cleanup_register() {
-  if [ "$#" -eq 0 ]; then
+  if [ "$#" -eq 0 ] || [ -z "${1}" ]; then
     flunk "Cleanup command is required."
     return 1
   fi
@@ -46,7 +52,13 @@ cleanup_register() {
   local registry
   registry="$(cleanup_registry_path)" || return 1
 
-  mkdir -p "$(dirname "${registry}")" || return 1
+  local dir
+  dir="$(dirname "${registry}")"
+
+  if ! mkdir -p "${dir}"; then
+    flunk "Unable to create the cleanup registry directory '${dir}'."
+    return 1
+  fi
 
   # Quoting the arguments here snapshots them, so reassigning a variable after
   # the call cannot redirect the command that was registered. '%q' escapes a
@@ -65,10 +77,6 @@ cleanup_register() {
 # The registry is drained before the commands run, so a second call runs
 # nothing and a command that registers another one does not re-enter this
 # function.
-#
-# Returns:
-#   0 when every registered command succeeded or none was registered, 1 when
-#   any of them failed.
 ##
 cleanup_run() {
   local registry
@@ -84,13 +92,19 @@ cleanup_run() {
     commands+=("${line}")
   done <"${registry}"
 
-  rm -f "${registry}" || return 1
+  if ! rm -f "${registry}"; then
+    flunk "Unable to drain the cleanup registry '${registry}'."
+    return 1
+  fi
 
   local status=0
   local command_status
   local i
   for ((i = ${#commands[@]} - 1; i >= 0; i--)); do
     command_status=0
+    # 'eval' undoes the quoting 'cleanup_register' applied, turning the line
+    # back into the argument vector it was registered with. Running the line
+    # unevaluated would look for one command named after the whole of it.
     eval "${commands[${i}]}" || command_status="$?"
 
     if [ "${command_status}" -ne 0 ]; then
