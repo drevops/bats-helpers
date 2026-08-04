@@ -294,6 +294,8 @@ assert_string_not_ends_with_case() {
 # Both anchors apply to the whole haystack rather than to each of its lines, so
 # a regular expression anchored with '^' or '$' behaves the same way.
 #
+# Runs inside the mock's own process, so it must not call 'flunk'.
+#
 # Arguments:
 #   1. haystack: String to search.
 #   2. needle: String to search for, read according to the mode.
@@ -596,23 +598,23 @@ string_match_rows() {
 #   STDOUT: The generated string.
 ##
 string_random() {
-  local len="${1:-8}"
+  local length="${1:-8}"
   local alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   local ret=''
   local i
 
-  if ! [[ ${len} =~ ^[0-9]+$ ]]; then
+  if ! [[ ${length} =~ ^[0-9]+$ ]]; then
     flunk "Length must be a non-negative integer."
     return 1
   fi
 
   # Base 10 is explicit so that a zero-padded length is not read as octal.
-  len=$((10#${len}))
+  length=$((10#${length}))
 
   # A '/dev/urandom' pipeline is not usable here: its tools' STDERR reaches the
   # caller, where Bats' 'run' merges it into the returned value, and its reader
   # can outlive the writer and hang.
-  for ((i = 0; i < len; i++)); do
+  for ((i = 0; i < length; i++)); do
     ret="${ret}${alphabet:RANDOM%${#alphabet}:1}"
   done
 

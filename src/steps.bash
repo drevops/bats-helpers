@@ -66,7 +66,7 @@ steps_run() {
     return 1
   fi
 
-  declare -A command_indexes
+  declare -A command_indices
   declare -A mocked_commands
 
   steps_debug "Phase       : ${phase}"
@@ -152,7 +152,7 @@ steps_run() {
       ## Processing the command.
       ##
 
-      command_index=${command_indexes[${command_binary}]:-1}
+      command_index=${command_indices[${command_binary}]:-1}
       steps_debug_sub "Command index for '${command_binary}' is '${command_index}'."
 
       if [ "${phase}" = "${PHASE_SETUP}" ]; then
@@ -207,8 +207,8 @@ steps_run() {
         fi
       fi
 
-      command_indexes["${command_binary}"]=$((command_index + 1))
-      steps_debug "Updated command index for '${command_binary}' to '${command_indexes[${command_binary}]}'"
+      command_indices["${command_binary}"]=$((command_index + 1))
+      steps_debug "Updated command index for '${command_binary}' to '${command_indices[${command_binary}]}'"
 
     ##
     ## String absent.

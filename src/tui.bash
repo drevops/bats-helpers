@@ -180,15 +180,15 @@ tui_exec() {
   ) >/dev/null 2>&1 3>&- &
   local watchdog_pid="$!"
 
-  local status=0
-  wait "${script_pid}" || status="$?"
+  local script_status=0
+  wait "${script_pid}" || script_status="$?"
 
   kill -TERM "${watchdog_pid}" 2>/dev/null || true
   wait "${watchdog_pid}" 2>/dev/null || true
 
   cat "${output_file}"
 
-  return "${status}"
+  return "${script_status}"
 }
 
 ##

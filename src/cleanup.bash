@@ -97,7 +97,7 @@ cleanup_run() {
     return 1
   fi
 
-  local status=0
+  local run_status=0
   local command_status
   local i
   for ((i = ${#commands[@]} - 1; i >= 0; i--)); do
@@ -110,9 +110,9 @@ cleanup_run() {
     if [ "${command_status}" -ne 0 ]; then
       # 'flunk' returns non-zero, so the assignment both records the failure and
       # keeps the remaining commands running under errexit.
-      flunk "Cleanup command '${commands[${i}]}' failed with exit status ${command_status}." || status=1
+      flunk "Cleanup command '${commands[${i}]}' failed with exit status ${command_status}." || run_status=1
     fi
   done
 
-  return "${status}"
+  return "${run_status}"
 }
