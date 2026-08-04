@@ -86,6 +86,11 @@ matrix_emit_pair() {
   dataprovider_case "${1}-${2}" "${1}" "${2}" "${1}${2}"
 }
 
+matrix_emit_single() {
+  matrix_seen+=("${1}")
+  dataprovider_case "${1}" "${1}" "${1}" "${1}${1}"
+}
+
 matrix_emit_triple() {
   matrix_seen+=("${1}${2}${3}")
   dataprovider_case "" "${1}" "${2}" "${3}" "count=3"
@@ -93,6 +98,10 @@ matrix_emit_triple() {
 
 provide_matrix_pairs() {
   dataprovider_matrix "matrix_emit_pair" matrix_first matrix_second
+}
+
+provide_matrix_singles() {
+  dataprovider_matrix "matrix_emit_single" matrix_first
 }
 
 provide_matrix_triples() {
@@ -352,6 +361,16 @@ provide_matrix_triples() {
 }
 
 @test "Test dataprovider matrix, single list - success" {
+  declare -a matrix_first=("a" "b")
+  declare -a matrix_seen=()
+
+  dataprovider_run_cases "fixture_concat" "provide_matrix_singles"
+
+  assert_equal "2" "${#matrix_seen[@]}"
+  assert_equal "a b" "${matrix_seen[*]}"
+}
+
+@test "Test dataprovider matrix, list holding one value - success" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1")
   declare -a matrix_seen=()

@@ -525,7 +525,7 @@ add_numbers() {
 
 A failure names the rows that broke by their zero-based index:
 
-```
+```text
 Failed sets (0-based): 1, 3
 Total failed test sets: 2
 ```
@@ -566,7 +566,7 @@ provide_cases() {
 
 The label is what a failure names, so nothing has to be counted to find the case that broke:
 
-```
+```text
 Error: Failed for set 'an empty argument'
 
 Failed sets: 'an empty argument'

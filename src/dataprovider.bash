@@ -375,21 +375,21 @@ dataprovider_report() {
     return 0
   fi
 
-  local list=""
+  local summary=""
   local description
 
   for description in "${BATS_HELPERS_DATAPROVIDER_FAILED[@]}"; do
-    list="${list}${description}, "
+    summary="${summary}${description}, "
   done
 
-  list="${list%, }"
+  summary="${summary%, }"
 
   echo
 
   if [ "${BATS_HELPERS_DATAPROVIDER_LABELLED}" = "1" ]; then
-    echo "Failed sets: ${list}"
+    echo "Failed sets: ${summary}"
   else
-    echo "Failed sets (0-based): ${list}"
+    echo "Failed sets (0-based): ${summary}"
   fi
 
   flunk "Total failed test sets: ${#BATS_HELPERS_DATAPROVIDER_FAILED[@]}"
