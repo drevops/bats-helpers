@@ -186,14 +186,21 @@ Line index 5 is out of range for output with 2 lines.
 A failure shows the offending line in context rather than the whole stream. The mark overwrites the indent instead of being inserted, so the lines stay in the same column:
 
 ```text
-Line 2 does not contain 'error'
-match mode: literal
-case: insensitive
-
+-- Line does not contain substring --
+line (1 line):
+2
+substring (1 line):
+error
+match mode (1 line):
+literal
+case (1 line):
+insensitive
+context (4 lines):
   0: Usage: tool.sh
   1: Reading config
 > 2: all good
   3: Done.
+--
 ```
 
 ##### Empty lines and indices
@@ -249,13 +256,16 @@ The option is recognised only as the first argument, and everything after it and
 Two statuses mean something other than the code under test deciding to fail, and both satisfy a bare `assert_failure` exactly as well as the intended error path does. Every report that prints a status names them:
 
 ```text
-Command exited with an unexpected status
-expected: 2
-actual:   127 (command not found)
+-- Command exited with an unexpected status --
+expected : 2
+actual   : 127 (command not found)
+--
 ```
 
 ```text
-Command failed with exit status 137 (killed by SIGKILL)
+-- Command failed --
+status : 137 (killed by SIGKILL)
+--
 ```
 
 A status of `127` is what a shell returns for a command it could not find, so a test that passes because the binary under test is missing is caught rather than counted. A status above `128` is how a shell reports a process a signal killed, and the signal is named from the running platform's own table. A program is free to exit with such a status of its own accord, so the name says which signal the number stands for, not that a signal was necessarily involved.
@@ -310,15 +320,14 @@ Stderr was not captured. Run the command with 'run --separate-stderr'.
 
 The check matters most for `assert_stderr_empty`, which would otherwise pass for a command that did write to STDERR - the stream having simply never been captured. Use `assert_stderr_captured` to make the same check on its own.
 
-A captured STDERR that is not empty is appended to failure reports, so a command that failed shows why rather than only that it did:
+A captured STDERR that is not empty becomes a row of the reports the exit status assertions raise, so a command that failed shows why rather than only that it did:
 
 ```text
-Command failed with exit status 3
-
-----------------------------------------
-stderr:
-Error: config file not found
-----------------------------------------
+-- Command failed --
+status : 3
+output : Reading /etc/app/config.yml
+stderr : Error: config file not found
+--
 ```
 
 A capture lives only until the next `run`: a plain one clears `$stderr`, so the assertions always read the most recent `run --separate-stderr`. Pass the option to the `run` whose STDERR is being asserted on, and assert directly after it.
@@ -419,10 +428,13 @@ Invalid regular expression '['.
 The failure report names the mode and the case sensitivity that were in force, and calls out the case sensitivity when the other choice would have decided the assertion the other way:
 
 ```text
-String 'some text' does not contain 'SOME'
-match mode: literal
-case: sensitive
-note: it matches without the '_case' suffix
+-- String does not contain substring --
+string     : some text
+substring  : SOME
+match mode : literal
+case       : sensitive
+note       : it matches without the '_case' suffix
+--
 ```
 
 Use `string_match` to make the same comparison without asserting on it, and `string_format_to_regex` to see what a format string expands to. Both take plain values rather than any of the names above:
@@ -1214,8 +1226,8 @@ retry_run 10 1 binary_is_installed "mytool"
 | `string_match`            | Reports whether a needle matches a haystack, without asserting on it          |
 | `string_format_to_regex`  | Translates a format string into an extended regular expression                |
 | `tui_run`                 | Runs the script named by `SCRIPT_FILE`, feeding it a list of answers on STDIN |
-| `flunk`                   | Fails the test with a message                                                 |
-| `format_error`            | Formats an error message with a border and the captured output and STDERR     |
+| `flunk`                   | Fails the test with a message, its stack trace and stable paths               |
+| `format_error`            | Formats a failure report as a titled block of aligned rows                    |
 
 `fixture_export_codebase` is a no-op unless `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` is set to `1`, so an expensive export can be enabled per suite rather than per call:
 
@@ -1239,6 +1251,64 @@ assert_output_contains "SCRIPT_FILE is not set."
 ```
 
 A bare call still fails the test at that point, because BATS runs tests with `errexit` enabled.
+
+Every assertion reports through one path, so a failure always reads the same way: a title naming what went wrong, then the values that decided it as aligned rows.
+
+```
+-- String does not contain substring --
+string     : some text
+substring  : SOME
+match mode : literal
+case       : sensitive
+note       : it matches without the '_case' suffix
+--
+
+-- stack trace --
+${PWD}/tests/example.bats:12: assert_string_contains_case
+--
+```
+
+When any value spans lines, every row switches to a labelled form carrying its line count. They switch together, so two values stay comparable rather than one collapsing onto a single line and the other not:
+
+```
+-- Line does not contain substring --
+line (1 line):
+1
+substring (1 line):
+absent
+match mode (1 line):
+literal
+case (1 line):
+insensitive
+context (4 lines):
+  0: Usage: tool.sh
+> 1: Reading config
+  2: Deleted 12 files
+  3: Done.
+--
+```
+
+A mismatch between an expected and an actual value is rendered as a unified diff rather than as two blobs:
+
+```
+-- Strings are not equal --
+--- expected
++++ actual
+@@ -1,3 +1,3 @@
+ first
+-second
++changed
+ third
+--
+```
+
+The diff is coloured when the platform's `diff` understands `--color`. Set `NO_COLOR` to any non-empty value to suppress it, or `BATS_HELPERS_REPORT_COLOR` to decide either way:
+
+```bash
+export BATS_HELPERS_REPORT_COLOR=0
+```
+
+The stack trace names the file, line and function of each of your own frames, leaving out the library's own and bats-core's, so a failure raised several calls deep inside a helper points at the helper and not only at the test. Paths that change between runs - the bats-core temporary directories, the working directory and the home directory - are rewritten to the names of the variables holding them, so the same failure is the same text on every machine and in every run.
 
 #### File backups
 
@@ -1339,7 +1409,7 @@ The format covers text files and nothing else. Binary content, file modes and sy
 
 ### Environment variables
 
-Every variable the library defines, in one place. Each is also covered by the section of the feature that uses it. Variables that belong to bats-core - `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME`, `BATS_VERBOSE_RUN` - are read but not owned here, and are documented by [bats-core](https://bats-core.readthedocs.io/).
+Every variable the library defines, in one place. Each is also covered by the section of the feature that uses it. Variables that belong to bats-core - `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME`, `BATS_VERBOSE_RUN` - are read but not owned here, and are documented by [bats-core](https://bats-core.readthedocs.io/). `NO_COLOR` is read the same way: any non-empty value suppresses the colour of a diff in a failure report, following [the convention](https://no-color.org/).
 
 `STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the test data a consumer declares right above the call that reads it, so they stay short and unprefixed. Everything the library reads from the wider environment carries the `BATS_HELPERS_` prefix.
 
@@ -1360,6 +1430,7 @@ Every variable the library defines, in one place. Each is also covered by the se
 | `BATS_HELPERS_MOCK_TMPDIR`                     | `mock_setup`, `mock_create`                                   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`, and `mock_setup` exports the resolved path |
 | `BATS_HELPERS_MOCK_USER`                       | `mock_get_call_user`                                          | User a mock call is reported as. Defaults to `id -un`                                       |
 | `BATS_HELPERS_MOCK_STRICT`                     | `mock_create`                                                 | Set to `0` to answer the calls a mock's expectations do not cover. Defaults to `1`, and is read when the mock is created |
+| `BATS_HELPERS_REPORT_COLOR`                    | `format_error`                                                | `0` to never colour a diff, `1` to colour it whenever `diff` supports the flag. Unset or empty defers to `NO_COLOR` |
 | `BATS_HELPERS_DEPRECATION_QUIET`               | every module                                                  | Set to any non-empty value to silence every deprecation notice                              |
 
 ### Deprecations
