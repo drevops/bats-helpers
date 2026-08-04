@@ -18,3 +18,7 @@ setup() {
   fi
   # LCOV_EXCL_STOP
 }
+
+teardown() {
+  cleanup_run
+}
