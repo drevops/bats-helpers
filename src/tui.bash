@@ -71,7 +71,7 @@ tui_run() {
   ## Runner.
   ##
 
-  local answers=("$@")
+  local -a answers=("$@")
   local input=""
   local answer
 

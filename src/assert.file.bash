@@ -182,9 +182,9 @@ assert_file_mode() {
   assert_file_exists "${file}" || return 1
 
   if [ "$(uname)" = "Darwin" ]; then
-    parsed=$(printf "%.3o\n" $(($(stat -f '0%Lp' "$file") & ~0022)))
+    parsed="$(printf "%.3o\n" $(($(stat -f '0%Lp' "${file}") & ~0022)))"
   else
-    parsed=$(printf "%.3o\n" $(($(stat --printf '0%a' "$file") & ~0022)))
+    parsed="$(printf "%.3o\n" $(($(stat --printf '0%a' "${file}") & ~0022)))"
   fi
 
   if [ "${parsed}" != "${perm}" ]; then
@@ -568,7 +568,7 @@ file_assert_equal() {
   local file1="${3}"
   local file2="${4}"
 
-  local diff_opts=(--normal)
+  local -a diff_opts=(--normal)
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
 
   assert_file_exists "${file1}" || return 1

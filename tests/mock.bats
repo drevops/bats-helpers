@@ -14,7 +14,7 @@ bats_require_minimum_version 1.13.0
 ##
 
 @test "mock_get_call_args and mock_get_call_num record every call" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   "${BATS_TEST_DIRNAME}/fixtures/mock_script.sh"
 
@@ -27,7 +27,7 @@ bats_require_minimum_version 1.13.0
 # 'echo' would read a leading '-n', '-e' or '-E' as one of its own flags and
 # swallow it, losing the argument from the record.
 @test "mock_get_call_args records arguments that look like echo flags" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl -n -e -E "trailing"
 
@@ -35,7 +35,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_set_output sets per-call output" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
   mock_set_output "${mock_curl}" "testoutput1" 1
   mock_set_output "${mock_curl}" "testoutput2" 2
 
@@ -47,7 +47,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_set_output writes the value literally" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
   mock_set_output "${mock_curl}" "-n" 1
   mock_set_output "${mock_curl}" 'first\nsecond' 2
 
@@ -61,7 +61,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_set_status sets the exit status" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
   mock_set_status "${mock_curl}" 1 1
 
   run "${BATS_TEST_DIRNAME}/fixtures/mock_script.sh"
@@ -70,7 +70,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_assert_call_args exact match" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
 
@@ -79,7 +79,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_assert_call_args wildcard match" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
 
@@ -88,7 +88,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_assert_call_args exact mismatch" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
 
@@ -97,7 +97,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_assert_call_args multiple calls with wildcard" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
   curl example.com
@@ -110,7 +110,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_resolve_n when the mock was not called enough times" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl example.com
 
@@ -120,7 +120,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_resolve_n when the mock was not called enough times - caller recovers" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl example.com
 
@@ -131,7 +131,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_get_call_args when not called enough times - caller recovers" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl example.com
 
@@ -142,7 +142,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_get_call_user when not called enough times - caller recovers" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl example.com
 
@@ -155,7 +155,7 @@ bats_require_minimum_version 1.13.0
 @test "mock_get_call_user reports the calling user" {
   unset BATS_HELPERS_MOCK_USER
   unset _USER
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl example.com
   assert_equal "$(id -un)" "$(mock_get_call_user "${mock_curl}")"
@@ -169,7 +169,7 @@ bats_require_minimum_version 1.13.0
 @test "mock_prepare_tmp defaults to a directory under BATS_TEST_TMPDIR" {
   assert_equal "${BATS_TEST_TMPDIR}/bats-helpers-mock" "${BATS_HELPERS_MOCK_TMPDIR}"
 
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   assert_equal "${BATS_HELPERS_MOCK_TMPDIR}" "$(dirname "${mock_curl}")"
   assert_symlink_exists "${BATS_HELPERS_MOCK_TMPDIR}/curl"
@@ -193,7 +193,7 @@ bats_require_minimum_version 1.13.0
 @test "mock_command with spaces in the temporary directory" {
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/bats mock with spaces"
   mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}"
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   PATH="${BATS_HELPERS_MOCK_TMPDIR}":${PATH} run curl example.com
 
@@ -203,7 +203,7 @@ bats_require_minimum_version 1.13.0
 @test "mock_command with shell metacharacters in the temporary directory" {
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/\$(touch pwned) mock"
   mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}"
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   # The injected 'touch' would write to the mock process's working directory,
   # which it inherits from here, so the assertion below has to watch that one.
@@ -289,7 +289,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_get_call_env" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   MOCK_TEST_VAR="testvalue1" curl example.com
   MOCK_TEST_VAR="testvalue2" curl example.com
@@ -299,7 +299,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_get_call_env defaults to the last call" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   MOCK_TEST_VAR="testvalue" curl example.com
 
@@ -311,7 +311,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_get_call_env when not called enough times" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl example.com
 
@@ -321,7 +321,7 @@ bats_require_minimum_version 1.13.0
 }
 
 @test "mock_get_call_env when not called enough times - caller recovers" {
-  mock_curl=$(mock_command "curl")
+  mock_curl="$(mock_command "curl")"
 
   curl example.com
 

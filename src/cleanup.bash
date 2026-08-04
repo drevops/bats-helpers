@@ -86,7 +86,7 @@ cleanup_run() {
     return 0
   fi
 
-  local commands=()
+  local -a commands=()
   local line
   while IFS= read -r line; do
     commands+=("${line}")
@@ -105,12 +105,12 @@ cleanup_run() {
     # 'eval' undoes the quoting 'cleanup_register' applied, turning the line
     # back into the argument vector it was registered with. Running the line
     # unevaluated would look for one command named after the whole of it.
-    eval "${commands[${i}]}" || command_status="$?"
+    eval "${commands[i]}" || command_status="$?"
 
     if [ "${command_status}" -ne 0 ]; then
       # 'flunk' returns non-zero, so the assignment both records the failure and
       # keeps the remaining commands running under errexit.
-      flunk "Cleanup command '${commands[${i}]}' failed with exit status ${command_status}." || run_status=1
+      flunk "Cleanup command '${commands[i]}' failed with exit status ${command_status}." || run_status=1
     fi
   done
 

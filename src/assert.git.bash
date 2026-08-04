@@ -17,7 +17,7 @@ assert_git_repo() {
 
   if [ -d "${dir}/.git" ]; then
     local message
-    message=$(git --work-tree="${dir}" --git-dir="${dir}/.git" status 2>&1)
+    message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status 2>&1)"
 
     if echo "${message}" | $(type -p grep | head -1) -i -F -- "not a git repository" >/dev/null; then
       format_error "Directory is not a git repository" "directory" "${dir}" | flunk

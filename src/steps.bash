@@ -88,7 +88,7 @@ steps_run() {
   local command_index
   local i
   for ((i = 0; i < ${#STEPS[@]}; i++)); do
-    local item="${STEPS[${i}]}"
+    local item="${STEPS[i]}"
 
     steps_debug "STEP START: '${item}'"
 
@@ -152,18 +152,18 @@ steps_run() {
       ## Processing the command.
       ##
 
-      command_index=${command_indices[${command_binary}]:-1}
+      command_index=${command_indices["${command_binary}"]:-1}
       steps_debug_sub "Command index for '${command_binary}' is '${command_index}'."
 
       if [ "${phase}" = "${PHASE_SETUP}" ]; then
         # Get mock from passed array or create a new one.
         if [ -z "${mocked_commands["${command_binary}"]-}" ]; then
-          mock=$(mock_command "${command_binary}")
+          mock="$(mock_command "${command_binary}")"
           mocked_commands["${command_binary}"]=${mock}
-          steps_debug_sub "SETUP: Created new mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'."
+          steps_debug_sub "SETUP: Created new mock for '${command_binary}' with value '${mocked_commands["${command_binary}"]}'."
         else
           mock="${mocked_commands["${command_binary}"]}"
-          steps_debug_sub "SETUP: Using existing mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'."
+          steps_debug_sub "SETUP: Using existing mock for '${command_binary}' with value '${mocked_commands["${command_binary}"]}'."
         fi
 
         steps_debug_sub "SETUP: Setting mock status to '${mock_status}'."
@@ -186,10 +186,10 @@ steps_run() {
           return 1
         fi
 
-        steps_debug_sub "ASSERT: Found mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'"
+        steps_debug_sub "ASSERT: Found mock for '${command_binary}' with value '${mocked_commands["${command_binary}"]}'"
 
         local mock_args_actual
-        mock="${mocked_commands[${command_binary}]}"
+        mock="${mocked_commands["${command_binary}"]}"
         steps_debug_sub "        command     : ${command_binary}"
         steps_debug_sub "        args        : ${command_args}"
         steps_debug_sub "        mock        : ${mock}"
@@ -208,7 +208,7 @@ steps_run() {
       fi
 
       command_indices["${command_binary}"]=$((command_index + 1))
-      steps_debug "Updated command index for '${command_binary}' to '${command_indices[${command_binary}]}'"
+      steps_debug "Updated command index for '${command_binary}' to '${command_indices["${command_binary}"]}'"
 
     ##
     ## String absent.
@@ -248,7 +248,7 @@ steps_run() {
   if [ "${phase}" = "${PHASE_SETUP}" ]; then
     local mc_string=""
     for key in "${!mocked_commands[@]}"; do
-      mc_string+="${key}=${mocked_commands[${key}]}"$'\n'
+      mc_string+="${key}=${mocked_commands["${key}"]}"$'\n'
     done
     printf '%s\n' "${mc_string}"
 
@@ -261,7 +261,7 @@ steps_run() {
 
   local -a owned=()
   for key in "${!mocked_commands[@]}"; do
-    owned+=("${mocked_commands[${key}]}")
+    owned+=("${mocked_commands["${key}"]}")
   done
 
   if [ "${#owned[@]}" -gt 0 ]; then
