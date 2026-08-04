@@ -1249,8 +1249,8 @@ mock_strict_reject() {
 ## mocked nor allowed does not run.
 ##
 ## This is not a security boundary. An absolute path reaches the real command
-## whatever PATH holds, and the commands the library itself runs stay available
-## so that the library keeps working inside the mode.
+## whatever PATH holds, and the commands the library and the BATS harness run
+## stay available so that both keep working inside the mode.
 ##
 
 ##
@@ -1276,8 +1276,8 @@ mock_sandbox_enable() {
     return 1
   fi
 
-  # The real PATH is saved once, so that enabling an already-enabled sandbox
-  # records the sandbox over the value it has to be restored to.
+  # The value is saved once, so that enabling an already-enabled sandbox does
+  # not record the sandbox over the PATH it has to be restored to.
   [ -e "${sandbox}/path" ] || printf '%s\n' "${PATH}" >"${sandbox}/path"
 
   mock_sandbox_link_base "${sandbox}/bin" || return 1
@@ -1371,8 +1371,6 @@ mock_sandbox_disable() {
   export -fn mock_sandbox_deny
   unset BATS_HELPERS_MOCK_SANDBOX_REPORT
 
-  # The report outlives the mode, so that it is still readable from a teardown
-  # that runs after the test restored PATH.
   mock_path_record
 }
 
@@ -1487,7 +1485,7 @@ mock_sandbox_base_commands() {
 }
 
 ##
-# Links the commands the library itself runs into the sandbox.
+# Links the commands the library and the BATS harness run into the sandbox.
 #
 # Arguments:
 #   1. bin: Directory to link them into.
