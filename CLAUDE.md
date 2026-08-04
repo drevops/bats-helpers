@@ -14,6 +14,7 @@ This is a BATS (Bash Automated Testing System) helpers library that provides ass
 - **src/**: Contains all helper modules:
   - `assert.*.bash`: Various assertion helpers (base, command, string, file, git)
   - `cleanup.bash`: Deferred cleanup that runs once the current test has finished
+  - `retry.bash`: Retry runner for conditions that become true shortly
   - `file.bash`: File utilities for creating, trimming, backing up and restoring files
   - `mock.bash`: Command mocking - the sandbox, mock creation, responses, argument specifications, strictness, the ordered call log and its assertions
   - `steps.bash`: Step runner for sequential command and string assertions
