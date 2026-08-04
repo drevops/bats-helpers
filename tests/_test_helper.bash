@@ -11,6 +11,10 @@ setup() {
   # Setup command mocking.
   mock_setup
 
+  # Assertions on the rendered reports compare plain text, so the tests that
+  # cover the colour decision itself opt back in rather than out.
+  export BATS_HELPERS_REPORT_COLOR=0
+
   # Print debug information if "--verbose-run" is passed.
   # LCOV_EXCL_START
   if [ "${BATS_VERBOSE_RUN-}" = "1" ]; then

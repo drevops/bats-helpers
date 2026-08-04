@@ -80,7 +80,7 @@ file_backup_path() {
 
   case "/${file}/" in
     */../*)
-      format_error "Unable to resolve the backup path: file '${file}' contains a parent directory reference" | flunk
+      format_error "Unable to resolve the backup path: the file contains a parent directory reference" "file" "${file}" | flunk
       return 1
       ;;
   esac
@@ -109,7 +109,7 @@ file_add_var() {
   local value="${3}"
 
   if [ ! -f "${file}" ]; then
-    format_error "File '${file}' does not exist" | flunk
+    format_error "File does not exist" "file" "${file}" | flunk
     return 1
   fi
 
@@ -135,7 +135,7 @@ file_restore() {
   backup="$(file_backup_path "${file}")" || return 1
 
   if [ ! -f "${backup}" ]; then
-    format_error "Backup for file '${file}' does not exist" | flunk
+    format_error "Backup does not exist" "file" "${file}" "backup" "${backup}" | flunk
     return 1
   fi
 

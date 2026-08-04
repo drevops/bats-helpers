@@ -45,14 +45,24 @@ capture_formatted_mixed() {
   capture
   run assert_line 0 "Reading config"
   assert_failure
-  assert_output_contains "Line 0 does not equal 'Reading config'"
-  assert_output_contains "> 0: Usage: tool.sh"
+  assert_output_contains "-- Line does not equal string --
+line (1 line):
+0
+string (1 line):
+Reading config
+context (3 lines):
+> 0: Usage: tool.sh
+  1: Reading config
+  2: Deleted 12 files
+--"
 
   # The line reached through a negative index is named both ways.
   capture
   run assert_line -1 "Usage: tool.sh"
   assert_failure
-  assert_output_contains "Line 3 (from index -1) does not equal 'Usage: tool.sh'"
+  assert_output_contains "-- Line does not equal string --"
+  assert_output_contains "line (1 line):
+3 (from index -1)"
 
   # An index outside the captured lines is an error rather than a comparison
   # against an empty string, at either end.
@@ -75,7 +85,7 @@ capture_formatted_mixed() {
   capture
   run assert_line_not 0 "Usage: tool.sh"
   assert_failure
-  assert_output_contains "Line 0 equals 'Usage: tool.sh', but should not"
+  assert_output_contains "-- Line equals string, but should not --"
   assert_output_contains "> 0: Usage: tool.sh"
 }
 
@@ -92,10 +102,21 @@ capture_formatted_mixed() {
   capture
   run assert_line_contains 1 "absent"
   assert_failure
-  assert_output_contains "Line 1 does not contain 'absent'"
-  assert_output_contains "match mode: literal"
-  assert_output_contains "case: insensitive"
-  assert_output_contains "> 1: Reading config"
+  assert_output_contains "-- Line does not contain substring --
+line (1 line):
+1
+substring (1 line):
+absent
+match mode (1 line):
+literal
+case (1 line):
+insensitive
+context (4 lines):
+  0: Usage: tool.sh
+> 1: Reading config
+  2: Deleted 12 files
+  3: Done.
+--"
 
   capture
   run assert_line_contains 9 "config"
@@ -110,9 +131,11 @@ capture_formatted_mixed() {
   capture
   run assert_line_contains_case 1 "CONFIG"
   assert_failure
-  assert_output_contains "Line 1 does not contain 'CONFIG'"
-  assert_output_contains "case: sensitive"
-  assert_output_contains "note: it matches without the '_case' suffix"
+  assert_output_contains "-- Line does not contain substring --"
+  assert_output_contains "case (1 line):
+sensitive"
+  assert_output_contains "note (1 line):
+it matches without the '_case' suffix"
 }
 
 @test "assert_line_not_contains" {
@@ -122,12 +145,12 @@ capture_formatted_mixed() {
   capture
   run assert_line_not_contains 1 "config"
   assert_failure
-  assert_output_contains "Line 1 contains 'config', but should not"
+  assert_output_contains "-- Line contains substring, but should not --"
 
   capture
   run assert_line_not_contains 1 "CONFIG"
   assert_failure
-  assert_output_contains "Line 1 contains 'CONFIG', but should not"
+  assert_output_contains "-- Line contains substring, but should not --"
 }
 
 @test "assert_line_not_contains_case" {
@@ -138,7 +161,7 @@ capture_formatted_mixed() {
   capture
   run assert_line_not_contains_case 1 "config"
   assert_failure
-  assert_output_contains "Line 1 contains 'config', but should not"
+  assert_output_contains "-- Line contains substring, but should not --"
 }
 
 ##
@@ -155,8 +178,11 @@ capture_formatted_mixed() {
   capture
   run assert_line_matches 2 'Deleted [a-z]+ files'
   assert_failure
-  assert_output_contains "Line 2 does not match 'Deleted [a-z]+ files'"
-  assert_output_contains "match mode: regex"
+  assert_output_contains "-- Line does not match regular expression --"
+  assert_output_contains "regular expression (1 line):
+Deleted [a-z]+ files"
+  assert_output_contains "match mode (1 line):
+regex"
   assert_output_contains "> 2: Deleted 12 files"
 }
 
@@ -167,8 +193,10 @@ capture_formatted_mixed() {
   capture
   run assert_line_matches_case 2 'DELETED [0-9]+ files'
   assert_failure
-  assert_output_contains "case: sensitive"
-  assert_output_contains "note: it matches without the '_case' suffix"
+  assert_output_contains "case (1 line):
+sensitive"
+  assert_output_contains "note (1 line):
+it matches without the '_case' suffix"
 }
 
 @test "assert_line_not_matches" {
@@ -178,7 +206,7 @@ capture_formatted_mixed() {
   capture
   run assert_line_not_matches 2 'Deleted [0-9]+ files'
   assert_failure
-  assert_output_contains "Line 2 matches 'Deleted [0-9]+ files', but should not"
+  assert_output_contains "-- Line matches regular expression, but should not --"
 }
 
 @test "assert_line_not_matches_case" {
@@ -188,7 +216,7 @@ capture_formatted_mixed() {
   capture
   run assert_line_not_matches_case 2 'Deleted [0-9]+ files'
   assert_failure
-  assert_output_contains "Line 2 matches 'Deleted [0-9]+ files', but should not"
+  assert_output_contains "-- Line matches regular expression, but should not --"
 }
 
 ##
@@ -203,8 +231,11 @@ capture_formatted_mixed() {
   capture
   run assert_line_matches_format 2 "Deleted %d directories"
   assert_failure
-  assert_output_contains "Line 2 does not match 'Deleted %d directories'"
-  assert_output_contains "match mode: format"
+  assert_output_contains "-- Line does not match format --"
+  assert_output_contains "format (1 line):
+Deleted %d directories"
+  assert_output_contains "match mode (1 line):
+format"
 
   capture
   run assert_line_matches_format 2 "Deleted %z files"
@@ -219,7 +250,8 @@ capture_formatted_mixed() {
   capture
   run assert_line_matches_format_case 2 "DELETED %d files"
   assert_failure
-  assert_output_contains "case: sensitive"
+  assert_output_contains "case (1 line):
+sensitive"
 }
 
 @test "assert_line_not_matches_format" {
@@ -229,7 +261,7 @@ capture_formatted_mixed() {
   capture
   run assert_line_not_matches_format 2 "Deleted %d files"
   assert_failure
-  assert_output_contains "Line 2 matches 'Deleted %d files', but should not"
+  assert_output_contains "-- Line matches format, but should not --"
 }
 
 @test "assert_line_not_matches_format_case" {
@@ -239,7 +271,7 @@ capture_formatted_mixed() {
   capture
   run assert_line_not_matches_format_case 2 "Deleted %d files"
   assert_failure
-  assert_output_contains "Line 2 matches 'Deleted %d files', but should not"
+  assert_output_contains "-- Line matches format, but should not --"
 }
 
 ##
@@ -254,7 +286,9 @@ capture_formatted_mixed() {
   capture
   run assert_any_line "absent"
   assert_failure
-  assert_output_contains "Output has no line equal to 'absent'"
+  assert_output_contains "-- Output has no line equal to string --
+string : absent
+--"
 }
 
 @test "assert_no_line" {
@@ -267,8 +301,14 @@ capture_formatted_mixed() {
   capture
   run assert_no_line "Done."
   assert_failure
-  assert_output_contains "Output has a line equal to 'Done.', but should not"
-  assert_output_contains "> 3: Done."
+  assert_output_contains "-- Output has a line equal to string, but should not --
+string (1 line):
+Done.
+context (3 lines):
+  1: Reading config
+  2: Deleted 12 files
+> 3: Done.
+--"
 }
 
 ##
@@ -283,8 +323,11 @@ capture_formatted_mixed() {
   capture
   run assert_any_line_contains "absent"
   assert_failure
-  assert_output_contains "Output has no line containing 'absent'"
-  assert_output_contains "match mode: literal"
+  assert_output_contains "-- Output has no line containing substring --
+substring  : absent
+match mode : literal
+case       : insensitive
+--"
 }
 
 @test "assert_any_line_contains_case" {
@@ -294,9 +337,9 @@ capture_formatted_mixed() {
   capture
   run assert_any_line_contains_case "CONFIG"
   assert_failure
-  assert_output_contains "Output has no line containing 'CONFIG'"
-  assert_output_contains "case: sensitive"
-  assert_output_contains "note: it matches without the '_case' suffix"
+  assert_output_contains "-- Output has no line containing substring --"
+  assert_output_contains "case       : sensitive"
+  assert_output_contains "note       : it matches without the '_case' suffix"
 }
 
 @test "assert_no_line_contains" {
@@ -306,14 +349,15 @@ capture_formatted_mixed() {
   capture
   run assert_no_line_contains "config"
   assert_failure
-  assert_output_contains "Output has a line containing 'config', but should not"
+  assert_output_contains "-- Output has a line containing substring, but should not --"
   assert_output_contains "> 1: Reading config"
 
   # Only the case setting let this one through, so it is named.
   capture
   run assert_no_line_contains "CONFIG"
   assert_failure
-  assert_output_contains "note: it does not match with the '_case' suffix"
+  assert_output_contains "note (1 line):
+it does not match with the '_case' suffix"
 }
 
 @test "assert_no_line_contains_case" {
@@ -323,8 +367,9 @@ capture_formatted_mixed() {
   capture
   run assert_no_line_contains_case "config"
   assert_failure
-  assert_output_contains "Output has a line containing 'config', but should not"
-  assert_output_contains "case: sensitive"
+  assert_output_contains "-- Output has a line containing substring, but should not --"
+  assert_output_contains "case (1 line):
+sensitive"
 }
 
 ##
@@ -338,8 +383,11 @@ capture_formatted_mixed() {
   capture
   run assert_any_line_matches 'Deleted [a-z]+ files'
   assert_failure
-  assert_output_contains "Output has no line matching 'Deleted [a-z]+ files'"
-  assert_output_contains "match mode: regex"
+  assert_output_contains "-- Output has no line matching regular expression --
+regular expression : Deleted [a-z]+ files
+match mode         : regex
+case               : insensitive
+--"
 
   # An unusable expression is an error rather than an absence of matches.
   capture
@@ -355,7 +403,7 @@ capture_formatted_mixed() {
   capture
   run assert_any_line_matches_case 'DELETED [0-9]+ files'
   assert_failure
-  assert_output_contains "case: sensitive"
+  assert_output_contains "case               : sensitive"
 }
 
 @test "assert_no_line_matches" {
@@ -365,7 +413,7 @@ capture_formatted_mixed() {
   capture
   run assert_no_line_matches 'Deleted [0-9]+ files'
   assert_failure
-  assert_output_contains "Output has a line matching 'Deleted [0-9]+ files', but should not"
+  assert_output_contains "-- Output has a line matching regular expression, but should not --"
   assert_output_contains "> 2: Deleted 12 files"
 }
 
@@ -376,7 +424,7 @@ capture_formatted_mixed() {
   capture
   run assert_no_line_matches_case 'Deleted [0-9]+ files'
   assert_failure
-  assert_output_contains "Output has a line matching 'Deleted [0-9]+ files', but should not"
+  assert_output_contains "-- Output has a line matching regular expression, but should not --"
 }
 
 ##
@@ -390,8 +438,11 @@ capture_formatted_mixed() {
   capture
   run assert_any_line_matches_format "Deleted %d directories"
   assert_failure
-  assert_output_contains "Output has no line matching 'Deleted %d directories'"
-  assert_output_contains "match mode: format"
+  assert_output_contains "-- Output has no line matching format --
+format     : Deleted %d directories
+match mode : format
+case       : insensitive
+--"
 
   capture
   run assert_any_line_matches_format "Deleted %z files"
@@ -406,7 +457,7 @@ capture_formatted_mixed() {
   capture
   run assert_any_line_matches_format_case "DELETED %d files"
   assert_failure
-  assert_output_contains "case: sensitive"
+  assert_output_contains "case       : sensitive"
 }
 
 @test "assert_no_line_matches_format" {
@@ -416,7 +467,7 @@ capture_formatted_mixed() {
   capture
   run assert_no_line_matches_format "Deleted %d files"
   assert_failure
-  assert_output_contains "Output has a line matching 'Deleted %d files', but should not"
+  assert_output_contains "-- Output has a line matching format, but should not --"
 }
 
 @test "assert_no_line_matches_format_case" {
@@ -426,7 +477,7 @@ capture_formatted_mixed() {
   capture
   run assert_no_line_matches_format_case "Deleted %d files"
   assert_failure
-  assert_output_contains "Output has a line matching 'Deleted %d files', but should not"
+  assert_output_contains "-- Output has a line matching format, but should not --"
 }
 
 ##
@@ -440,13 +491,16 @@ capture_formatted_mixed() {
   capture
   run assert_line_count 3
   assert_failure
-  assert_output_contains "Output has 4 lines, but should have 3"
+  assert_output_contains "-- Output does not have the expected number of lines --
+expected : 3
+actual   : 4
+--"
 
-  # The noun agrees with the count.
   run printf '%s\n' "only one"
   run assert_line_count 2
   assert_failure
-  assert_output_contains "Output has 1 line, but should have 2"
+  assert_output_contains "expected : 2
+actual   : 1"
 
   capture
   run assert_line_count "four"
@@ -466,7 +520,9 @@ capture_formatted_mixed() {
   capture
   run assert_line_count_not 4
   assert_failure
-  assert_output_contains "Output has 4 lines, but should not"
+  assert_output_contains "-- Output has the given number of lines, but should not --
+line count : 4
+--"
 }
 
 ##
@@ -482,8 +538,13 @@ capture_formatted_mixed() {
   capture_counted
   run assert_line_count_contains 3 "error"
   assert_failure
-  assert_output_contains "Output has 2 lines containing 'error', but should have 3"
-  assert_output_contains "match mode: literal"
+  assert_output_contains "-- Output does not have the expected number of lines containing substring --
+substring  : error
+expected   : 3
+actual     : 2
+match mode : literal
+case       : insensitive
+--"
 }
 
 @test "assert_line_count_contains_case" {
@@ -493,8 +554,9 @@ capture_formatted_mixed() {
   capture_counted
   run assert_line_count_contains_case 2 "ERROR"
   assert_failure
-  assert_output_contains "Output has 0 lines containing 'ERROR', but should have 2"
-  assert_output_contains "note: it matches without the '_case' suffix"
+  assert_output_contains "expected   : 2
+actual     : 0"
+  assert_output_contains "note       : it matches without the '_case' suffix"
 }
 
 @test "assert_line_count_not_contains" {
@@ -504,7 +566,9 @@ capture_formatted_mixed() {
   capture_counted
   run assert_line_count_not_contains 3 "error"
   assert_failure
-  assert_output_contains "Output has 2 lines not containing 'error', but should have 3"
+  assert_output_contains "-- Output does not have the expected number of lines not containing substring --"
+  assert_output_contains "expected   : 3
+actual     : 2"
 }
 
 @test "assert_line_count_not_contains_case" {
@@ -514,7 +578,9 @@ capture_formatted_mixed() {
   capture_counted
   run assert_line_count_not_contains_case 2 "ERROR"
   assert_failure
-  assert_output_contains "Output has 4 lines not containing 'ERROR', but should have 2"
+  assert_output_contains "-- Output does not have the expected number of lines not containing substring --"
+  assert_output_contains "expected   : 2
+actual     : 4"
 }
 
 ##
@@ -528,8 +594,13 @@ capture_formatted_mixed() {
   capture_counted
   run assert_line_count_matches 1 '^error'
   assert_failure
-  assert_output_contains "Output has 2 lines matching '^error', but should have 1"
-  assert_output_contains "match mode: regex"
+  assert_output_contains "-- Output does not have the expected number of lines matching regular expression --
+regular expression : ^error
+expected           : 1
+actual             : 2
+match mode         : regex
+case               : insensitive
+--"
 }
 
 @test "assert_line_count_matches_case" {
@@ -539,7 +610,8 @@ capture_formatted_mixed() {
   capture_counted
   run assert_line_count_matches_case 2 '^ERROR'
   assert_failure
-  assert_output_contains "Output has 0 lines matching '^ERROR', but should have 2"
+  assert_output_contains "expected           : 2
+actual             : 0"
 }
 
 @test "assert_line_count_not_matches" {
@@ -549,7 +621,9 @@ capture_formatted_mixed() {
   capture_counted
   run assert_line_count_not_matches 1 '^error'
   assert_failure
-  assert_output_contains "Output has 2 lines not matching '^error', but should have 1"
+  assert_output_contains "-- Output does not have the expected number of lines not matching regular expression --"
+  assert_output_contains "expected           : 1
+actual             : 2"
 }
 
 @test "assert_line_count_not_matches_case" {
@@ -559,7 +633,9 @@ capture_formatted_mixed() {
   capture_counted
   run assert_line_count_not_matches_case 2 '^ERROR'
   assert_failure
-  assert_output_contains "Output has 4 lines not matching '^ERROR', but should have 2"
+  assert_output_contains "-- Output does not have the expected number of lines not matching regular expression --"
+  assert_output_contains "expected           : 2
+actual             : 4"
 }
 
 ##
@@ -573,8 +649,13 @@ capture_formatted_mixed() {
   capture_formatted
   run assert_line_count_matches_format 1 "Deleted %d files"
   assert_failure
-  assert_output_contains "Output has 2 lines matching 'Deleted %d files', but should have 1"
-  assert_output_contains "match mode: format"
+  assert_output_contains "-- Output does not have the expected number of lines matching format --
+format     : Deleted %d files
+expected   : 1
+actual     : 2
+match mode : format
+case       : insensitive
+--"
 }
 
 @test "assert_line_count_matches_format_case" {
@@ -584,7 +665,8 @@ capture_formatted_mixed() {
   capture_formatted_mixed
   run assert_line_count_matches_format_case 2 "Deleted %d files"
   assert_failure
-  assert_output_contains "Output has 1 line matching 'Deleted %d files', but should have 2"
+  assert_output_contains "expected   : 2
+actual     : 1"
 }
 
 @test "assert_line_count_not_matches_format" {
@@ -594,7 +676,9 @@ capture_formatted_mixed() {
   capture_formatted
   run assert_line_count_not_matches_format 2 "Deleted %d files"
   assert_failure
-  assert_output_contains "Output has 1 line not matching 'Deleted %d files', but should have 2"
+  assert_output_contains "-- Output does not have the expected number of lines not matching format --"
+  assert_output_contains "expected   : 2
+actual     : 1"
 }
 
 @test "assert_line_count_not_matches_format_case" {
@@ -604,7 +688,10 @@ capture_formatted_mixed() {
   capture_formatted_mixed
   run assert_line_count_not_matches_format_case 1 "Deleted %d files"
   assert_failure
-  assert_output_contains "Output has 2 lines not matching 'Deleted %d files', but should have 1"
+  assert_output_contains "-- Output does not have the expected number of lines not matching format --"
+  assert_output_contains "expected   : 1
+actual     : 2"
+  assert_output_contains "note       : it matches without the '_case' suffix"
 }
 
 ##
@@ -685,20 +772,6 @@ capture_formatted_mixed() {
    9: j
 > 10: k
   11: l"
-}
-
-@test "line_plural" {
-  run line_plural 0
-  assert_success
-  assert_output "0 lines"
-
-  run line_plural 1
-  assert_success
-  assert_output "1 line"
-
-  run line_plural 2
-  assert_success
-  assert_output "2 lines"
 }
 
 @test "line_participle" {

@@ -9,48 +9,62 @@ load _test_helper
 # Matches the library's minimum, and silences the warning flags on 'run' emit.
 bats_require_minimum_version 1.13.0
 
+# A report carries the captured output, so each case clears the capture the
+# previous 'run' left behind. Without that, an assertion below could be
+# satisfied by the text of an earlier failure rather than by the one it names.
 @test "assert_success" {
   status=0
   assert_success
 
+  output=""
   status=1
   run assert_success
   [ "${status}" -eq 1 ]
-  assert_output_contains "Command failed with exit status 1"
-  assert_output_not_contains "stderr:"
+  assert_output_contains "-- Command failed --"
+  assert_output_contains "status : 1"
+  assert_output_not_contains "output :"
+  assert_output_not_contains "stderr :"
 
+  output=""
   status=127
   run assert_success
   [ "${status}" -eq 1 ]
-  assert_output_contains "Command failed with exit status 127 (command not found)"
+  assert_output_contains "status : 127 (command not found)"
 
+  output=""
   status=137
   run assert_success
   [ "${status}" -eq 1 ]
-  assert_output_contains "Command failed with exit status 137 (killed by SIGKILL)"
+  assert_output_contains "status : 137 (killed by SIGKILL)"
 
+  output="captured output"
   stderr="stderr needle"
   status=1
   run assert_success
   [ "${status}" -eq 1 ]
-  assert_output_contains "stderr needle"
+  assert_output_contains "output : captured output"
+  assert_output_contains "stderr : stderr needle"
 }
 
 @test "assert_failure" {
   status=1
   assert_failure
 
+  output=""
+  unset stderr
   status=0
   run assert_failure
   [ "${status}" -eq 1 ]
-  assert_output_contains "Command succeeded, but should have failed"
-  assert_output_not_contains "stderr:"
+  assert_output_contains "-- Command succeeded, but should have failed --"
+  assert_output_not_contains "output :"
+  assert_output_not_contains "stderr :"
 
+  output=""
   stderr="stderr needle"
   status=0
   run assert_failure
   [ "${status}" -eq 1 ]
-  assert_output_contains "stderr needle"
+  assert_output_contains "stderr : stderr needle"
 
   status=2
   assert_failure --status 2
@@ -59,11 +73,12 @@ bats_require_minimum_version 1.13.0
   status=2
   assert_failure --status 2 "some output"
 
+  output=""
   status=2
   run assert_failure --status 3
   assert_failure
-  assert_output_contains "expected: 3"
-  assert_output_contains "actual:   2"
+  assert_output_contains "expected : 3"
+  assert_output_contains "actual   : 2"
 
   status=2
   run assert_failure --status
@@ -95,22 +110,25 @@ bats_require_minimum_version 1.13.0
   run bash -c 'kill -KILL $$'
   assert_status 137
 
+  output=""
   status=2
   run assert_status 3
   assert_failure
-  assert_output_contains "Command exited with an unexpected status"
-  assert_output_contains "expected: 3"
-  assert_output_contains "actual:   2"
+  assert_output_contains "-- Command exited with an unexpected status --"
+  assert_output_contains "expected : 3"
+  assert_output_contains "actual   : 2"
 
+  output=""
   status=127
   run assert_status 2
   assert_failure
-  assert_output_contains "actual:   127 (command not found)"
+  assert_output_contains "actual   : 127 (command not found)"
 
+  output=""
   status=137
   run assert_status 2
   assert_failure
-  assert_output_contains "actual:   137 (killed by SIGKILL)"
+  assert_output_contains "actual   : 137 (killed by SIGKILL)"
 
   status=2
   run assert_status
@@ -135,8 +153,8 @@ bats_require_minimum_version 1.13.0
   status=2
   run assert_status_general_error
   assert_failure
-  assert_output_contains "expected: 1"
-  assert_output_contains "actual:   2"
+  assert_output_contains "expected : 1"
+  assert_output_contains "actual   : 2"
 }
 
 @test "assert_status_command_not_found" {
@@ -148,8 +166,8 @@ bats_require_minimum_version 1.13.0
   status=1
   run assert_status_command_not_found
   assert_failure
-  assert_output_contains "expected: 127"
-  assert_output_contains "actual:   1"
+  assert_output_contains "expected : 127"
+  assert_output_contains "actual   : 1"
 }
 
 @test "command_describe_status" {

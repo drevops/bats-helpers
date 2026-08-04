@@ -193,7 +193,7 @@ load _test_helper
 
   run file_restore "${BATS_TEST_TMPDIR}/.env"
   assert_failure
-  assert_output_contains "Backup for file"
+  assert_output_contains "-- Backup does not exist --"
 
   assert_file_contains "${BATS_TEST_TMPDIR}/.env" "line1"
 }

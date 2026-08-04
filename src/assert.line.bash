@@ -670,7 +670,7 @@ line_resolve_index() {
   # An out-of-range index would otherwise compare against an empty string,
   # which reads as an ordinary mismatch and hides where the fault is.
   if [ "${resolved}" -lt 0 ] || [ "${resolved}" -ge "${total}" ]; then
-    flunk "Line index ${index} is out of range for output with $(line_plural "${total}")."
+    flunk "Line index ${index} is out of range for output with $(report_plural_lines "${total}")."
     return 1
   fi
 
@@ -689,11 +689,11 @@ line_resolve_index() {
 ##
 line_label() {
   if [ "${1}" = "${2}" ]; then
-    printf 'Line %s\n' "${2}"
+    printf '%s\n' "${2}"
     return 0
   fi
 
-  printf 'Line %s (from index %s)\n' "${2}" "${1}"
+  printf '%s (from index %s)\n' "${2}" "${1}"
 }
 
 ##
@@ -732,24 +732,6 @@ line_context() {
     [ "${i}" -eq "${index}" ] && marker="> "
     printf '%s%*d: %s\n' "${marker}" "${width}" "${i}" "${lines[i]}"
   done
-}
-
-##
-# Names a number of lines.
-#
-# Arguments:
-#   1. count: Number of lines.
-#
-# Outputs:
-#   STDOUT: The count and the noun agreeing with it.
-##
-line_plural() {
-  if [ "${1}" -eq 1 ]; then
-    printf '1 line\n'
-    return 0
-  fi
-
-  printf '%s lines\n' "${1}"
 }
 
 ##
@@ -921,6 +903,9 @@ line_assert_index_match() {
     [ "${match_status}" -eq 0 ] && return 0
   fi
 
+  local noun
+  noun="$(string_needle_noun "${mode}")"
+
   local verb="contain"
   local verb_third_person="contains"
 
@@ -929,11 +914,11 @@ line_assert_index_match() {
     verb_third_person="matches"
   fi
 
-  local message
+  local title
   if [ "${negate}" = "1" ]; then
-    message="$(line_label "${given}" "${index}") ${verb_third_person} '${needle}', but should not"
+    title="Line ${verb_third_person} ${noun}, but should not"
   else
-    message="$(line_label "${given}" "${index}") does not ${verb} '${needle}'"
+    title="Line does not ${verb} ${noun}"
   fi
 
   local opposite_status=0
@@ -942,10 +927,14 @@ line_assert_index_match() {
   local case_decided=0
   [ "${opposite_status}" -ne "${match_status}" ] && case_decided=1
 
-  message="${message}"$'\n'"$(string_match_footer "${mode}" "${case_sensitive}" "${case_decided}")"
-  message="${message}"$'\n\n'"$(line_context "${index}")"
+  local -a footer=()
+  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
 
-  format_error "${message}" | flunk
+  format_error "${title}" \
+    "line" "$(line_label "${given}" "${index}")" \
+    "${noun}" "${needle}" \
+    "${footer[@]}" \
+    "context" "$(line_context "${index}")" | flunk
 }
 
 ##
@@ -981,16 +970,17 @@ line_assert_index_equal() {
     [ "${equal}" -eq 0 ] && return 0
   fi
 
-  local message
+  local title
   if [ "${negate}" = "1" ]; then
-    message="$(line_label "${given}" "${index}") equals '${expected}', but should not"
+    title="Line equals string, but should not"
   else
-    message="$(line_label "${given}" "${index}") does not equal '${expected}'"
+    title="Line does not equal string"
   fi
 
-  message="${message}"$'\n\n'"$(line_context "${index}")"
-
-  format_error "${message}" | flunk
+  format_error "${title}" \
+    "line" "$(line_label "${given}" "${index}")" \
+    "string" "${expected}" \
+    "context" "$(line_context "${index}")" | flunk
 }
 
 ##
@@ -1041,23 +1031,29 @@ line_assert_any_match() {
     [ "${#opposite_indices[@]}" -eq 0 ] && case_decided=1
   fi
 
+  local noun
+  noun="$(string_needle_noun "${mode}")"
+
   local participle
   participle="$(line_participle "${mode}" 0)"
 
-  local message
+  local title
   if [ "${present}" = "1" ]; then
-    message="Output has no line ${participle} '${needle}'"
+    title="Output has no line ${participle} ${noun}"
   else
-    message="Output has a line ${participle} '${needle}', but should not"
+    title="Output has a line ${participle} ${noun}, but should not"
   fi
 
-  message="${message}"$'\n'"$(string_match_footer "${mode}" "${case_sensitive}" "${case_decided}")"
+  local -a footer=()
+  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
+
+  local -a rows=("${noun}" "${needle}" "${footer[@]}")
 
   if [ "${#indices[@]}" -gt 0 ]; then
-    message="${message}"$'\n\n'"$(line_context "${indices[0]}")"
+    rows+=("context" "$(line_context "${indices[0]}")")
   fi
 
-  format_error "${message}" | flunk
+  format_error "${title}" "${rows[@]}" | flunk
 }
 
 ##
@@ -1091,18 +1087,20 @@ line_assert_any_equal() {
     [ "${#indices[@]}" -eq 0 ] && return 0
   fi
 
-  local message
+  local title
   if [ "${present}" = "1" ]; then
-    message="Output has no line equal to '${expected}'"
+    title="Output has no line equal to string"
   else
-    message="Output has a line equal to '${expected}', but should not"
+    title="Output has a line equal to string, but should not"
   fi
+
+  local -a rows=("string" "${expected}")
 
   if [ "${#indices[@]}" -gt 0 ]; then
-    message="${message}"$'\n\n'"$(line_context "${indices[0]}")"
+    rows+=("context" "$(line_context "${indices[0]}")")
   fi
 
-  format_error "${message}" | flunk
+  format_error "${title}" "${rows[@]}" | flunk
 }
 
 ##
@@ -1131,13 +1129,13 @@ line_assert_count() {
   if [ "${negate}" = "1" ]; then
     [ "${total}" -ne "${expected}" ] && return 0
 
-    format_error "Output has $(line_plural "${total}"), but should not" | flunk
+    format_error "Output has the given number of lines, but should not" "line count" "${total}" | flunk
     return 1
   fi
 
   [ "${total}" -eq "${expected}" ] && return 0
 
-  format_error "Output has $(line_plural "${total}"), but should have ${expected}" | flunk
+  format_error "Output does not have the expected number of lines" "expected" "${expected}" "actual" "${total}" | flunk
 }
 
 ##
@@ -1185,12 +1183,18 @@ line_assert_count_match() {
   local case_decided=0
   [ "${#opposite_indices[@]}" -eq "${expected}" ] && case_decided=1
 
+  local noun
+  noun="$(string_needle_noun "${mode}")"
+
   local participle
   participle="$(line_participle "${mode}" "${negate}")"
 
-  local message
-  message="Output has $(line_plural "${actual}") ${participle} '${needle}', but should have ${expected}"
-  message="${message}"$'\n'"$(string_match_footer "${mode}" "${case_sensitive}" "${case_decided}")"
+  local -a footer=()
+  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
 
-  format_error "${message}" | flunk
+  format_error "Output does not have the expected number of lines ${participle} ${noun}" \
+    "${noun}" "${needle}" \
+    "expected" "${expected}" \
+    "actual" "${actual}" \
+    "${footer[@]}" | flunk
 }

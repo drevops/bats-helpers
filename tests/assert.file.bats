@@ -60,8 +60,8 @@ load _test_helper
   run assert_file_exists "${BATS_TEST_TMPDIR}/missing.txt"
   assert_failure
 
-  banner_count="$(echo "${output}" | grep -c "BEGIN ERROR MESSAGE" || true)"
-  assert_equal "1" "${banner_count}"
+  report_count="$(echo "${output}" | grep -c -- "-- File does not exist --" || true)"
+  assert_equal "1" "${report_count}"
 }
 
 @test "assert_file_not_exists reports a failure once for a glob" {
@@ -72,8 +72,8 @@ load _test_helper
   run assert_file_not_exists "${BATS_TEST_TMPDIR}/*.txt"
   assert_failure
 
-  banner_count="$(echo "${output}" | grep -c "BEGIN ERROR MESSAGE" || true)"
-  assert_equal "1" "${banner_count}"
+  report_count="$(echo "${output}" | grep -c -- "-- File exists, but should not --" || true)"
+  assert_equal "1" "${report_count}"
 }
 
 @test "assert_dir_exists" {
@@ -446,12 +446,13 @@ load _test_helper
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
   assert_failure
+  assert_output_contains "difference (4 lines):"
   assert_output_contains "< Third line"
   assert_output_contains "> Third line changed"
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
   assert_failure
-  assert_output_contains "<"
+  assert_output_contains "-- Files are not equal --"
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/missing.txt" "${BATS_TEST_TMPDIR}/missing_other.txt"
   assert_failure
