@@ -1158,7 +1158,7 @@ assert_file_exists "$(file_backup_path "${BATS_TEST_TMPDIR}/.env")"
 
 #### Fixture trees
 
-`fixture_create_dir` builds a whole file tree from a plain-text archive read from STDIN, so the shape of the fixture is visible in the test rather than reconstructed from a run of `mkdir` and `echo` calls. Fed from a quoted here-document, the content passes through byte for byte, with no escaping:
+`fixture_create_dir` builds a whole file tree from a plain-text archive read from STDIN, so the shape of the fixture is visible in the test rather than reconstructed from a run of `mkdir` and `echo` calls. Fed from a quoted here-document, the content passes through byte for byte: nothing is expanded, and nothing needs escaping apart from a line that would itself read as a marker:
 
 ```bash
 fixture_create_dir "${dir}" <<'FIXTURE'
@@ -1174,7 +1174,7 @@ FOO=bar
 FIXTURE
 ```
 
-A line is a marker when it opens with `--` followed by a space and closes with a space followed by `--`; the name between them is trimmed, so markers can be padded to line up. Every other line is content, which is what makes the format safe to hand-edit: there is nothing to get syntactically wrong. An entry holds every line from its marker to the next marker or to the end of the archive, and parent directories are created implicitly.
+A line is a marker when it opens with `--` followed by a space and closes with a space followed by `--`; the name between them is trimmed, so markers can be padded to line up. After the first marker, every line that is not itself a marker is content, which is what makes the format safe to hand-edit: there is nothing to get syntactically wrong. An entry holds every line from its marker to the next marker or to the end of the archive, and parent directories are created implicitly.
 
 Anything before the first marker is a comment and is discarded, so a fixture can carry a note about what it stands for:
 
