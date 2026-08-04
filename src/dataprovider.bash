@@ -31,7 +31,7 @@
 dataprovider_run() {
   local func_name="${1-}"
   local args_per_row="${2:-1}"
-  local assertion="${3-assert_output_contains}"
+  local assertion="${3:-assert_output_contains}"
 
   ##
   ## Input validation.
@@ -120,7 +120,7 @@ dataprovider_run() {
 dataprovider_run_cases() {
   local func_name="${1-}"
   local cases_func="${2-}"
-  local assertion="${3-assert_output_contains}"
+  local assertion="${3:-assert_output_contains}"
 
   dataprovider_validate_function "${func_name}" "Function" || return 1
   dataprovider_validate_function "${cases_func}" "Cases function" || return 1

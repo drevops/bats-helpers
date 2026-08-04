@@ -127,6 +127,13 @@ provide_matrix_triples() {
     "start" "middle" "finish" "startmiddle"
   )
   dataprovider_run "concat_values" 4
+
+  # An omitted assertion and an empty one both mean "not given", so both take
+  # the default.
+  declare -a TEST_CASES=(
+    1 2 3
+  )
+  dataprovider_run "add_numbers" 3 ""
 }
 
 @test "Test dataprovider runner - success" {
@@ -164,10 +171,6 @@ provide_matrix_triples() {
   run dataprovider_run "non_existing_func" 3
   assert_failure
   assert_output_contains "Function 'non_existing_func' is not a valid function."
-
-  run dataprovider_run "add_numbers" 3 ""
-  assert_failure
-  assert_output_contains "Assertion name must not be empty."
 
   run dataprovider_run "add_numbers" 3 "non_existing_func"
   assert_failure
@@ -325,9 +328,9 @@ provide_matrix_triples() {
   assert_failure
   assert_output_contains "Cases function 'non_existing_func' is not a valid function."
 
-  run dataprovider_run_cases "add_numbers" "provide_cases" ""
-  assert_failure
-  assert_output_contains "Assertion name must not be empty."
+  # An omitted assertion and an empty one both mean "not given", so both take
+  # the default.
+  dataprovider_run_cases "add_numbers" "provide_cases" ""
 
   run dataprovider_run_cases "add_numbers" "provide_cases" "non_existing_func"
   assert_failure

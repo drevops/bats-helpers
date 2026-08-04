@@ -1080,7 +1080,7 @@ mock_forward_exec() {
 ##
 mock_forward_path() {
   local dir="${1}"
-  local path="${2-${PATH}}"
+  local path="${2:-${PATH}}"
   local -a entries=()
   local -a kept=()
 

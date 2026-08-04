@@ -28,7 +28,12 @@ fixture_export_codebase() {
     return
   fi
 
-  local dst="${1?Destination directory is required.}"
+  if [ "$#" -lt 1 ]; then
+    flunk "Destination directory is required."
+    return 1
+  fi
+
+  local dst="${1}"
   local src="${2:-"$(pwd)"}"
 
   assert_dir_exists "${dst}" || return 1
@@ -83,7 +88,12 @@ fixture_prepare_dir() {
 #   1. dir: Directory to create the tree in.
 ##
 fixture_create_dir() {
-  local dir="${1?Directory is required.}"
+  if [ "$#" -lt 1 ]; then
+    flunk "Directory is required."
+    return 1
+  fi
+
+  local dir="${1}"
 
   local -a paths=()
   local -a contents=()
@@ -132,7 +142,12 @@ fixture_create_dir() {
 #   STDOUT: The archive, with the entries ordered by path.
 ##
 fixture_dump_dir() {
-  local dir="${1?Directory is required.}"
+  if [ "$#" -lt 1 ]; then
+    flunk "Directory is required."
+    return 1
+  fi
+
+  local dir="${1}"
 
   assert_dir_exists "${dir}" || return 1
 
@@ -178,7 +193,12 @@ fixture_dump_dir() {
 #   1. dir: Directory to compare.
 ##
 fixture_assert_dir() {
-  local dir="${1?Directory is required.}"
+  if [ "$#" -lt 1 ]; then
+    flunk "Directory is required."
+    return 1
+  fi
+
+  local dir="${1}"
 
   assert_dir_exists "${dir}" || return 1
 
