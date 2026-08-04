@@ -16,7 +16,11 @@
 assert_success() {
   # shellcheck disable=SC2154
   if [ "${status-}" -ne 0 ]; then
-    format_error "Command failed with exit status $(command_describe_status "${status}")" | flunk
+    local -a rows=("status" "$(command_describe_status "${status}")")
+    [ "${output-}" = "" ] || rows+=("output" "${output}")
+    [ "${stderr-}" = "" ] || rows+=("stderr" "${stderr}")
+
+    format_error "Command failed" "${rows[@]}" | flunk
   elif [ "$#" -gt 0 ]; then
     assert_output "${1}"
   fi
@@ -55,7 +59,11 @@ assert_failure() {
 
   # shellcheck disable=SC2154
   if [ "${status-}" -eq 0 ]; then
-    format_error "Command succeeded, but should have failed" | flunk
+    local -a rows=()
+    [ "${output-}" = "" ] || rows+=("output" "${output}")
+    [ "${stderr-}" = "" ] || rows+=("stderr" "${stderr}")
+
+    format_error "Command succeeded, but should have failed" "${rows[@]}" | flunk
     return 1
   fi
 
@@ -94,11 +102,11 @@ assert_status() {
     return 0
   fi
 
-  local message="Command exited with an unexpected status"
-  message="${message}"$'\n'"expected: ${1}"
-  message="${message}"$'\n'"actual:   $(command_describe_status "${status}")"
+  local -a rows=("expected" "${1}" "actual" "$(command_describe_status "${status}")")
+  [ "${output-}" = "" ] || rows+=("output" "${output}")
+  [ "${stderr-}" = "" ] || rows+=("stderr" "${stderr}")
 
-  format_error "${message}" | flunk
+  format_error "Command exited with an unexpected status" "${rows[@]}" | flunk
 }
 
 ##

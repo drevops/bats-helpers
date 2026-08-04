@@ -2,7 +2,7 @@
 #
 # Tests for the retry helper.
 #
-# shellcheck disable=SC2030,SC2031
+# shellcheck disable=SC2030,SC2031,SC2016
 
 load _test_helper
 
@@ -97,11 +97,13 @@ fixture_assert_elapsed() {
 
   run retry_run 3 0.1 fixture_probe 99
   assert_failure
-  assert_output_contains "Command 'fixture_probe' did not succeed within 3 attempt(s)."
-  assert_output_contains "attempts: 3"
-  assert_output_matches_format "elapsed: %d second(s)"
-  assert_output_contains "last status: 1"
-  assert_output_contains "last output: 'probed 3'"
+  assert_output_contains "-- Command did not succeed within the retry limit --"
+  assert_output_contains "command     : fixture_probe"
+  assert_output_contains "limit       : 3 attempt(s)"
+  assert_output_contains "attempts    : 3"
+  assert_output_matches_format "elapsed     : %d second(s)"
+  assert_output_contains "last status : 1"
+  assert_output_contains "last output : probed 3"
 
   assert_equal 3 "$(cat "${BATS_TEST_TMPDIR}/probe.count")"
   assert_equal 2 "$(mock_get_call_num "${mock_sleep}")"
@@ -136,7 +138,7 @@ fixture_assert_elapsed() {
 
   run retry_run 1 5 false
   assert_failure
-  assert_output_contains "did not succeed within 1 attempt(s)."
+  assert_output_contains "limit       : 1 attempt(s)"
 
   fixture_assert_elapsed "$((SECONDS - start))" 0 1
 }
@@ -158,8 +160,9 @@ fixture_assert_elapsed() {
 
   run retry_run 5 1 false
   assert_failure
-  assert_output_contains "Command 'false' did not succeed within the 0 second deadline."
-  assert_output_contains "attempts: 1"
+  assert_output_contains "command     : false"
+  assert_output_contains "limit       : the 0 second deadline"
+  assert_output_contains "attempts    : 1"
 
   mock_assert_not_called "sleep"
 }
@@ -173,8 +176,8 @@ fixture_assert_elapsed() {
 
   run retry_run 10 1 false
   assert_failure
-  assert_output_contains "Command 'false' did not succeed within the 1 second deadline."
-  assert_output_matches "attempts: [12]"
+  assert_output_contains "limit       : the 1 second deadline"
+  assert_output_matches "attempts    : [12]"
 
   # The attempt count alone would have taken nine seconds.
   fixture_assert_elapsed "$((SECONDS - start))" 0 3
@@ -188,7 +191,7 @@ fixture_assert_elapsed() {
 
   run retry_run 3 0.1 false
   assert_failure
-  assert_output_contains "did not succeed within 3 attempt(s)."
+  assert_output_contains "limit       : 3 attempt(s)"
 
   assert_equal 2 "$(mock_get_call_num "${mock_sleep}")"
 }
@@ -218,7 +221,9 @@ fixture_assert_elapsed() {
 
   run retry_run 2 0.1 assert_file_not_exists "${file}"
   assert_failure
-  assert_output_contains "File '\${BATS_TEST_TMPDIR}/late.txt' exists, but should not"
+  assert_output_contains '-- File exists, but should not --
+file : ${BATS_TEST_TMPDIR}/late.txt
+--'
 }
 
 @test "retry_run passes arguments verbatim" {

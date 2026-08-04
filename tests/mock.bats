@@ -1174,7 +1174,9 @@ bats_require_minimum_version 1.13.0
 
   run mock_assert_called "git"
   assert_failure
-  assert_output_contains "Command 'git' was not called"
+  assert_output_contains "-- Command was not called --
+command : git
+--"
 
   run mock_assert_called "crul"
   assert_failure
@@ -1191,8 +1193,10 @@ bats_require_minimum_version 1.13.0
 
   run mock_assert_not_called "curl"
   assert_failure
-  assert_output_contains "Command 'curl' was called, but should not have been"
-  assert_output_contains "curl 'example.com'"
+  assert_output_contains "-- Command was called, but should not have been --
+command : curl
+calls   : curl 'example.com'
+--"
 
   run mock_assert_not_called "crul"
   assert_failure

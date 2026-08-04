@@ -20,13 +20,13 @@ assert_git_repo() {
     message=$(git --work-tree="${dir}" --git-dir="${dir}/.git" status 2>&1)
 
     if echo "${message}" | $(type -p grep | head -1) -i -F -- "not a git repository" >/dev/null; then
-      format_error "Directory '${dir}' is not a git repository" | flunk
+      format_error "Directory is not a git repository" "directory" "${dir}" | flunk
       return 1
     fi
 
     return 0
   else
-    format_error "Directory '${dir}' is not a git repository" | flunk
+    format_error "Directory is not a git repository" "directory" "${dir}" | flunk
     return 1
   fi
 }
@@ -43,7 +43,7 @@ assert_git_not_repo() {
   assert_dir_exists "${dir}" || return 1
 
   if [ -d "${dir}/.git" ]; then
-    format_error "Directory '${dir}' is a git repository, but should not be" | flunk
+    format_error "Directory is a git repository, but should not be" "directory" "${dir}" | flunk
   else
     return 0
   fi

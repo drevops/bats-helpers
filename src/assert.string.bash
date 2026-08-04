@@ -14,7 +14,7 @@ assert_empty() {
   if [ "${1-}" = "" ]; then
     return 0
   else
-    format_error "String '${1}' is not empty" | flunk
+    format_error "String is not empty" "string" "${1}" | flunk
   fi
 }
 
@@ -26,7 +26,7 @@ assert_empty() {
 ##
 assert_not_empty() {
   if [ "${1-}" = "" ]; then
-    format_error "String '${1}' is empty, but should not be" | flunk
+    format_error "String is empty, but should not be" | flunk
   else
     return 0
   fi
@@ -41,10 +41,7 @@ assert_not_empty() {
 ##
 assert_equal() {
   if [ "${1-}" != "${2-}" ]; then
-    {
-      echo "expected: ${1}"
-      echo "actual:   ${2}"
-    } | flunk
+    format_error "Strings are not equal" "expected" "${1-}" "actual" "${2-}" | flunk
   fi
 }
 
@@ -486,6 +483,9 @@ string_assert_match() {
   ## Failure report.
   ##
 
+  local noun
+  noun="$(string_needle_noun "${mode}")"
+
   local verb
   local verb_third_person
 
@@ -509,11 +509,11 @@ string_assert_match() {
       ;;
   esac
 
-  local message
+  local title
   if [ "${negate}" = "1" ]; then
-    message="String '${haystack}' ${verb_third_person} '${needle}', but should not"
+    title="String ${verb_third_person} ${noun}, but should not"
   else
-    message="String '${haystack}' does not ${verb} '${needle}'"
+    title="String does not ${verb} ${noun}"
   fi
 
   # The setting that was in force is only worth naming when the other one would
@@ -525,13 +525,37 @@ string_assert_match() {
   local case_decided=0
   [ "${opposite_status}" -ne "${match_status}" ] && case_decided=1
 
-  message="${message}"$'\n'"$(string_match_footer "${mode}" "${case_sensitive}" "${case_decided}")"
+  local -a footer=()
+  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
 
-  format_error "${message}" | flunk
+  format_error "${title}" "string" "${haystack}" "${noun}" "${needle}" "${footer[@]}" | flunk
 }
 
 ##
-# Formats how a failed match was performed.
+# Names the kind of needle a match mode reads.
+#
+# Arguments:
+#   1. mode: How the needle is read - 'literal', 'regex' or 'format'.
+#
+# Outputs:
+#   STDOUT: The noun.
+##
+string_needle_noun() {
+  case "${1}" in
+    regex)
+      printf 'regular expression\n'
+      ;;
+    format)
+      printf 'format\n'
+      ;;
+    *)
+      printf 'substring\n'
+      ;;
+  esac
+}
+
+##
+# Describes how a failed match was performed, as rows for a failure report.
 #
 # Arguments:
 #   1. mode: How the needle was read - 'literal', 'regex' or 'format'.
@@ -540,10 +564,10 @@ string_assert_match() {
 #      assertion the other way.
 #
 # Outputs:
-#   STDOUT: The match mode and the case sensitivity, followed by a note naming
+#   STDOUT: Alternating keys and values, one per line, ending with a note naming
 #           the case setting when it is what decided the outcome.
 ##
-string_match_footer() {
+string_match_rows() {
   local mode="${1}"
   local case_sensitive="${2}"
   local case_decided="${3}"
@@ -551,15 +575,14 @@ string_match_footer() {
   local case_label="insensitive"
   [ "${case_sensitive}" = "1" ] && case_label="sensitive"
 
-  echo "match mode: ${mode}"
-  echo "case: ${case_label}"
+  printf '%s\n' "match mode" "${mode}" "case" "${case_label}"
 
   [ "${case_decided}" = "1" ] || return 0
 
   if [ "${case_sensitive}" = "1" ]; then
-    echo "note: it matches without the '_case' suffix"
+    printf '%s\n' "note" "it matches without the '_case' suffix"
   else
-    echo "note: it does not match with the '_case' suffix"
+    printf '%s\n' "note" "it does not match with the '_case' suffix"
   fi
 }
 

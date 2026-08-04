@@ -446,12 +446,13 @@ load _test_helper
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
   assert_failure
+  assert_output_contains "difference (4 lines):"
   assert_output_contains "< Third line"
   assert_output_contains "> Third line changed"
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
   assert_failure
-  assert_output_contains "<"
+  assert_output_contains "-- Files are not equal --"
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/missing.txt" "${BATS_TEST_TMPDIR}/missing_other.txt"
   assert_failure
@@ -533,6 +534,30 @@ load _test_helper
 
   run assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/missing.png"
   assert_failure
+}
+
+# A directory passes the existence check the comparisons make first, so it is
+# what reaches 'diff' and 'cmp' as an operand they cannot read.
+@test "A comparison that could not run is an error rather than a difference" {
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/binary.png"
+  mkdir -p "${BATS_TEST_TMPDIR}/empty-dir"
+
+  run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/empty-dir"
+  assert_failure
+  assert_output_contains "Unable to compare the files."
+
+  run assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/empty-dir"
+  assert_failure
+  assert_output_contains "Unable to compare the files."
+
+  run assert_binary_files_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/empty-dir"
+  assert_failure
+  assert_output_contains "Unable to compare the files."
+
+  run assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/empty-dir"
+  assert_failure
+  assert_output_contains "Unable to compare the files."
 }
 
 @test "assert_dirs_equal" {
