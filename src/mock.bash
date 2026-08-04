@@ -1574,25 +1574,21 @@ mock_names() {
 #       called.
 ##
 mock_assert_calls() {
-  local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  local expected=""
 
-  local expected_file="${dir}/mock.log.expected"
-  local actual_file="${dir}/mock.log.actual"
+  # The captured log carries no trailing newline, so the expectations are joined
+  # without one either and the two are comparable as they stand.
+  if [ "$#" -gt 0 ]; then
+    printf -v expected '%s\n' "$@"
+    expected="${expected%$'\n'}"
+  fi
 
-  echo -n '' >"${expected_file}"
+  local actual
+  actual="$(mock_log_filtered)" || return 1
 
-  local expected_call
-  for expected_call in "$@"; do
-    printf '%s\n' "${expected_call}" >>"${expected_file}"
-  done
+  [ "${expected}" = "${actual}" ] && return 0
 
-  mock_log_filtered >"${actual_file}" || return 1
-
-  local report
-  report="$(diff -u -L expected -L actual "${expected_file}" "${actual_file}")" && return 0
-
-  format_error "Call log does not match the expected sequence"$'\n'"${report}" | flunk
+  format_error "Call log does not match the expected sequence" "expected" "${expected}" "actual" "${actual}" | flunk
 }
 
 ##
@@ -1604,7 +1600,7 @@ mock_assert_no_calls() {
 
   [ -z "${actual}" ] && return 0
 
-  format_error "Mocked commands were called, but none should have been"$'\n'"${actual}" | flunk
+  format_error "Mocked commands were called, but none should have been" "calls" "${actual}" | flunk
 }
 
 ##
@@ -1626,7 +1622,7 @@ mock_assert_called() {
 
   [ -n "${matched}" ] && return 0
 
-  format_error "Command '${name}' was not called" | flunk
+  format_error "Command was not called" "command" "${name}" | flunk
 }
 
 ##
@@ -1648,7 +1644,7 @@ mock_assert_not_called() {
 
   [ -z "${matched}" ] && return 0
 
-  format_error "Command '${name}' was called, but should not have been"$'\n'"${matched}" | flunk
+  format_error "Command was called, but should not have been" "command" "${name}" "calls" "${matched}" | flunk
 }
 
 ##
@@ -1688,7 +1684,7 @@ mock_verify() {
   local message
   printf -v message '%s\n' "${problems[@]}"
 
-  format_error "${message%$'\n'}" | flunk
+  format_error "Mock expectations were not met" "unmet" "${message%$'\n'}" | flunk
 }
 
 ##
