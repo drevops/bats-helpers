@@ -335,7 +335,15 @@ fixture_list_files() {
   local -a files=()
   local file
 
+  # The walk runs in a process substitution, where its exit status is out of
+  # reach, so a failure is signalled in band with an empty record - a shape no
+  # path printed below '.' can take.
   while IFS= read -r -d '' file; do
+    if [ -z "${file}" ]; then
+      flunk "Unable to list the files of fixture directory '${dir}'."
+      return 1
+    fi
+
     file="${file#./}"
 
     if [[ ${file} == *$'\n'* ]]; then
@@ -344,7 +352,7 @@ fixture_list_files() {
     fi
 
     files+=("${file}")
-  done < <(cd "${dir}" && find . -type f -print0)
+  done < <({ cd "${dir}" && find . -type f -print0; } || printf '\0')
 
   [ "${#files[@]}" -gt 0 ] || return 0
 

@@ -451,6 +451,12 @@ EXPECTED
   assert_output_contains "Fixture file 'binary.bin' is not a text file"
 }
 
+@test "fixture_list_files with a directory it cannot walk" {
+  run fixture_list_files "${BATS_TEST_TMPDIR}/missing"
+  assert_failure
+  assert_output_contains "Unable to list the files"
+}
+
 @test "fixture_dump_dir with a newline in a file name" {
   dir="${BATS_TEST_TMPDIR}/tree"
   mkdir -p "${dir}"
@@ -525,6 +531,21 @@ FIXTURE
 FIXTURE
   assert_failure
   assert_output_contains "unexpected: src/app.sh"
+}
+
+@test "fixture_assert_dir with a file that has no trailing newline" {
+  dir="${BATS_TEST_TMPDIR}/tree"
+  mkdir -p "${dir}"
+  printf 'no newline' >"${dir}/file.txt"
+
+  # The archive always names a trailing newline, so a file without one differs.
+  run fixture_assert_dir "${dir}" <<'FIXTURE'
+-- file.txt --
+no newline
+FIXTURE
+  assert_failure
+  assert_output_contains "differs: file.txt"
+  assert_output_contains "No newline at end of file"
 }
 
 @test "fixture_assert_dir with a symlink in place of a file" {
