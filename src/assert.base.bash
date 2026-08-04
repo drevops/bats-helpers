@@ -48,7 +48,8 @@ flunk() {
 # A row whose value spans lines switches every row to a labelled form carrying
 # its line count, so that two values stay comparable rather than one of them
 # collapsing onto a single line and the other not. Rows keyed 'expected' and
-# 'actual' are then replaced by a unified diff of the two.
+# 'actual' are replaced by a unified diff of the two once either of them spans
+# lines.
 #
 # Arguments:
 #   1. title: Short summary naming what went wrong.
@@ -97,9 +98,13 @@ format_error() {
     shift 2
   done
 
+  # Two values that each fit on a line are already comparable as rows, so a diff
+  # is what makes the mismatch readable only once either of them spans lines.
   local diffable=0
-  if [ "${multiline}" = "1" ] && [ "${expected_index}" -ge 0 ] && [ "${actual_index}" -ge 0 ]; then
-    diffable=1
+  if [ "${expected_index}" -ge 0 ] && [ "${actual_index}" -ge 0 ]; then
+    if [[ ${values[expected_index]} == *$'\n'* ]] || [[ ${values[actual_index]} == *$'\n'* ]]; then
+      diffable=1
+    fi
   fi
 
   ##

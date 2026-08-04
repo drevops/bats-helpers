@@ -123,6 +123,20 @@ some.txt
 expected : 3
 actual   : 2
 --"
+
+  # Another row spanning lines decides how the rows are laid out, not whether
+  # the pair is worth diffing.
+  run format_error "Command exited with an unexpected status" "expected" "3" "actual" "2" "output" $'first\nsecond'
+  assert_success
+  assert_output "-- Command exited with an unexpected status --
+expected (1 line):
+3
+actual (1 line):
+2
+output (2 lines):
+first
+second
+--"
 }
 
 @test "format_error rewrites the volatile paths" {
