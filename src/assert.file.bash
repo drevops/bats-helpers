@@ -477,7 +477,7 @@ assert_dir_not_contains_string() {
 file_compare_failed() {
   [ "${1}" -le 1 ] && return 0
 
-  flunk "Unable to compare the files: ${2}"
+  flunk "Unable to compare the files. ${2}"
 }
 
 ##

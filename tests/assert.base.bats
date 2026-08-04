@@ -125,6 +125,22 @@ context (2 lines):
 --"
 }
 
+@test "format_error diffs two values that differ only by a trailing newline" {
+  # The rendered value carries one newline more than the value itself, which
+  # keeps a trailing newline visible in the diff rather than closing a line that
+  # was already closed.
+  run format_error "Strings are not equal" "expected" $'first\nsecond' "actual" $'first\nsecond\n'
+  assert_success
+  assert_output "-- Strings are not equal --
+--- expected
++++ actual
+@@ -1,2 +1,3 @@
+ first
+ second
++
+--"
+}
+
 @test "format_error keeps the other rows beside a diff" {
   run format_error "Strings are not equal" "file" "some.txt" "expected" $'first\nsecond' "actual" $'first\nchanged'
   assert_success

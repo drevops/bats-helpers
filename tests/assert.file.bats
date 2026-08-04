@@ -545,19 +545,19 @@ load _test_helper
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/empty-dir"
   assert_failure
-  assert_output_contains "Unable to compare the files:"
+  assert_output_contains "Unable to compare the files."
 
   run assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/empty-dir"
   assert_failure
-  assert_output_contains "Unable to compare the files:"
+  assert_output_contains "Unable to compare the files."
 
   run assert_binary_files_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/empty-dir"
   assert_failure
-  assert_output_contains "Unable to compare the files:"
+  assert_output_contains "Unable to compare the files."
 
   run assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/binary.png" "${BATS_TEST_TMPDIR}/empty-dir"
   assert_failure
-  assert_output_contains "Unable to compare the files:"
+  assert_output_contains "Unable to compare the files."
 }
 
 @test "assert_dirs_equal" {
