@@ -6,7 +6,7 @@
 
 load _test_helper
 
-@test "Substring presence" {
+@test "steps_run substring presence" {
   declare -a STEPS=(
     "Some Substring"
   )
@@ -31,7 +31,7 @@ load _test_helper
   assert_failure
 }
 
-@test "Substring presence - negative: caller recovers" {
+@test "steps_run substring presence - negative: caller recovers" {
   declare -a STEPS=(
     "Some Substring"
   )
@@ -44,7 +44,7 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Substring absence" {
+@test "steps_run substring absence" {
   declare -a STEPS=(
     "- Some Substring"
   )
@@ -69,7 +69,7 @@ load _test_helper
   assert_failure
 }
 
-@test "Substring absence - negative: caller recovers" {
+@test "steps_run substring absence - negative: caller recovers" {
   declare -a STEPS=(
     "- Some Substring"
   )
@@ -82,7 +82,7 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Direct command execution" {
+@test "steps_run direct command execution" {
   declare -a STEPS=(
     "@somebin # 0 # someval"
   )
@@ -92,7 +92,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Direct command execution, args" {
+@test "steps_run direct command execution, args" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
@@ -102,7 +102,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Wrapped execution through Bats' 'run'" {
+@test "steps_run wrapped execution through Bats' 'run'" {
   declare -a STEPS=(
     "@somebin # 0 # someval"
   )
@@ -113,7 +113,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, args" {
+@test "steps_run command, args" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
@@ -124,7 +124,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, args - negative: wrong args" {
+@test "steps_run command, args - negative: wrong args" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
@@ -138,7 +138,7 @@ load _test_helper
   assert_output_contains "Mocked command 'somebin' was called with arguments '--opt1 --opt2 --opt3', but '--opt1 --opt2' was expected."
 }
 
-@test "Command, args - negative: wrong args - caller recovers" {
+@test "steps_run command, args - negative: wrong args - caller recovers" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
@@ -152,7 +152,7 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Command - negative: mock does not exist" {
+@test "steps_run command - negative: mock does not exist" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
@@ -162,7 +162,7 @@ load _test_helper
   assert_output_contains "Mock for the binary 'somebin' does not exist."
 }
 
-@test "Command - negative: mock does not exist - caller recovers" {
+@test "steps_run command - negative: mock does not exist - caller recovers" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval"
   )
@@ -173,7 +173,7 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Command, args, no exit code or output" {
+@test "steps_run command, args, no exit code or output" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2"
   )
@@ -184,7 +184,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, args, output, no exit code" {
+@test "steps_run command, args, output, no exit code" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # someval with spaces"
   )
@@ -196,7 +196,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, args, error exit code" {
+@test "steps_run command, args, error exit code" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 1 # someval with spaces"
   )
@@ -209,7 +209,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, args - negative: incorrect input - delim" {
+@test "steps_run command, args - negative: incorrect input - delim" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 ## someval"
   )
@@ -219,7 +219,7 @@ load _test_helper
   assert_output_contains "The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
 
-@test "Command, args - negative: incorrect input - delim - caller recovers" {
+@test "steps_run command, args - negative: incorrect input - delim - caller recovers" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 ## someval"
   )
@@ -230,7 +230,7 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Command, multiple commands, same, repeated call" {
+@test "steps_run command, multiple commands, same, repeated call" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
@@ -248,7 +248,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, multiple commands, same, combined execution" {
+@test "steps_run command, multiple commands, same, combined execution" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
@@ -263,7 +263,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, multiple commands, same, combined execution, and" {
+@test "steps_run command, multiple commands, same, combined execution, and" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
@@ -278,7 +278,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, multiple commands, different" {
+@test "steps_run command, multiple commands, different" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@otherbin --opt1 --opt2 # 0 # someval2 with spaces"
@@ -294,7 +294,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, multiple commands, different - negative: incorrect arguments" {
+@test "steps_run command, multiple commands, different - negative: incorrect arguments" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@otherbin --opt1 --opt2 # 0 # someval2 with spaces"
@@ -310,7 +310,7 @@ load _test_helper
   assert_failure
 }
 
-@test "Command, multiple commands, different, repeated call" {
+@test "steps_run command, multiple commands, different, repeated call" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
@@ -335,7 +335,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, multiple commands, different, repeated call - negative" {
+@test "steps_run command, multiple commands, different, repeated call - negative" {
   declare -a STEPS=(
     "@somebin --opt1 --opt2 # 0 # someval1 with spaces"
     "@somebin --opt1 --opt2 # 0 # someval2 with spaces"
@@ -358,7 +358,7 @@ load _test_helper
   assert_failure
 }
 
-@test "Command, multiple commands, different, repeated call, order" {
+@test "steps_run command, multiple commands, different, repeated call, order" {
   declare -a STEPS=(
     "@somebin --opt11 --opt21 # 0 # someval1 with spaces"
     "@somebin --opt11 --opt22 # 0 # someval2 with spaces"
@@ -380,7 +380,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, multiple commands, different, repeated call, order - negative" {
+@test "steps_run command, multiple commands, different, repeated call, order - negative" {
   declare -a STEPS=(
     "@somebin --opt11 --opt21 # 0 # someval1 with spaces"
     "@somebin --opt11 --opt22 # 0 # someval2 with spaces"
@@ -403,7 +403,7 @@ load _test_helper
   assert_failure
 }
 
-@test "Command, multiple commands, different, combined, repeated call, order" {
+@test "steps_run command, multiple commands, different, combined, repeated call, order" {
   # To assert string presence/absence without creating a script that prints
   # strings, we use the output of commands.
   declare -a STEPS=(
@@ -426,7 +426,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, multiple commands, different, combined, repeated call, order, shorthand" {
+@test "steps_run command, multiple commands, different, combined, repeated call, order, shorthand" {
   # To assert string presence/absence without creating a script that prints
   # strings, we use the output of commands.
   declare -a STEPS=(
@@ -449,7 +449,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command, multi-line argument" {
+@test "steps_run command, multi-line argument" {
   declare -a STEPS=(
     "@somebin --opt1 \
     --opt2 \
@@ -470,7 +470,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command with side effect - basic file creation" {
+@test "steps_run command with side effect - basic file creation" {
   declare -a STEPS=(
     '@somebin --opt1 # 0 # success # touch ${BATS_TEST_TMPDIR}/side_effect_file'
   )
@@ -486,7 +486,7 @@ load _test_helper
   assert_file_exists "${BATS_TEST_TMPDIR}/side_effect_file"
 }
 
-@test "Command with side effect - environment variable" {
+@test "steps_run command with side effect - environment variable" {
   declare -a STEPS=(
     "@somebin --opt1 # 0 # success # export TEST_SIDE_EFFECT=executed"
   )
@@ -501,7 +501,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Command with side effect - echo to file" {
+@test "steps_run command with side effect - echo to file" {
   declare -a STEPS=(
     "@somebin --opt1 # 0 # success # echo 'side effect executed' > \${BATS_TEST_TMPDIR}/side_effect_output"
   )
@@ -519,7 +519,7 @@ load _test_helper
   assert_output_contains "side effect executed"
 }
 
-@test "Command with side effect - multiple commands" {
+@test "steps_run command with side effect - multiple commands" {
   declare -a STEPS=(
     "@somebin --opt1 # 0 # success # touch \${BATS_TEST_TMPDIR}/file1; echo 'data' > \${BATS_TEST_TMPDIR}/file2"
   )
@@ -538,7 +538,7 @@ load _test_helper
   assert_output_contains "data"
 }
 
-@test "Command with side effect - exit status and output" {
+@test "steps_run command with side effect - exit status and output" {
   declare -a STEPS=(
     "@somebin --opt1 # 1 # error message # echo 'error logged' > \${BATS_TEST_TMPDIR}/error_log"
   )
@@ -556,7 +556,7 @@ load _test_helper
   assert_output_contains "error logged"
 }
 
-@test "Command with side effect - no output, only side effect" {
+@test "steps_run command with side effect - no output, only side effect" {
   declare -a STEPS=(
     '@somebin --opt1 # 0 # # touch ${BATS_TEST_TMPDIR}/no_output_side_effect'
   )
@@ -571,7 +571,7 @@ load _test_helper
   assert_file_exists "${BATS_TEST_TMPDIR}/no_output_side_effect"
 }
 
-@test "Command with side effect - shorthand status with side effect" {
+@test "steps_run command with side effect - shorthand status with side effect" {
   declare -a STEPS=(
     '@somebin --opt1 # success output # # touch ${BATS_TEST_TMPDIR}/shorthand_side_effect'
   )
@@ -587,7 +587,7 @@ load _test_helper
   assert_file_exists "${BATS_TEST_TMPDIR}/shorthand_side_effect"
 }
 
-@test "Multiple commands with different side effects" {
+@test "steps_run command with side effect - different commands, different side effects" {
   declare -a STEPS=(
     '@cmd1 # 0 # output1 # touch ${BATS_TEST_TMPDIR}/cmd1_file'
     "@cmd2 # 0 # output2 # echo 'cmd2 executed' > \${BATS_TEST_TMPDIR}/cmd2_file"
@@ -612,7 +612,7 @@ load _test_helper
   assert_output_contains "cmd2 executed"
 }
 
-@test "Command with side effect - repeated calls with different side effects" {
+@test "steps_run command with side effect - repeated calls with different side effects" {
   declare -a STEPS=(
     '@somebin # 0 # call1 # touch ${BATS_TEST_TMPDIR}/call1_file'
     '@somebin # 0 # call2 # touch ${BATS_TEST_TMPDIR}/call2_file'
@@ -635,7 +635,7 @@ load _test_helper
   assert_file_exists "${BATS_TEST_TMPDIR}/call2_file"
 }
 
-@test "Command with side effect - error in parsing too many separators" {
+@test "steps_run command with side effect - error in parsing too many separators - negative: delimiter count" {
   declare -a STEPS=(
     "@somebin # 0 # output # side effect # extra"
   )
@@ -645,7 +645,7 @@ load _test_helper
   assert_output_contains "The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
 
-@test "Command with side effect - consecutive ## still forbidden" {
+@test "steps_run command with side effect - consecutive ## still forbidden - negative: double delimiter" {
   declare -a STEPS=(
     "@somebin # 0 ## output # side effect"
   )
@@ -655,7 +655,7 @@ load _test_helper
   assert_output_contains "The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
 
-@test "Wildcard command - any arguments accepted" {
+@test "steps_run wildcard command - any arguments accepted" {
   declare -a STEPS=(
     "@somebin * # 0 # wildcard output 1"
     "@somebin * # 0 # wildcard output 2"
@@ -680,7 +680,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Wildcard command - multiple calls with different args" {
+@test "steps_run wildcard command - multiple calls with different args" {
   declare -a STEPS=(
     "@git * # 0 # git output 1"
     "@git * # 0 # git output 2"
@@ -699,7 +699,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Wildcard command - with side effects" {
+@test "steps_run wildcard command - with side effects" {
   declare -a STEPS=(
     '@somebin * # 0 # wildcard success # touch ${BATS_TEST_TMPDIR}/wildcard_file'
   )
@@ -716,7 +716,7 @@ load _test_helper
   assert_file_exists "${BATS_TEST_TMPDIR}/wildcard_file"
 }
 
-@test "Wildcard command - error status" {
+@test "steps_run wildcard command - error status" {
   declare -a STEPS=(
     "@somebin * # 1 # wildcard error"
   )
@@ -730,7 +730,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Mixed exact and wildcard commands" {
+@test "steps_run wildcard command - alongside an exact command" {
   declare -a STEPS=(
     "@git status # 0 # exact status output"
     "@git * # 0 # wildcard git output"
@@ -757,7 +757,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Wildcard command - shorthand syntax" {
+@test "steps_run wildcard command - shorthand syntax" {
   declare -a STEPS=(
     "@somebin * # wildcard shorthand output"
   )
@@ -771,7 +771,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - URL with fragment in command arguments" {
+@test "steps_run escaped hash - URL with fragment in command arguments" {
   declare -a STEPS=(
     "@curl -fsSL https://example.com\#anchor -o file.php # 0"
   )
@@ -783,7 +783,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - Git URL with branch fragment" {
+@test "steps_run escaped hash - Git URL with branch fragment" {
   declare -a STEPS=(
     "@git clone https://github.com/user/repo.git\#stable # 0 # Cloning repo"
   )
@@ -796,7 +796,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - multiple escaped hashes in arguments" {
+@test "steps_run escaped hash - multiple escaped hashes in arguments" {
   declare -a STEPS=(
     "@somebin --url1=https://a.com\#tag1 --url2=https://b.com\#tag2 # 0"
   )
@@ -808,7 +808,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - in output" {
+@test "steps_run escaped hash - in output" {
   declare -a STEPS=(
     "@somebin # 0 # Output with \# hash"
   )
@@ -821,7 +821,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - in side effect" {
+@test "steps_run escaped hash - in side effect" {
   declare -a STEPS=(
     '@somebin # 0 # success # echo "Comment \# starts here" > ${BATS_TEST_TMPDIR}/escaped_hash'
   )
@@ -839,7 +839,7 @@ load _test_helper
   assert_output_contains "Comment # starts here"
 }
 
-@test "Escaped hash - complex URL with query and fragment" {
+@test "steps_run escaped hash - complex URL with query and fragment" {
   declare -a STEPS=(
     "@curl -fsSL https://example.com/install?key=123\#section -o installer.php # 0 # Downloaded"
   )
@@ -852,7 +852,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - mix of escaped and delimiter hashes" {
+@test "steps_run escaped hash - mix of escaped and delimiter hashes" {
   declare -a STEPS=(
     "@php installer.php --uri=https://github.com/repo.git\#stable # 0 # Success \# done"
   )
@@ -865,7 +865,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Escaped hash - all three parts with escaped hashes" {
+@test "steps_run escaped hash - all three parts with escaped hashes" {
   declare -a STEPS=(
     '@somebin --url=https://site.com\#tag # 0 # Message with \# hash # echo "Comment \# here" > ${BATS_TEST_TMPDIR}/all_escaped'
   )
@@ -883,7 +883,7 @@ load _test_helper
   assert_output_contains "Comment # here"
 }
 
-@test "Escaped hash - real-world example from user" {
+@test "steps_run escaped hash - real-world example from user" {
   declare -a STEPS=(
     "@curl -fsSL https://www.vortextemplate.com/install?1234567890 -o installer.php # 0"
     "@php installer.php --no-interaction --uri=https://github.com/drevops/vortex.git\#stable # 0"
@@ -903,7 +903,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Debug output" {
+@test "steps_run debug output" {
   debug="${BATS_TEST_TMPDIR}/debug.txt"
   export BATS_HELPERS_STEPS_DEBUG=1
 
@@ -925,7 +925,7 @@ load _test_helper
   assert_file_contains "${debug}" "  >   PARSE: FINISHED"
 }
 
-@test "Debug output - disabled" {
+@test "steps_run debug output - disabled" {
   debug="${BATS_TEST_TMPDIR}/debug.txt"
 
   declare -a STEPS=(
@@ -938,20 +938,20 @@ load _test_helper
   assert_empty "$(cat "${debug}")"
 }
 
-@test "Missing STEPS" {
+@test "steps_run missing STEPS - negative: empty array" {
   run steps_run "assert"
   assert_failure
   assert_output_contains "STEPS array is empty."
 }
 
-@test "Missing STEPS - caller recovers" {
+@test "steps_run missing STEPS - caller recovers" {
   recovered=0
   steps_run "assert" 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }
 
-@test "Mocked command called fewer times than expected" {
+@test "steps_run mocked command called fewer times than expected - negative: fewer calls" {
   declare -a STEPS=(
     "@curl example.com # 0"
     "@curl example.org # 0"
@@ -965,7 +965,7 @@ load _test_helper
   assert_output_contains "Mocked command 'curl' was expected to be called at least 2 time(s), but was called fewer times."
 }
 
-@test "Mocked command called fewer times than expected - caller recovers" {
+@test "steps_run mocked command called fewer times than expected - caller recovers" {
   declare -a STEPS=(
     "@curl example.com # 0"
     "@curl example.org # 0"
@@ -980,7 +980,7 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Expected call sequence" {
+@test "steps_run expected call sequence" {
   declare -a STEPS=(
     "@git clone https://example.com/repo.git # 0"
     "@curl -s https://example.com/hook # 0"
@@ -995,7 +995,7 @@ load _test_helper
   steps_run "assert" "${mocks[@]}"
 }
 
-@test "Expected call sequence - out of order" {
+@test "steps_run expected call sequence - out of order - negative: sequence mismatch" {
   declare -a STEPS=(
     "@git clone https://example.com/repo.git # 0"
     "@curl -s https://example.com/hook # 0"
@@ -1013,7 +1013,7 @@ load _test_helper
   assert_output_contains "Call log does not match the expected sequence"
 }
 
-@test "Expected call sequence - caller recovers" {
+@test "steps_run expected call sequence - caller recovers" {
   declare -a STEPS=(
     "@curl example.com # 0"
     "= curl 'example.org'"
@@ -1029,7 +1029,7 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
-@test "Mocked command called more times than expected" {
+@test "steps_run mocked command called more times than expected - negative: more calls" {
   declare -a STEPS=(
     "@curl example.com # 0"
   )

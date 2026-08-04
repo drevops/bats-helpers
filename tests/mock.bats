@@ -13,7 +13,7 @@ bats_require_minimum_version 1.13.0
 ## Mocks.
 ##
 
-@test "Mock: calls and arguments" {
+@test "mock_get_call_args and mock_get_call_num record every call" {
   mock_curl=$(mock_command "curl")
 
   "${BATS_TEST_DIRNAME}/fixtures/mock_script.sh"
@@ -26,7 +26,7 @@ bats_require_minimum_version 1.13.0
 
 # 'echo' would read a leading '-n', '-e' or '-E' as one of its own flags and
 # swallow it, losing the argument from the record.
-@test "Mock: calls and arguments that look like echo flags" {
+@test "mock_get_call_args records arguments that look like echo flags" {
   mock_curl=$(mock_command "curl")
 
   curl -n -e -E "trailing"
@@ -34,7 +34,7 @@ bats_require_minimum_version 1.13.0
   assert_equal "-n -e -E trailing" "$(mock_get_call_args "${mock_curl}" 1)"
 }
 
-@test "Mock: output" {
+@test "mock_set_output sets per-call output" {
   mock_curl=$(mock_command "curl")
   mock_set_output "${mock_curl}" "testoutput1" 1
   mock_set_output "${mock_curl}" "testoutput2" 2
@@ -46,7 +46,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "testoutput2"
 }
 
-@test "Mock: output is written literally" {
+@test "mock_set_output writes the value literally" {
   mock_curl=$(mock_command "curl")
   mock_set_output "${mock_curl}" "-n" 1
   mock_set_output "${mock_curl}" 'first\nsecond' 2
@@ -60,7 +60,7 @@ bats_require_minimum_version 1.13.0
   assert_output 'first\nsecond'
 }
 
-@test "Mock: exit status" {
+@test "mock_set_status sets the exit status" {
   mock_curl=$(mock_command "curl")
   mock_set_status "${mock_curl}" 1 1
 
@@ -69,7 +69,7 @@ bats_require_minimum_version 1.13.0
   assert_equal 1 "$(mock_get_call_num "${mock_curl}")"
 }
 
-@test "Mock: assert call args - exact match" {
+@test "mock_assert_call_args exact match" {
   mock_curl=$(mock_command "curl")
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
@@ -78,7 +78,7 @@ bats_require_minimum_version 1.13.0
   assert_success
 }
 
-@test "Mock: assert call args - wildcard match" {
+@test "mock_assert_call_args wildcard match" {
   mock_curl=$(mock_command "curl")
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
@@ -87,7 +87,7 @@ bats_require_minimum_version 1.13.0
   assert_success
 }
 
-@test "Mock: assert call args - exact mismatch" {
+@test "mock_assert_call_args exact mismatch" {
   mock_curl=$(mock_command "curl")
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
@@ -96,7 +96,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "Mock: assert call args - multiple calls with wildcard" {
+@test "mock_assert_call_args multiple calls with wildcard" {
   mock_curl=$(mock_command "curl")
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
@@ -109,7 +109,7 @@ bats_require_minimum_version 1.13.0
   assert_success
 }
 
-@test "Mock: not called enough times" {
+@test "mock_resolve_n when the mock was not called enough times" {
   mock_curl=$(mock_command "curl")
 
   curl example.com
@@ -119,7 +119,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Mock must be called at least '2' time(s)"
 }
 
-@test "Mock: not called enough times - caller recovers" {
+@test "mock_resolve_n when the mock was not called enough times - caller recovers" {
   mock_curl=$(mock_command "curl")
 
   curl example.com
@@ -130,7 +130,7 @@ bats_require_minimum_version 1.13.0
   assert_equal 1 "${recovered}"
 }
 
-@test "Mock: call args when not called enough times - caller recovers" {
+@test "mock_get_call_args when not called enough times - caller recovers" {
   mock_curl=$(mock_command "curl")
 
   curl example.com
@@ -141,7 +141,7 @@ bats_require_minimum_version 1.13.0
   assert_equal 1 "${recovered}"
 }
 
-@test "Mock: call user when not called enough times - caller recovers" {
+@test "mock_get_call_user when not called enough times - caller recovers" {
   mock_curl=$(mock_command "curl")
 
   curl example.com
@@ -152,7 +152,7 @@ bats_require_minimum_version 1.13.0
   assert_equal 1 "${recovered}"
 }
 
-@test "Mock: call user" {
+@test "mock_get_call_user reports the calling user" {
   unset BATS_HELPERS_MOCK_USER
   unset _USER
   mock_curl=$(mock_command "curl")
@@ -166,7 +166,7 @@ bats_require_minimum_version 1.13.0
   assert_equal "someoneelse" "$(mock_get_call_user "${mock_curl}" 2)"
 }
 
-@test "Mock: default temporary directory" {
+@test "mock_prepare_tmp defaults to a directory under BATS_TEST_TMPDIR" {
   assert_equal "${BATS_TEST_TMPDIR}/bats-helpers-mock" "${BATS_HELPERS_MOCK_TMPDIR}"
 
   mock_curl=$(mock_command "curl")
@@ -175,7 +175,7 @@ bats_require_minimum_version 1.13.0
   assert_symlink_exists "${BATS_HELPERS_MOCK_TMPDIR}/curl"
 }
 
-@test "Mock: custom temporary directory" {
+@test "mock_prepare_tmp with a custom directory" {
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom"
 
   run mock_prepare_tmp
@@ -190,7 +190,7 @@ bats_require_minimum_version 1.13.0
   assert_output "${BATS_TEST_TMPDIR}/custom/bats-helpers-mock"
 }
 
-@test "Mock: custom temporary directory with spaces" {
+@test "mock_command with spaces in the temporary directory" {
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/bats mock with spaces"
   mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}"
   mock_curl=$(mock_command "curl")
@@ -200,7 +200,7 @@ bats_require_minimum_version 1.13.0
   assert_success
 }
 
-@test "Mock: custom temporary directory with shell metacharacters" {
+@test "mock_command with shell metacharacters in the temporary directory" {
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/\$(touch pwned) mock"
   mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}"
   mock_curl=$(mock_command "curl")
@@ -216,7 +216,7 @@ bats_require_minimum_version 1.13.0
   assert_equal "curl 'example.com'" "$(mock_log_print)"
 }
 
-@test "Mock: temporary directory that cannot be created" {
+@test "mock_prepare_tmp when the directory cannot be created" {
   touch "${BATS_TEST_TMPDIR}/regular_file"
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/regular_file/custom"
 
@@ -224,7 +224,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "Mock: temporary directory without a sandbox" {
+@test "mock_prepare_tmp without a sandbox" {
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
@@ -237,7 +237,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
-@test "Mock: create without a sandbox" {
+@test "mock_create without a sandbox" {
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
@@ -250,7 +250,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
-@test "Mock: paths" {
+@test "mock_paths" {
   mock_curl="$(mock_command "curl")"
   mock_git="$(mock_command "git")"
 
@@ -269,7 +269,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
-@test "Mock: names" {
+@test "mock_names" {
   mock_command "curl" >/dev/null
   mock_command "git" >/dev/null
 
@@ -288,7 +288,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
-@test "Mock: call environment" {
+@test "mock_get_call_env" {
   mock_curl=$(mock_command "curl")
 
   MOCK_TEST_VAR="testvalue1" curl example.com
@@ -298,7 +298,7 @@ bats_require_minimum_version 1.13.0
   assert_equal "testvalue2" "$(mock_get_call_env "${mock_curl}" "MOCK_TEST_VAR" 2)"
 }
 
-@test "Mock: call environment - default index" {
+@test "mock_get_call_env defaults to the last call" {
   mock_curl=$(mock_command "curl")
 
   MOCK_TEST_VAR="testvalue" curl example.com
@@ -310,7 +310,7 @@ bats_require_minimum_version 1.13.0
   assert_equal "testvalue" "${actual}"
 }
 
-@test "Mock: call environment when not called enough times" {
+@test "mock_get_call_env when not called enough times" {
   mock_curl=$(mock_command "curl")
 
   curl example.com
@@ -320,7 +320,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Mock must be called at least '2' time(s)"
 }
 
-@test "Mock: call environment when not called enough times - caller recovers" {
+@test "mock_get_call_env when not called enough times - caller recovers" {
   mock_curl=$(mock_command "curl")
 
   curl example.com
@@ -346,7 +346,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "does not exist. Create it with 'mock_command' first."
 }
 
-@test "mock_spec_arg - equals" {
+@test "mock_spec_arg equals" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 equals "status"
@@ -361,7 +361,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - not_equals" {
+@test "mock_spec_arg not_equals" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_equals "status"
@@ -372,7 +372,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - starts_with" {
+@test "mock_spec_arg starts_with" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 starts_with "https://"
@@ -383,7 +383,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - not_starts_with" {
+@test "mock_spec_arg not_starts_with" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_starts_with "https://"
@@ -394,7 +394,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - ends_with" {
+@test "mock_spec_arg ends_with" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 ends_with ".git"
@@ -405,7 +405,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - not_ends_with" {
+@test "mock_spec_arg not_ends_with" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_ends_with ".git"
@@ -416,7 +416,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - contains" {
+@test "mock_spec_arg contains" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 contains "example"
@@ -427,7 +427,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - not_contains" {
+@test "mock_spec_arg not_contains" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_contains "example"
@@ -438,7 +438,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - matches" {
+@test "mock_spec_arg matches" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 matches '^v[0-9]+$'
@@ -451,7 +451,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - not_matches" {
+@test "mock_spec_arg not_matches" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_matches '^v[0-9]+$'
@@ -462,7 +462,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - present" {
+@test "mock_spec_arg present" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 2 present
@@ -475,7 +475,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - not_present" {
+@test "mock_spec_arg not_present" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 2 not_present
@@ -486,7 +486,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - any position" {
+@test "mock_spec_arg any position" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" '*' equals "--force"
@@ -498,7 +498,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - any position, negated" {
+@test "mock_spec_arg any position, negated" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" '*' not_equals "--force"
@@ -510,7 +510,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - any position, present" {
+@test "mock_spec_arg any position, present" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" '*' present
@@ -521,7 +521,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - repeated any position" {
+@test "mock_spec_arg repeated any position" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" '*' equals "--force"
@@ -533,7 +533,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_spec_arg - validation" {
+@test "mock_spec_arg validation" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 equals "status"
@@ -594,12 +594,12 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Count 'two' is not a non-negative integer."
 }
 
-@test "mock_match_value - unknown matcher" {
+@test "mock_match_value unknown matcher" {
   run mock_match_value "value" "unknown" "needle"
   assert_failure
 }
 
-@test "mock_match_index - first matching specification wins" {
+@test "mock_match_index first matching specification wins" {
   mock_git="$(mock_command "git")"
 
   broad="$(mock_spec_add "${mock_git}")"
@@ -643,7 +643,7 @@ bats_require_minimum_version 1.13.0
   assert_output "clean"
 }
 
-@test "mock_spec_set_property - from STDIN" {
+@test "mock_spec_set_property from STDIN" {
   mock_git="$(mock_command "git")"
 
   spec="$(mock_spec_add "${mock_git}")"
@@ -659,7 +659,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Create it with 'mock_spec_add' first."
 }
 
-@test "mock_spec_set_property - the value is written literally" {
+@test "mock_spec_set_property the value is written literally" {
   mock_git="$(mock_command "git")"
 
   flag="$(mock_spec_add "${mock_git}")"
@@ -798,7 +798,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "does not exist. Create it with 'mock_command' first."
 }
 
-@test "mock_set_forward - real command is not available" {
+@test "mock_set_forward real command is not available" {
   mock_absent="$(mock_command "definitely_not_a_real_command")"
   mock_set_forward "${mock_absent}"
 
@@ -809,7 +809,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "is not available to forward to"
 }
 
-@test "mock_set_forward - real command is a shell builtin" {
+@test "mock_set_forward real command is a shell builtin" {
   mock_echo="$(mock_command "echo")"
   mock_set_forward "${mock_echo}"
 
@@ -924,7 +924,7 @@ bats_require_minimum_version 1.13.0
   assert_output_not_contains "argument specification 1"
 }
 
-@test "mock_verify - explicit mocks" {
+@test "mock_verify explicit mocks" {
   mock_git="$(mock_command "git")"
   mock_curl="$(mock_command "curl")"
   mock_set_status "${mock_git}" 0 1
@@ -944,7 +944,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "does not exist. Create it with 'mock_command' first."
 }
 
-@test "mock_verify - every mock of the test" {
+@test "mock_verify every mock of the test" {
   mock_git="$(mock_command "git")"
   mock_curl="$(mock_command "curl")"
   mock_set_status "${mock_git}" 0 1
@@ -959,7 +959,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Mock 'curl' has a response configured for call 1, but was called 0 time(s)"
 }
 
-@test "mock_verify - no mocks" {
+@test "mock_verify no mocks" {
   mock_verify
 }
 
@@ -1022,7 +1022,7 @@ bats_require_minimum_version 1.13.0
   assert_output_not_contains "no expectation covers"
 }
 
-@test "mock_expect_ordinal - an index is recorded once" {
+@test "mock_expect_ordinal an index is recorded once" {
   mock_git="$(mock_command "git")"
   mock_set_status "${mock_git}" 0 1
   mock_set_output "${mock_git}" "first" 1
@@ -1069,7 +1069,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox is enabled"
 }
 
-@test "mock_sandbox_enable - the library keeps working inside the sandbox" {
+@test "mock_sandbox_enable the library keeps working inside the sandbox" {
   mock_command "curl" >/dev/null
 
   mock_sandbox_enable
@@ -1087,7 +1087,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_sandbox_enable - the BATS harness keeps working inside the sandbox" {
+@test "mock_sandbox_enable the BATS harness keeps working inside the sandbox" {
   mock_curl="$(mock_command "curl")"
 
   mock_sandbox_enable
@@ -1103,7 +1103,7 @@ bats_require_minimum_version 1.13.0
   assert_equal "my value" "$(mock_get_call_env "${mock_curl}" "MY_VAR")"
 }
 
-@test "mock_sandbox_enable - the allow-list can be seeded" {
+@test "mock_sandbox_enable the allow-list can be seeded" {
   mock_sandbox_enable "basename"
 
   run basename "${BATS_TEST_TMPDIR}/real.txt"
@@ -1133,7 +1133,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Command 'basename' ran for real, allowed by the mock sandbox"
 }
 
-@test "mock_sandbox_allow - an allowed command is not replaced by a silent link" {
+@test "mock_sandbox_allow an allowed command is not replaced by a silent link" {
   echo "content" >"${BATS_TEST_TMPDIR}/file.txt"
 
   # 'cat' is one of the commands the library itself runs, so enabling the
@@ -1152,7 +1152,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Command 'cat' ran for real, allowed by the mock sandbox"
 }
 
-@test "mock_sandbox_allow - validation" {
+@test "mock_sandbox_allow validation" {
   run mock_sandbox_allow
   assert_failure
   assert_output_contains "At least one command name is required."
@@ -1247,7 +1247,7 @@ bats_require_minimum_version 1.13.0
   assert_equal "$(mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}" "${path_before}")" "${real_path}"
 }
 
-@test "mock_sandbox_link_base - a command the machine does not have is skipped" {
+@test "mock_sandbox_link_base a command the machine does not have is skipped" {
   mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
   mkdir -p "${BATS_TEST_TMPDIR}/empty"
 
@@ -1309,7 +1309,7 @@ bats_require_minimum_version 1.13.0
   assert_output "real.txt"
 }
 
-@test "mock_verify - a denied command fails the verification" {
+@test "mock_verify a denied command fails the verification" {
   mock_sandbox_enable
 
   run -127 definitely_not_a_real_command
@@ -1320,7 +1320,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox denied it"
 }
 
-@test "mock_verify - an allowed command is reported without failing" {
+@test "mock_verify an allowed command is reported without failing" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
 
   mock_sandbox_enable "basename"
@@ -1353,7 +1353,7 @@ bats_require_minimum_version 1.13.0
   assert_file_contains "${notice}" "Mocked commands are not found and the real commands run instead."
 }
 
-@test "mock_path_check - without a record" {
+@test "mock_path_check without a record" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
 
   rm -f "${BATS_HELPERS_MOCK_TMPDIR}/.path"
@@ -1475,7 +1475,7 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
-@test "mock_assert_calls - empty and whitespace arguments" {
+@test "mock_assert_calls empty and whitespace arguments" {
   mock_command "curl" >/dev/null
 
   curl "" "two words" " padded "

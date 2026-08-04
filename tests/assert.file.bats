@@ -104,7 +104,6 @@ load _test_helper
 @test "assert_symlink_exists" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_symlink"
 
-  # Assert file.
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_symlink/src.txt"
   ln -s "${BATS_TEST_TMPDIR}/fixture_symlink/src.txt" "${BATS_TEST_TMPDIR}/fixture_symlink/dst.txt"
   assert_symlink_exists "${BATS_TEST_TMPDIR}/fixture_symlink/dst.txt"
@@ -112,7 +111,6 @@ load _test_helper
   run assert_symlink_exists "${BATS_TEST_TMPDIR}/fixture_symlink/not-existing.txt"
   assert_failure
 
-  # Assert dir.
   mkdir "${BATS_TEST_TMPDIR}/fixture_symlink/symlink_src"
   ln -s "${BATS_TEST_TMPDIR}/fixture_symlink/symlink_src" "${BATS_TEST_TMPDIR}/fixture_symlink/symlink_dst"
   assert_symlink_exists "${BATS_TEST_TMPDIR}/fixture_symlink/symlink_dst"
@@ -126,7 +124,6 @@ load _test_helper
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_symlink/src.txt"
   ln -s "${BATS_TEST_TMPDIR}/fixture_symlink/src.txt" "${BATS_TEST_TMPDIR}/fixture_symlink/dst.txt"
 
-  # Assert others.
   assert_symlink_not_exists "${BATS_TEST_TMPDIR}/fixture_symlink/src.txt"
   assert_symlink_not_exists "${BATS_TEST_TMPDIR}/fixture_symlink/other_dst.txt"
   assert_symlink_not_exists "${BATS_TEST_TMPDIR}/fixture_symlink/some_dir"
@@ -397,13 +394,11 @@ load _test_helper
 
   rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
 
-  # Excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
 
-  # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor three"
@@ -427,19 +422,16 @@ load _test_helper
   assert_output_contains "fixture/3.txt"
   assert_output_not_contains "fixture/2.txt"
 
-  # Non-existing dir.
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/non_existing" "existing"
 
   rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
   rm "${BATS_TEST_TMPDIR}/fixture/2.txt" >/dev/null
   rm "${BATS_TEST_TMPDIR}/fixture/3.txt" >/dev/null
 
-  # Excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
 
-  # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor three"
@@ -602,31 +594,26 @@ load _test_helper
 }
 
 @test "assert_dirs_equal" {
-  # Assert that files in the root are equal.
   mkdir -p "${BATS_TEST_TMPDIR}/t11"
   mkdir -p "${BATS_TEST_TMPDIR}/t12"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t11/binary.png"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t12/binary.png"
   assert_dirs_equal "${BATS_TEST_TMPDIR}/t11" "${BATS_TEST_TMPDIR}/t12"
 
-  # Assert that files in the root are not equal.
   echo "some other file" >"${BATS_TEST_TMPDIR}/t12/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t11" "${BATS_TEST_TMPDIR}/t12"
   assert_failure
 
-  # Assert that files in the subdirs are equal.
   mkdir -p "${BATS_TEST_TMPDIR}/t31/subdir"
   mkdir -p "${BATS_TEST_TMPDIR}/t32/subdir"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t31/subdir/binary.png"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t32/subdir/binary.png"
   assert_dirs_equal "${BATS_TEST_TMPDIR}/t31" "${BATS_TEST_TMPDIR}/t32"
 
-  # Assert that files in the subdirs are not equal.
   echo "some other file" >"${BATS_TEST_TMPDIR}/t32/subdir/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t31" "${BATS_TEST_TMPDIR}/t32"
   assert_failure
 
-  # Assert that files in the root and subdirs are equal.
   mkdir -p "${BATS_TEST_TMPDIR}/t41/subdir"
   mkdir -p "${BATS_TEST_TMPDIR}/t42/subdir"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t41/binary.png"
@@ -637,12 +624,10 @@ load _test_helper
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t42/subdir/binary.png"
   assert_dirs_equal "${BATS_TEST_TMPDIR}/t41" "${BATS_TEST_TMPDIR}/t42"
 
-  # Assert that files in the root and subdirs are not equal.
   echo "some other file" >"${BATS_TEST_TMPDIR}/t42/subdir/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t41" "${BATS_TEST_TMPDIR}/t42"
   assert_failure
 
-  # Assert that missing files trigger a failure.
   mkdir -p "${BATS_TEST_TMPDIR}/t51/subdir"
   mkdir -p "${BATS_TEST_TMPDIR}/t52/subdir"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t51/binary.png"
@@ -655,7 +640,6 @@ load _test_helper
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t51" "${BATS_TEST_TMPDIR}/t52"
   assert_failure
 
-  # Assert non-existing dirs are failing.
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t61" "${BATS_TEST_TMPDIR}/t62"
   assert_failure
 }

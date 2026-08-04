@@ -39,9 +39,11 @@ load _test_helper
   echo "VAR2=val2" >>.env
   # shellcheck disable=SC2016
   run file_read_env '$VAR1'
+  assert_success
   assert_output_contains "val1"
   # shellcheck disable=SC2016
   run file_read_env '$VAR2'
+  assert_success
   assert_output_contains "val2"
 
   popd
