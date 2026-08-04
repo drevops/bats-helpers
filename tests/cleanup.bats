@@ -237,7 +237,7 @@ two"
 
 # The two tests below share one registry location, because with the per-test
 # default nothing could leak between them in the first place.
-@test "cleanup registrations do not leak into the next test" {
+@test "Cleanup registrations do not leak into the next test" {
   export BATS_HELPERS_CLEANUP_DIR="${BATS_FILE_TMPDIR}"
 
   cleanup_register touch "${BATS_FILE_TMPDIR}/leak.marker"
@@ -246,7 +246,7 @@ two"
   assert_file_not_exists "${BATS_FILE_TMPDIR}/leak.marker"
 }
 
-@test "cleanup registrations do not leak into the next test - next test" {
+@test "Cleanup registrations from the previous test are already drained" {
   export BATS_HELPERS_CLEANUP_DIR="${BATS_FILE_TMPDIR}"
 
   assert_file_exists "${BATS_FILE_TMPDIR}/leak.marker"

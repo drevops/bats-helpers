@@ -10,7 +10,7 @@ process_is_gone() {
   ! kill -0 "${1}" 2>/dev/null
 }
 
-@test "Interactive" {
+@test "tui_run" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   declare -a answers=(
@@ -24,7 +24,7 @@ process_is_gone() {
   assert_output_contains "custom answer2"
 }
 
-@test "Defaults" {
+@test "tui_run with an empty answer" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   declare -a answers=(
@@ -38,7 +38,7 @@ process_is_gone() {
   assert_output_contains "custom answer2"
 }
 
-@test "Deprecated 'nothing' answer submits a blank line" {
+@test "tui_run submits a blank line for the deprecated nothing answer" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
   export BATS_HELPERS_DEPRECATION_QUIET=1
 
@@ -52,7 +52,7 @@ process_is_gone() {
   assert_output_contains "custom answer2"
 }
 
-@test "Answers reach the script literally" {
+@test "tui_run passes the answers verbatim" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   declare -a answers=(
@@ -65,7 +65,7 @@ process_is_gone() {
   assert_output_contains "100% of %s answers"
 }
 
-@test "Answers containing backslash escapes are not decoded" {
+@test "tui_run does not decode backslash escapes in answers" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   declare -a answers=(
@@ -78,7 +78,7 @@ process_is_gone() {
   assert_output_contains 'literal\ctruncate'
 }
 
-@test "Answer count is published" {
+@test "tui_run publishes the answer count" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   tui_run "custom answer1" "custom answer2"
@@ -86,7 +86,7 @@ process_is_gone() {
   assert_equal 2 "${BATS_HELPERS_TUI_ANSWERS}"
 }
 
-@test "Absolute script path containing a space" {
+@test "tui_run with an absolute script path containing a space" {
   cp "${BATS_TEST_DIRNAME}/fixtures/tui_script.sh" "${BATS_TEST_TMPDIR}/tui script.sh"
   export SCRIPT_FILE="${BATS_TEST_TMPDIR}/tui script.sh"
 
@@ -96,7 +96,7 @@ process_is_gone() {
   assert_output_contains "custom answer1"
 }
 
-@test "Script path containing a space" {
+@test "tui_run with a relative script path containing a space" {
   cp "${BATS_TEST_DIRNAME}/fixtures/tui_script.sh" "${BATS_TEST_TMPDIR}/tui script.sh"
   export SCRIPT_FILE="tui script.sh"
   pushd "${BATS_TEST_TMPDIR}"
@@ -109,7 +109,7 @@ process_is_gone() {
   popd
 }
 
-@test "Missing SCRIPT_FILE" {
+@test "tui_run without SCRIPT_FILE" {
   unset SCRIPT_FILE
 
   declare -a answers=(
@@ -121,7 +121,7 @@ process_is_gone() {
   assert_output_contains "SCRIPT_FILE is not set."
 }
 
-@test "Missing SCRIPT_FILE - caller recovers" {
+@test "tui_run without SCRIPT_FILE and the caller recovers" {
   unset SCRIPT_FILE
 
   declare -a answers=(
@@ -135,7 +135,7 @@ process_is_gone() {
   assert_equal 1 "${recovered}"
 }
 
-@test "Non-existing SCRIPT_FILE" {
+@test "tui_run with a missing script file" {
   export SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
 
   declare -a answers=(
@@ -147,7 +147,7 @@ process_is_gone() {
   assert_output_contains "Script file 'tests/fixtures/tui_script_nonexisting.sh' does not exist."
 }
 
-@test "Non-existing SCRIPT_FILE - caller recovers" {
+@test "tui_run with a missing script file and the caller recovers" {
   export SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
 
   declare -a answers=(
@@ -161,7 +161,7 @@ process_is_gone() {
   assert_equal 1 "${recovered}"
 }
 
-@test "SCRIPT_FILE is not a regular file" {
+@test "tui_run with a script that is not a regular file" {
   export SCRIPT_FILE="tests/fixtures"
 
   declare -a answers=(
@@ -173,7 +173,7 @@ process_is_gone() {
   assert_output_contains "Script file 'tests/fixtures' is not a regular file."
 }
 
-@test "Sandbox cannot be resolved" {
+@test "tui_run when the sandbox cannot be resolved" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
   sandbox="${BATS_TEST_TMPDIR}"
   BATS_TEST_TMPDIR=""
@@ -190,7 +190,7 @@ process_is_gone() {
 ## Deadline.
 ##
 
-@test "Script that prompts more times than it has answers" {
+@test "tui_run with a script that prompts more times than it has answers" {
   export SCRIPT_FILE="tests/fixtures/tui_script_prompts.sh"
   export BATS_HELPERS_TUI_TIMEOUT=2
 
@@ -205,7 +205,7 @@ process_is_gone() {
   assert_output_contains "Answer2 [default answer2]:"
 }
 
-@test "Deadline reaches the processes the script started" {
+@test "tui_run ends the processes the script started at the deadline" {
   export SCRIPT_FILE="tests/fixtures/tui_script_worker.sh"
   export WORKER_PID_FILE="${BATS_TEST_TMPDIR}/worker.pid"
   export BATS_HELPERS_TUI_TIMEOUT=2
@@ -217,7 +217,7 @@ process_is_gone() {
   retry_run 20 0.1 process_is_gone "${worker_pid}"
 }
 
-@test "Deadline is configurable" {
+@test "tui_run with a configured deadline" {
   export SCRIPT_FILE="tests/fixtures/tui_script_prompts.sh"
   export BATS_HELPERS_TUI_TIMEOUT=30
 
@@ -227,7 +227,7 @@ process_is_gone() {
   assert_output_contains "two"
 }
 
-@test "Deadline is not a whole number of seconds" {
+@test "tui_run with a fractional deadline" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
   export BATS_HELPERS_TUI_TIMEOUT="1.5"
 
@@ -237,7 +237,7 @@ process_is_gone() {
   assert_output_contains "Timeout '1.5' is not a whole number of seconds."
 }
 
-@test "Deadline is not greater than zero" {
+@test "tui_run with a deadline of zero or less" {
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
   export BATS_HELPERS_TUI_TIMEOUT=0
@@ -292,7 +292,7 @@ process_is_gone() {
   assert_output_contains "0 of 2"
 }
 
-@test "Answer count does not match the prompt count" {
+@test "tui_assert_prompts with a mismatched answer count" {
   export SCRIPT_FILE="tests/fixtures/tui_script_prompts.sh"
 
   tui_run "one" "two"
@@ -310,7 +310,7 @@ process_is_gone() {
   assert_output_contains "prompts : 3"
 }
 
-@test "Script that prompts for nothing" {
+@test "tui_run with a script that prompts for nothing" {
   export SCRIPT_FILE="tests/fixtures/tui_script_silent.sh"
 
   tui_run
@@ -325,7 +325,7 @@ process_is_gone() {
   assert_output_contains "prompts : 1"
 }
 
-@test "Prompts asserted before a script has run" {
+@test "tui_assert_prompts before a script has run" {
   unset BATS_HELPERS_TUI_ANSWERS
 
   run tui_assert_prompts "Answer1"
@@ -334,7 +334,7 @@ process_is_gone() {
   assert_output_contains "No script has been run. Run 'tui_run' first."
 }
 
-@test "Empty prompt" {
+@test "tui_assert_prompts with an empty prompt" {
   export SCRIPT_FILE="tests/fixtures/tui_script_prompts.sh"
 
   tui_run "one" "two"

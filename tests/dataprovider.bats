@@ -108,7 +108,7 @@ provide_matrix_triples() {
   dataprovider_matrix "matrix_emit_triple" matrix_first matrix_second matrix_third
 }
 
-@test "dataprovider_run called directly - success" {
+@test "dataprovider_run called directly" {
   # Numbers.
   declare -a TEST_CASES=(
     1 2 3
@@ -136,7 +136,7 @@ provide_matrix_triples() {
   dataprovider_run "add_numbers" 3 ""
 }
 
-@test "dataprovider_run - success" {
+@test "dataprovider_run" {
   declare -a TEST_CASES=(
     1 2 3
     1 2 3
@@ -149,7 +149,7 @@ provide_matrix_triples() {
   assert_output_not_contains "Total failed test sets"
 }
 
-@test "dataprovider_run - failure" {
+@test "dataprovider_run with failing cases" {
   declare -a TEST_CASES=(
     1 2 3
     1 2 4
@@ -163,7 +163,7 @@ provide_matrix_triples() {
   assert_output_contains "Total failed test sets: 2"
 }
 
-@test "dataprovider_run validation - failure" {
+@test "dataprovider_run with invalid input" {
   run dataprovider_run "" 3
   assert_failure
   assert_output_contains "Function name must not be empty."
@@ -218,7 +218,7 @@ provide_matrix_triples() {
   assert_output_contains "Expected value (last element) in the data set '1' is empty."
 }
 
-@test "dataprovider_run with a custom assertion - success" {
+@test "dataprovider_run with a custom assertion" {
   declare -a TEST_CASES=(
     1 2 3
     4 5 9
@@ -227,7 +227,7 @@ provide_matrix_triples() {
   dataprovider_run "add_numbers" 3 "assert_output"
 }
 
-@test "dataprovider_run with a custom assertion - failure" {
+@test "dataprovider_run with a custom assertion that fails" {
   declare -a TEST_CASES=(
     1 23 23
   )
@@ -242,11 +242,11 @@ provide_matrix_triples() {
   assert_output_contains "Total failed test sets: 1"
 }
 
-@test "dataprovider_run_cases called directly - success" {
+@test "dataprovider_run_cases called directly" {
   dataprovider_run_cases "add_numbers" "provide_cases"
 }
 
-@test "dataprovider_run_cases - success" {
+@test "dataprovider_run_cases" {
   run dataprovider_run_cases "add_numbers" "provide_cases"
   assert_success
 
@@ -254,7 +254,7 @@ provide_matrix_triples() {
   assert_output_not_contains "Total failed test sets"
 }
 
-@test "dataprovider_run_cases - failure" {
+@test "dataprovider_run_cases with failing cases" {
   run dataprovider_run_cases "add_numbers" "provide_failing_cases"
   assert_failure
   assert_output_contains "Error: Failed for set 'adds a negative'"
@@ -264,7 +264,7 @@ provide_matrix_triples() {
   assert_output_not_contains "0-based"
 }
 
-@test "dataprovider_run_cases without a label - failure" {
+@test "dataprovider_run_cases without a label" {
   run dataprovider_run_cases "add_numbers" "provide_unlabelled_cases"
   assert_failure
   assert_output_contains "Error: Failed for set 0"
@@ -272,7 +272,7 @@ provide_matrix_triples() {
   assert_output_contains "Total failed test sets: 1"
 }
 
-@test "dataprovider_run_cases with mixed labels - failure" {
+@test "dataprovider_run_cases with mixed labels" {
   run dataprovider_run_cases "add_numbers" "provide_mixed_labels"
   assert_failure
   assert_output_contains "Error: Failed for set 0"
@@ -281,37 +281,37 @@ provide_matrix_triples() {
   assert_output_contains "Total failed test sets: 2"
 }
 
-@test "dataprovider_run_cases with varying arity - success" {
+@test "dataprovider_run_cases with varying arity" {
   dataprovider_run_cases "describe_args" "provide_varying_arity"
 }
 
-@test "dataprovider_run_cases with empty values - success" {
+@test "dataprovider_run_cases with empty values" {
   dataprovider_run_cases "describe_args" "provide_empty_values" "assert_output"
 }
 
-@test "dataprovider_run_cases with spaces - success" {
+@test "dataprovider_run_cases with spaces" {
   dataprovider_run_cases "describe_args" "provide_space_values" "assert_output"
 }
 
-@test "dataprovider_run_cases with tabs - success" {
+@test "dataprovider_run_cases with tabs" {
   dataprovider_run_cases "describe_args" "provide_tab_values" "assert_output"
 }
 
-@test "dataprovider_run_cases with newlines - success" {
+@test "dataprovider_run_cases with newlines" {
   dataprovider_run_cases "describe_args" "provide_newline_values" "assert_output"
 }
 
-@test "dataprovider_run_cases with a custom assertion - success" {
+@test "dataprovider_run_cases with a custom assertion" {
   dataprovider_run_cases "add_numbers" "provide_regex_cases" "assert_output_matches"
 }
 
-@test "dataprovider_run_cases with a custom assertion - failure" {
+@test "dataprovider_run_cases with a custom assertion that fails" {
   run dataprovider_run_cases "add_numbers" "provide_regex_cases" "assert_output_not_matches"
   assert_failure
   assert_output_contains "Failed sets: 'sums to a number'"
 }
 
-@test "dataprovider_run_cases validation - failure" {
+@test "dataprovider_run_cases with invalid input" {
   run dataprovider_run_cases "" "provide_cases"
   assert_failure
   assert_output_contains "Function name must not be empty."
@@ -346,13 +346,13 @@ provide_matrix_triples() {
   assert_output_contains "Cases function 'provide_case_without_expected' exited with a non-zero status."
 }
 
-@test "dataprovider_case outside a runner - failure" {
+@test "dataprovider_case outside a runner" {
   run dataprovider_case "label" "expected"
   assert_failure
   assert_output_contains "Function 'dataprovider_case' must be called from the function passed to 'dataprovider_run_cases'."
 }
 
-@test "dataprovider_matrix - success" {
+@test "dataprovider_matrix" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1" "2" "3")
   declare -a matrix_seen=()
@@ -363,7 +363,7 @@ provide_matrix_triples() {
   assert_equal "a|1 a|2 a|3 b|1 b|2 b|3" "${matrix_seen[*]}"
 }
 
-@test "dataprovider_matrix with a single list - success" {
+@test "dataprovider_matrix with a single list" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_seen=()
 
@@ -373,7 +373,7 @@ provide_matrix_triples() {
   assert_equal "a b" "${matrix_seen[*]}"
 }
 
-@test "dataprovider_matrix with a list holding one value - success" {
+@test "dataprovider_matrix with a list holding one value" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1")
   declare -a matrix_seen=()
@@ -384,7 +384,7 @@ provide_matrix_triples() {
   assert_equal "a|1 b|1" "${matrix_seen[*]}"
 }
 
-@test "dataprovider_matrix with three lists - success" {
+@test "dataprovider_matrix with three lists" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1" "2")
   declare -a matrix_third=("x" "y")
@@ -396,7 +396,7 @@ provide_matrix_triples() {
   assert_equal "a1x a1y a2x a2y b1x b1y b2x b2y" "${matrix_seen[*]}"
 }
 
-@test "dataprovider_matrix - failure" {
+@test "dataprovider_matrix with failing cases" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1" "2")
   declare -a matrix_seen=()
@@ -407,7 +407,7 @@ provide_matrix_triples() {
   assert_output_contains "Total failed test sets: 4"
 }
 
-@test "dataprovider_matrix validation - failure" {
+@test "dataprovider_matrix with invalid input" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_empty=()
   declare matrix_scalar="a"

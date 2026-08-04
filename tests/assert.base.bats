@@ -18,7 +18,7 @@ report_trace_wrapper() {
   report_trace_assert
 }
 
-@test "bats_internals" {
+@test "The BATS harness provides the temporary directories" {
   echo "Bats version ${BATS_VERSION}" >&3
   [ "${BATS_FILE_TMPDIR}" != "" ]
   [ "${BATS_TEST_TMPDIR}" != "" ]
@@ -197,7 +197,7 @@ file : ${BATS_TEST_TMPDIR}/some.txt
   assert_output_contains "Failure report rows require a key and a value each."
 }
 
-@test "A diff is coloured when the platform supports it" {
+@test "format_error colours the diff when colour is enabled" {
   if ! report_diff_color_supported; then
     skip "the platform's diff does not understand the colour flag"
   fi

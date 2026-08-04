@@ -6,14 +6,14 @@
 
 load _test_helper
 
-@test "Codebase export not enabled" {
+@test "fixture_export_codebase when disabled" {
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
   fixture_prepare_dir "${build_dir}"
   fixture_export_codebase "${build_dir}"
   assert_file_not_exists "${build_dir}/README.md"
 }
 
-@test "Codebase export enabled" {
+@test "fixture_export_codebase when enabled" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
@@ -22,7 +22,7 @@ load _test_helper
   assert_file_exists "${build_dir}/README.md"
 }
 
-@test "Codebase export - missing destination directory" {
+@test "fixture_export_codebase with a missing destination directory" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/non-existing"
@@ -35,7 +35,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
 --'
 }
 
-@test "Codebase export - missing destination directory - caller recovers" {
+@test "fixture_export_codebase with a missing destination directory and the caller recovers" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/non-existing"
@@ -46,7 +46,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
   assert_equal 1 "${recovered}"
 }
 
-@test "Codebase export - export fails" {
+@test "fixture_export_codebase when the export fails" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
@@ -62,7 +62,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
   assert_output_contains "Unable to export codebase"
 }
 
-@test "Codebase export - export fails - caller recovers" {
+@test "fixture_export_codebase when the export fails and the caller recovers" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
@@ -78,7 +78,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
   assert_equal 1 "${recovered}"
 }
 
-@test "Codebase export - source is not a git repository" {
+@test "fixture_export_codebase when the source is not a git repository" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
@@ -95,7 +95,7 @@ directory : ${BATS_TEST_TMPDIR}/src-not-a-repo
 --'
 }
 
-@test "Codebase export - source is not a git repository - caller recovers" {
+@test "fixture_export_codebase when the source is not a git repository and the caller recovers" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
