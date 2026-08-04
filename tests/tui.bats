@@ -197,8 +197,10 @@ process_is_gone() {
   run tui_run "one"
 
   assert_failure
-  assert_output_contains "Script 'tests/fixtures/tui_script_prompts.sh' did not finish within the 2 second timeout."
-  assert_output_matches_format "elapsed: %d second(s)"
+  assert_output_contains "Script did not finish within the deadline"
+  assert_output_contains "tests/fixtures/tui_script_prompts.sh"
+  assert_output_contains "elapsed"
+  assert_output_matches_format "%d second(s)"
   assert_output_contains "Static script output"
   assert_output_contains "Answer2 [default answer2]:"
 }
@@ -265,14 +267,15 @@ process_is_gone() {
   tui_run "one" "two"
   run tui_assert_prompts "Answer1" "Answer3"
   assert_failure
-  assert_output_contains "Prompt 'Answer3' does not appear in the remaining output"
-  assert_output_contains "matched: 1 of 2"
+  assert_output_contains "Prompt does not appear in the remaining output"
+  assert_output_contains "Answer3"
+  assert_output_contains "1 of 2"
 
   tui_run "one" "two"
   run tui_assert_prompts "Answer2" "Answer1"
   assert_failure
-  assert_output_contains "Prompt 'Answer1' does not appear in the remaining output"
-  assert_output_contains "matched: 1 of 2"
+  assert_output_contains "Prompt does not appear in the remaining output"
+  assert_output_contains "1 of 2"
 }
 
 @test "tui_assert_prompts_case" {
@@ -284,8 +287,9 @@ process_is_gone() {
   tui_run "one" "two"
   run tui_assert_prompts_case "ANSWER1" "ANSWER2"
   assert_failure
-  assert_output_contains "Prompt 'ANSWER1' does not appear in the remaining output"
-  assert_output_contains "matched: 0 of 2"
+  assert_output_contains "Prompt does not appear in the remaining output"
+  assert_output_contains "ANSWER1"
+  assert_output_contains "0 of 2"
 }
 
 @test "Answer count does not match the prompt count" {
@@ -294,12 +298,16 @@ process_is_gone() {
   tui_run "one" "two"
   run tui_assert_prompts "Answer1"
   assert_failure
-  assert_output_contains "Script was answered 2 time(s), but 1 prompt(s) are expected"
+  assert_output_contains "Answer count does not match the prompt count"
+  assert_output_contains "answers : 2"
+  assert_output_contains "prompts : 1"
 
   tui_run "one" "two"
   run tui_assert_prompts "Answer1" "Answer2" "Answer3"
   assert_failure
-  assert_output_contains "Script was answered 2 time(s), but 3 prompt(s) are expected"
+  assert_output_contains "Answer count does not match the prompt count"
+  assert_output_contains "answers : 2"
+  assert_output_contains "prompts : 3"
 }
 
 @test "Script that prompts for nothing" {
@@ -312,7 +320,9 @@ process_is_gone() {
   tui_run
   run tui_assert_prompts "Answer1"
   assert_failure
-  assert_output_contains "Script was answered 0 time(s), but 1 prompt(s) are expected"
+  assert_output_contains "Answer count does not match the prompt count"
+  assert_output_contains "answers : 0"
+  assert_output_contains "prompts : 1"
 }
 
 @test "Prompts asserted before a script has run" {

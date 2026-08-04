@@ -113,15 +113,11 @@ tui_run() {
   local elapsed
   elapsed="$(cat "${expiry_file}")"
 
-  local message="Script '${SCRIPT_FILE}' did not finish within the ${timeout} second timeout."
-
-  message="${message}"$'\n'"elapsed: ${elapsed} second(s)"
-  message="${message}"$'\n'"output: '${output-}'"
-
-  # Reported through 'flunk' rather than 'format_error', because this is a
-  # runtime failure of the run rather than an assertion about it, and the output
-  # the report already carries is the one 'format_error' would append.
-  flunk "${message}"
+  format_error "Script did not finish within the deadline" \
+    "script" "${SCRIPT_FILE}" \
+    "deadline" "${timeout} second(s)" \
+    "elapsed" "${elapsed} second(s)" \
+    "output" "${output-}" | flunk
 }
 
 ##
@@ -259,7 +255,9 @@ tui_prompts_assert_match() {
   local count="$#"
 
   if [ "${count}" -ne "${BATS_HELPERS_TUI_ANSWERS}" ]; then
-    format_error "Script was answered ${BATS_HELPERS_TUI_ANSWERS} time(s), but ${count} prompt(s) are expected" | flunk
+    format_error "Answer count does not match the prompt count" \
+      "answers" "${BATS_HELPERS_TUI_ANSWERS}" \
+      "prompts" "${count}" | flunk
     return 1
   fi
 
@@ -292,7 +290,10 @@ tui_prompts_assert_match() {
     prefix="${haystack%%"${needle}"*}"
 
     if [ "${#prefix}" -eq "${#haystack}" ]; then
-      format_error "Prompt '${prompt}' does not appear in the remaining output"$'\n'"matched: ${matched} of ${count}" | flunk
+      format_error "Prompt does not appear in the remaining output" \
+        "prompt" "${prompt}" \
+        "matched" "${matched} of ${count}" \
+        "remaining output" "${remaining}" | flunk
       return 1
     fi
 

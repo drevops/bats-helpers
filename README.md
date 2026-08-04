@@ -1321,10 +1321,17 @@ Each answer is submitted followed by a newline, and an empty answer submits a bl
 Every run is bounded. A script that keeps asking after its answers are spent is terminated and reported, rather than blocking until the whole suite is killed:
 
 ```text
-Script './install.sh' did not finish within the 60 second timeout.
-elapsed: 60 second(s)
-output: 'Welcome to the installer
-Site name: '
+-- Script did not finish within the deadline --
+script (1 line):
+./install.sh
+deadline (1 line):
+60 second(s)
+elapsed (1 line):
+60 second(s)
+output (2 lines):
+Welcome to the installer
+Site name: 
+--
 ```
 
 The report carries everything the script printed before it was terminated, so the last prompt it reached names the answer that is missing.
@@ -1350,14 +1357,26 @@ tui_assert_prompts "Site name" "Machine name" "Install profile"
 Each prompt is searched for in what is left of the output after the prompt before it matched, so the same prompts in another order are reported rather than passed:
 
 ```text
-Prompt 'Install profile' does not appear in the remaining output
-matched: 2 of 3
+-- Prompt does not appear in the remaining output --
+prompt (1 line):
+Install profile
+matched (1 line):
+2 of 3
+remaining output (2 lines):
+ [my_site]: 
+Installation complete
+--
 ```
+
+The remainder starts immediately after the prompt that matched, which is why it opens mid-line.
 
 The number of prompts must also match the number of answers the last run submitted, in either direction, which is what catches an answer sequence that has drifted:
 
 ```text
-Script was answered 3 time(s), but 2 prompt(s) are expected
+-- Answer count does not match the prompt count --
+answers : 3
+prompts : 2
+--
 ```
 
 `BATS_HELPERS_TUI_ANSWERS` holds that count. Calling the assertion before any script has run is an error rather than a pass.
