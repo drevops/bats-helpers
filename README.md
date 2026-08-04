@@ -900,7 +900,7 @@ mock_sandbox_allow "git"
 
 An allowed command has to have a file on `PATH` when it is allowed, so a typo is reported at that line rather than as a puzzling failure later. A shell builtin never needs allowing: the shell answers it without a `PATH` lookup, so the mode never denies it.
 
-The commands the library itself runs stay available, because the assertions, the file helpers and the generated mocks are built out of them: `bash`, `cat`, `chmod`, `cp`, `diff`, `dirname`, `find`, `grep`, `head`, `id`, `ln`, `ls`, `mkdir`, `rm`, `sed`, `stat`, `touch` and `wc`. Mocking one of them shadows the sandbox entry, since the mock directory still comes first on `PATH`. `git` and `tar` are deliberately not in that set, so [git assertions](#git-assertions) and `fixture_export_codebase` need them allowed to run inside the mode.
+The commands the library and the BATS harness run stay available, because the assertions, the file helpers, the generated mocks and `run` itself are built out of them: `bash`, `cat`, `chmod`, `cp`, `diff`, `dirname`, `find`, `grep`, `head`, `id`, `ln`, `ls`, `mkdir`, `mktemp`, `rm`, `sed`, `stat`, `touch` and `wc`. Mocking one of them shadows the sandbox entry, since the mock directory still comes first on `PATH`. `git` and `tar` are deliberately not in that set, so [git assertions](#git-assertions) and `fixture_export_codebase` need them allowed to run inside the mode.
 
 A [forwarding mock](#argument-specifications) reaches the real command the same way, so `mock_set_forward` inside the sandbox needs its command allowed as well.
 

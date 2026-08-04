@@ -1077,6 +1077,22 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
+@test "mock_sandbox_enable - the BATS harness keeps working inside the sandbox" {
+  mock_curl="$(mock_command "curl")"
+
+  mock_sandbox_enable
+
+  export MY_VAR="my value"
+
+  # 'run --separate-stderr' shells out to 'mktemp' for the stream it splits off.
+  run --separate-stderr curl "arg"
+  mock_sandbox_disable
+
+  assert_success
+  assert_stderr ""
+  assert_equal "my value" "$(mock_get_call_env "${mock_curl}" "MY_VAR")"
+}
+
 @test "mock_sandbox_enable - the allow-list can be seeded" {
   mock_sandbox_enable "basename"
 
