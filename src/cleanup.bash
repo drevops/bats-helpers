@@ -11,6 +11,7 @@
 #   BATS_HELPERS_CLEANUP_DIR: Directory holding the registry. Defaults to the
 #     per-test temporary directory, so that BATS removes the registry with the
 #     rest of the test sandbox.
+#   BATS_TEST_TMPDIR: Per-test sandbox, used when no directory is set.
 #
 # Outputs:
 #   STDOUT: The registry path.

@@ -27,6 +27,8 @@
 #   BATS_TEST_TMPDIR: Per-test sandbox holding the script's input and output.
 #   output: Set by 'run' to what the script printed.
 #   status: Set by 'run' to the exit status of the script.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 tui_run() {
   ##
@@ -138,6 +140,10 @@ tui_run() {
 #   4. expiry_file: File written with the elapsed seconds when the deadline
 #      passes, and left absent when it does not.
 #   5. timeout: Seconds the script is given to finish.
+#
+# Globals:
+#   SECONDS: Bash's elapsed-time counter, read as the clock the deadline is
+#     measured against.
 #
 # Outputs:
 #   STDOUT: Everything the script printed, including what it printed before it

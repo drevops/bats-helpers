@@ -44,6 +44,10 @@ file_trim() {
 # Arguments:
 #   1. expression: Expression to evaluate.
 #
+# Globals:
+#   BATS_TEST_TMPDIR: Per-test sandbox the snapshot of exported variables is
+#     written to.
+#
 # Outputs:
 #   STDOUT: The evaluated expression.
 ##
@@ -74,6 +78,9 @@ file_read_env() {
 #     the per-test temporary directory, so that BATS removes the backups with
 #     the rest of the test sandbox.
 #   BATS_HELPERS_BACKUP_DIR: Deprecated name of the above.
+#   BATS_TEST_TMPDIR: Per-test sandbox, used when no directory is set.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 #
 # Outputs:
 #   STDOUT: The backup path.

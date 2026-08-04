@@ -386,6 +386,9 @@ assert_file_not_matches_format_case() {
 # Globals:
 #   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
 #     the search.
+#   ASSERT_DIR_EXCLUDE: Deprecated name of the above.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 #
 # Outputs:
 #   STDOUT: One '--exclude-dir' parameter per line, so that a directory name
@@ -500,6 +503,10 @@ file_compare_failed() {
 #   3. ignore_spaces: Set to '1' to ignore blank lines and whitespace changes.
 #      Optional, defaults to '0'. Deprecated, use
 #      'assert_files_equal_ignore_spaces' instead.
+#
+# Globals:
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 assert_files_equal() {
   local ignore_spaces="${3:-0}"
@@ -531,6 +538,10 @@ assert_files_equal_ignore_spaces() {
 #   3. ignore_spaces: Set to '1' to ignore blank lines and whitespace changes.
 #      Optional, defaults to '0'. Deprecated, use
 #      'assert_files_not_equal_ignore_spaces' instead.
+#
+# Globals:
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 assert_files_not_equal() {
   local ignore_spaces="${3:-0}"

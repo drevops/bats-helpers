@@ -46,6 +46,9 @@
 # Globals:
 #   STEPS: Array of steps to process.
 #   BATS_HELPERS_STEPS_DEBUG: Set to '1' to enable debug output.
+#   RUN_STEPS_DEBUG: Deprecated name of the above.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 #
 # Outputs:
 #   STDOUT: The created mocks, in the 'setup' phase only.
@@ -298,6 +301,7 @@ steps_debug_sub() {
 #
 # Globals:
 #   BATS_HELPERS_STEPS_DEBUG: Set to '1' to enable debug output.
+#   RUN_STEPS_DEBUG: Deprecated name of the above.
 ##
 steps_debug_write() {
   local debug="${BATS_HELPERS_STEPS_DEBUG:-${RUN_STEPS_DEBUG-}}"

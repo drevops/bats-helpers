@@ -30,6 +30,8 @@
 #     success is the attempt that succeeded.
 #   BATS_HELPERS_RETRY_OUTPUT: Set to the STDOUT and STDERR of the last attempt.
 #   BATS_HELPERS_RETRY_ELAPSED: Set to the whole seconds spent.
+#   SECONDS: Bash's elapsed-time counter, read as the clock the deadline and
+#     the elapsed time are measured against.
 #
 # Outputs:
 #   File descriptor 3: A notice naming the attempt the command succeeded on.

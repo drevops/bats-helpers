@@ -41,6 +41,8 @@ assert_success() {
 #   status: Exit status of the last 'run' call.
 #   output: Output captured by the last 'run' call.
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 assert_failure() {
   local expected=""

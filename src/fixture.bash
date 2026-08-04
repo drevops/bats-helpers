@@ -14,6 +14,9 @@
 # Globals:
 #   BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED: Set to '1' to enable the
 #     export. Anything else makes this function a no-op.
+#   BATS_FIXTURE_EXPORT_CODEBASE_ENABLED: Deprecated name of the above.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 fixture_export_codebase() {
   local enabled

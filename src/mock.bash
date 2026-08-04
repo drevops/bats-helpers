@@ -43,7 +43,10 @@ mock_setup() {
 #
 # Globals:
 #   BATS_HELPERS_MOCK_TMPDIR: Directory to use, when set.
+#   BATS_MOCK_TMPDIR: Deprecated name of the above.
 #   BATS_TEST_TMPDIR: Per-test sandbox, used when no directory is set.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 #
 # Outputs:
 #   STDOUT: Path to the directory.
@@ -175,6 +178,11 @@ mock_path_contains() {
 #     resolved path.
 #   BATS_HELPERS_MOCK_STRICT: Whether the mock rejects the calls its
 #     expectations do not cover. Defaults to '1'.
+#   BATS_HELPERS_MOCK_USER: User name the generated mock records for a call,
+#     in place of the real one.
+#   _USER: Deprecated name of the above.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 #
 # Outputs:
 #   STDOUT: Path to the mock.
@@ -1074,6 +1082,9 @@ mock_forward_exec() {
 # Arguments:
 #   1. dir: Directory to remove.
 #   2. path: Value to remove it from. Optional, defaults to the current PATH.
+#
+# Globals:
+#   PATH: Default for the 'path' argument when it is omitted.
 #
 # Outputs:
 #   STDOUT: The remaining PATH entries.
