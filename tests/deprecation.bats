@@ -147,6 +147,16 @@ fixture_add() {
   assert_file_contains "${notice}" "Deprecated: 'restore_file' will be removed in the next version. Use 'file_restore' instead."
 }
 
+@test "nothing answer" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
+
+  tui_run "nothing" "custom answer2" 3>"${notice}"
+
+  assert_output_contains "default answer1"
+  assert_file_contains "${notice}" "Deprecated: the 'nothing' answer will be removed in the next version. Use an empty string instead."
+}
+
 @test "RUN_STEPS_DEBUG" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export RUN_STEPS_DEBUG=1
