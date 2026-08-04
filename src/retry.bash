@@ -139,15 +139,11 @@ retry_run() {
     bound="the ${timeout} second deadline"
   fi
 
-  local message="Command '${command_name}' did not succeed within ${bound}."
-
-  message="${message}"$'\n'"attempts: ${BATS_HELPERS_RETRY_ATTEMPTS}"
-  message="${message}"$'\n'"elapsed: ${BATS_HELPERS_RETRY_ELAPSED} second(s)"
-  message="${message}"$'\n'"last status: ${last_status}"
-  message="${message}"$'\n'"last output: '${BATS_HELPERS_RETRY_OUTPUT}'"
-
-  # Reported through 'flunk' rather than 'format_error', which appends the
-  # output the enclosing 'run' captured - unrelated to the retry, and read as
-  # the last attempt's own output that the report already carries.
-  flunk "${message}"
+  format_error "Command did not succeed within the retry limit" \
+    "command" "${command_name}" \
+    "limit" "${bound}" \
+    "attempts" "${BATS_HELPERS_RETRY_ATTEMPTS}" \
+    "elapsed" "${BATS_HELPERS_RETRY_ELAPSED} second(s)" \
+    "last status" "${last_status}" \
+    "last output" "${BATS_HELPERS_RETRY_OUTPUT}" | flunk
 }
