@@ -197,7 +197,7 @@ process_is_gone() {
   run tui_run "one"
 
   assert_failure
-  assert_output_contains "Script 'tests/fixtures/tui_script_prompts.sh' did not finish within the 2 second timeout"
+  assert_output_contains "Script 'tests/fixtures/tui_script_prompts.sh' did not finish within the 2 second timeout."
   assert_output_matches_format "elapsed: %d second(s)"
   assert_output_contains "Static script output"
   assert_output_contains "Answer2 [default answer2]:"

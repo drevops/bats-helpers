@@ -1321,8 +1321,10 @@ Each answer is submitted followed by a newline, and an empty answer submits a bl
 Every run is bounded. A script that keeps asking after its answers are spent is terminated and reported, rather than blocking until the whole suite is killed:
 
 ```text
-Script './install.sh' did not finish within the 60 second timeout
+Script './install.sh' did not finish within the 60 second timeout.
 elapsed: 60 second(s)
+output: 'Welcome to the installer
+Site name: '
 ```
 
 The report carries everything the script printed before it was terminated, so the last prompt it reached names the answer that is missing.

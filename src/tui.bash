@@ -29,6 +29,10 @@
 #   status: Set by 'run' to the exit status of the script.
 ##
 tui_run() {
+  ##
+  ## Input validation.
+  ##
+
   if [ -z "${SCRIPT_FILE-}" ]; then
     flunk "SCRIPT_FILE is not set."
     return 1
@@ -65,6 +69,10 @@ tui_run() {
     return 1
   fi
 
+  ##
+  ## Runner.
+  ##
+
   local answers=("$@")
   local input=""
   local answer
@@ -96,15 +104,24 @@ tui_run() {
 
   run tui_exec "${script_path}" "${input_file}" "${output_file}" "${expiry_file}" "${timeout}"
 
+  ##
+  ## Failure report.
+  ##
+
   [ -f "${expiry_file}" ] || return 0
 
   local elapsed
   elapsed="$(cat "${expiry_file}")"
 
-  local message="Script '${SCRIPT_FILE}' did not finish within the ${timeout} second timeout"
-  message="${message}"$'\n'"elapsed: ${elapsed} second(s)"
+  local message="Script '${SCRIPT_FILE}' did not finish within the ${timeout} second timeout."
 
-  format_error "${message}" | flunk
+  message="${message}"$'\n'"elapsed: ${elapsed} second(s)"
+  message="${message}"$'\n'"output: '${output-}'"
+
+  # Reported through 'flunk' rather than 'format_error', because this is a
+  # runtime failure of the run rather than an assertion about it, and the output
+  # the report already carries is the one 'format_error' would append.
+  flunk "${message}"
 }
 
 ##
