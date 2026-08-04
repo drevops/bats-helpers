@@ -16,7 +16,7 @@ This is a BATS (Bash Automated Testing System) helpers library that provides ass
   - `cleanup.bash`: Deferred cleanup that runs once the current test has finished
   - `retry.bash`: Retry runner for conditions that become true shortly
   - `file.bash`: File utilities for creating, trimming, backing up and restoring files
-  - `mock.bash`: Command mocking - the sandbox, mock creation, responses, argument specifications, strictness, the ordered call log and its assertions
+  - `mock.bash`: Command mocking - the mock directory, mock creation, responses, argument specifications, strictness, sandbox mode, the ordered call log and its assertions
   - `steps.bash`: Step runner for sequential command and string assertions
   - `dataprovider.bash`: Data provider utilities for parameterized tests
   - `fixture.bash`: Test fixture management
@@ -80,7 +80,7 @@ Two exceptions:
 The subject naming a helper is what it acts on, not the file it sits in, so the helpers behind those two bare verbs read `report_*` - `report_decorate`, `report_diff`, `report_stack_trace`, `report_normalise_paths` - even though they live in `src/assert.base.bash`. The failure report is the subject they share.
 
 ### Variable Naming
-Every variable the library reads from the wider environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`. The mocking modules follow it like every other: `BATS_HELPERS_MOCK_TMPDIR`, `BATS_HELPERS_MOCK_USER` and `BATS_HELPERS_MOCK_STRICT`.
+Every variable the library reads from the wider environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`. The mocking modules follow it like every other: `BATS_HELPERS_MOCK_TMPDIR`, `BATS_HELPERS_MOCK_USER`, `BATS_HELPERS_MOCK_STRICT` and `BATS_HELPERS_MOCK_SANDBOX_REPORT`.
 
 `STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the three exceptions and stay unprefixed. They are not environment configuration but the test data itself, written on the lines directly above the call that reads them, so the declaration and its use are read together and a long prefix costs more in daily ergonomics than the collision risk costs in rare confusion. `STEPS` and `TEST_CASES` are arrays declared with `declare -a`; `SCRIPT_FILE` is a scalar path.
 
@@ -172,6 +172,8 @@ File headers and function docblocks follow one house style so the library reads 
 The mocking system creates temporary mock executables that record calls and can return configured outputs/exit codes.
 
 Everything mock-related lives in one `src/mock.bash`, in the same way the `assert.*` family splits by subject but each subject stays whole. The one rule the single file has to carry itself is the process boundary: the generated mock is a separate script that sources `assert.string.bash` and `mock.bash` and then runs in its own process, where `assert.base.bash` is *not* loaded. Every function that mock reaches at call time - the log writers, the whole matching engine, the response resolution, forwarding, and the strictness accept and reject pair - therefore must never call `flunk`, which would die as an unknown command under the mock's `set -e`. Each of those functions says so in its docblock; add a `flunk` to one and the mock breaks at run time rather than at lint time, so the docblock line is the only guard.
+
+Sandbox mode crosses the same boundary through a different door: `mock_sandbox_deny` is exported as `command_not_found_handle` and runs in whichever process hit the failed lookup, where nothing is loaded at all. It is bound by the same rule and by a stricter one - it may use builtins only, since the very reason it ran is that a command could not be found.
 
 ### Step Runner
 The `steps.bash` module provides a DSL for defining test sequences with both command mocking and string assertions:
