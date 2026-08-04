@@ -77,7 +77,7 @@ Two exceptions:
 - **The `assert_*` family** keeps the verb first, because there the verb is already the namespace and it matches bats-assert and bats-file exactly. Shape: `assert_<subject>_<predicate>`, e.g. `assert_file_not_exists`. An assertion a module owns still takes the module's prefix: `mock_assert_call_args`.
 - **`flunk` and `format_error`** are bare verbs, mirroring bats-support's `fail`.
 
-The subject naming a helper is what it acts on, not the file it sits in, so the helpers behind those two bare verbs read `report_*` - `report_decorate`, `report_diff`, `report_stack_trace`, `report_normalise_paths` - even though they live in `src/assert.base.bash`. The failure report is the subject they share.
+The subject naming a helper is what it acts on, not the file it sits in, so the helpers behind those two bare verbs read `report_*` - `report_decorate`, `report_diff`, `report_stack_trace`, `report_normalize_paths` - even though they live in `src/assert.base.bash`. The failure report is the subject they share.
 
 ### Variable Naming
 Every variable the library reads from the wider environment carries the `BATS_HELPERS_` prefix, for the same namespace reason as the function prefixes: `load.bash` is sourced into the consumer's test shell, so an unprefixed global would collide silently with the consumer's own. The name after the prefix identifies the module and then the subject - `BATS_HELPERS_STEPS_DEBUG`, `BATS_HELPERS_ASSERT_DIR_EXCLUDE`, `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED`. The mocking modules follow it like every other: `BATS_HELPERS_MOCK_TMPDIR`, `BATS_HELPERS_MOCK_USER`, `BATS_HELPERS_MOCK_STRICT` and `BATS_HELPERS_MOCK_SANDBOX_REPORT`.
