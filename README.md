@@ -1383,6 +1383,8 @@ prompts : 2
 
 A prompt is matched as a substring, ignoring case; `tui_assert_prompts_case` matches case-sensitively. Only what the script prints itself can be asserted on: Bash writes a `read -p` prompt only when STDIN is a terminal, so a script asking that way leaves nothing in the output to match.
 
+Nothing in the output marks a prompt as one, either. A script that echoes its answers back can therefore satisfy a prompt with an answer holding the same text, so pick prompt text an answer cannot stand in for.
+
 ### Helpers
 
 | Function Name             | Description                                                                   |

@@ -63,9 +63,7 @@ tui_run() {
   local dir="${BATS_TEST_TMPDIR-}"
 
   if [ -z "${dir}" ]; then
-    # Written directly rather than through 'flunk', whose path rewriting needs
-    # the non-empty sandbox path that is missing here.
-    echo "TUI sandbox cannot be resolved: 'BATS_TEST_TMPDIR' is not set." >&2
+    flunk "TUI sandbox cannot be resolved: 'BATS_TEST_TMPDIR' is not set."
     return 1
   fi
 
@@ -229,6 +227,10 @@ tui_assert_prompts_case() {
 # rather than passing. The number of prompts must match the number of answers
 # the last run submitted, which is what catches an answer landing against the
 # wrong prompt.
+#
+# Nothing in the output marks a prompt as one, so a script that echoes its
+# answers back can satisfy a prompt with an answer holding the same text. Prompt
+# text an answer cannot contain is what keeps the assertion honest.
 #
 # Arguments:
 #   1. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
