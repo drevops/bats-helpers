@@ -442,8 +442,11 @@ fixture_validate_target() {
 #   0 when the list holds the path, 1 when it does not.
 ##
 fixture_list_holds() {
-  case "${1}" in
-    *$'\n'"${2}"$'\n'*)
+  local list="${1}"
+  local path="${2}"
+
+  case "${list}" in
+    *$'\n'"${path}"$'\n'*)
       return 0
       ;;
   esac
