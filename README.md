@@ -1254,7 +1254,7 @@ A bare call still fails the test at that point, because BATS runs tests with `er
 
 Every assertion reports through one path, so a failure always reads the same way: a title naming what went wrong, then the values that decided it as aligned rows.
 
-```
+```text
 -- String does not contain substring --
 string     : some text
 substring  : SOME
@@ -1270,7 +1270,7 @@ ${PWD}/tests/example.bats:12: assert_string_contains_case
 
 When any value spans lines, every row switches to a labelled form carrying its line count. They switch together, so two values stay comparable rather than one collapsing onto a single line and the other not:
 
-```
+```text
 -- Line does not contain substring --
 line (1 line):
 1
@@ -1290,7 +1290,7 @@ context (4 lines):
 
 A mismatch between an expected and an actual value is rendered as a unified diff rather than as two blobs:
 
-```
+```text
 -- Strings are not equal --
 --- expected
 +++ actual
