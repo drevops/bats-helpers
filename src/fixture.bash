@@ -62,7 +62,7 @@ fixture_export_codebase() {
 ##
 fixture_prepare_dir() {
   local dir="${1:-"$(pwd)"}"
-  rm -Rf "${dir}" >/dev/null
+  rm -rf "${dir}"
   mkdir -p "${dir}"
   assert_dir_exists "${dir}"
 }

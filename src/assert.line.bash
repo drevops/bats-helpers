@@ -930,11 +930,7 @@ line_assert_index_match() {
   local -a footer=()
   mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
 
-  format_error "${title}" \
-    "line" "$(line_label "${given}" "${index}")" \
-    "${noun}" "${needle}" \
-    "${footer[@]}" \
-    "context" "$(line_context "${index}")" | flunk
+  format_error "${title}" "line" "$(line_label "${given}" "${index}")" "${noun}" "${needle}" "${footer[@]}" "context" "$(line_context "${index}")" | flunk
 }
 
 ##

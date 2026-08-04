@@ -257,9 +257,7 @@ tui_prompts_assert_match() {
   local count="$#"
 
   if [ "${count}" -ne "${BATS_HELPERS_TUI_ANSWERS}" ]; then
-    format_error "Answer count does not match the prompt count" \
-      "answers" "${BATS_HELPERS_TUI_ANSWERS}" \
-      "prompts" "${count}" | flunk
+    format_error "Answer count does not match the prompt count" "answers" "${BATS_HELPERS_TUI_ANSWERS}" "prompts" "${count}" | flunk
     return 1
   fi
 

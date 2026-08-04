@@ -82,7 +82,7 @@ mock_prepare_tmp() {
   local dir
   dir="$(mock_resolve_tmp)" || return 1
 
-  rm -rf "${dir}/bats-helpers-mock" >/dev/null || return 1
+  rm -rf "${dir}/bats-helpers-mock" || return 1
   mkdir -p "${dir}/bats-helpers-mock" || return 1
 
   printf '%s\n' "${dir}/bats-helpers-mock"

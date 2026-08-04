@@ -615,9 +615,9 @@ assert_binary_files_equal() {
   local compare_status=0
   difference="$(cmp "${file1}" "${file2}" 2>&1)" || compare_status=$?
 
-  [ "${compare_status}" -eq 0 ] && return 0
-
   file_compare_failed "${compare_status}" "${difference}" || return 1
+
+  [ "${compare_status}" -eq 0 ] && return 0
 
   format_error "Files are not equal" "file" "${file1}" "other file" "${file2}" "difference" "${difference}" | flunk
 }
@@ -686,10 +686,7 @@ file_dirs_equal_one_way() {
     local counterpart="${other}/${file#"${dir}/"}"
 
     if [ ! -e "${counterpart}" ]; then
-      format_error "Directory holds a file the other directory does not" \
-        "file" "${file}" \
-        "directory" "${dir}" \
-        "other directory" "${other}" | flunk
+      format_error "Directory holds a file the other directory does not" "file" "${file}" "directory" "${dir}" "other directory" "${other}" | flunk
       return 1
     fi
 

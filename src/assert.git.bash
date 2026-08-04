@@ -118,9 +118,7 @@ assert_git_clean() {
     *"nothing to commit"*) return 0 ;;
   esac
 
-  format_error "Repository has uncommitted changes" \
-    "directory" "${dir}" \
-    "status" "${message}" | flunk
+  format_error "Repository has uncommitted changes" "directory" "${dir}" "status" "${message}" | flunk
 
   return 1
 }
@@ -144,9 +142,7 @@ assert_git_not_clean() {
     *) return 0 ;;
   esac
 
-  format_error "Repository has no uncommitted changes, but should have" \
-    "directory" "${dir}" \
-    "status" "${message}" | flunk
+  format_error "Repository has no uncommitted changes, but should have" "directory" "${dir}" "status" "${message}" | flunk
 
   return 1
 }

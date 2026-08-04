@@ -392,7 +392,7 @@ load _test_helper
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/non_existing"
   assert_failure
 
-  rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
+  rm "${BATS_TEST_TMPDIR}/fixture/1.txt"
 
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
@@ -424,9 +424,9 @@ load _test_helper
 
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/non_existing" "existing"
 
-  rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
-  rm "${BATS_TEST_TMPDIR}/fixture/2.txt" >/dev/null
-  rm "${BATS_TEST_TMPDIR}/fixture/3.txt" >/dev/null
+  rm "${BATS_TEST_TMPDIR}/fixture/1.txt"
+  rm "${BATS_TEST_TMPDIR}/fixture/2.txt"
+  rm "${BATS_TEST_TMPDIR}/fixture/3.txt"
 
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
