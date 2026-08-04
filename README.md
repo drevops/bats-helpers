@@ -29,19 +29,20 @@
   - [Load library](#load-library)
   - [Assertions](#assertions) - Command run, Line, Exit statuses, Standard error, String, Match modes, File, Git
   - [Data provider](#data-provider) - Parameterized tests
-  - [Mocking](#mocking) - Command mocking
+  - [Mocking](#mocking) - Command mocking, Call log, Argument specifications, Strictness
   - [Step runner](#step-runner) - Sequential test assertions
   - [Helpers](#helpers) - Utility functions
   - [Environment variables](#environment-variables) - Full variable reference
   - [Deprecations](#deprecations) - Renamed functions and variables
-- [Acknowledgments](#-acknowledgments)
 - [Contributing](#-contributing)
 
 ## ✨ Features
 
 - Assertions for command output, its individual lines, exit status, standard error, strings, files, directories and git repositories.
 - Literal, regular expression and format matching, with case sensitivity as an explicit choice.
-- Command mocking with per-call output, exit status and side effects.
+- Command mocking with per-call output, exit status and side effects, and responses selected by matched arguments.
+- An ordered log of every mocked call, asserted as a sequence and reported as a unified diff.
+- Mock expectations that fail the test when they go unused or when an unanticipated call arrives.
 - Step runner for sequences of mocked calls and output assertions.
 - Data provider for running one function over many test cases.
 - Fixture and file utilities for building and restoring test sandboxes.
@@ -533,30 +534,45 @@ This is a very powerful feature that allows to test complex scenarios as unit te
 
 #### Setup functions
 
-| Function               | Description                                | Arguments                        | Returns   |
-|------------------------|--------------------------------------------|----------------------------------|-----------|
-| `mock_setup`           | Setup mock support. Call from `setup()`    | None                             | None      |
-| `mock_create`          | Creates a mock program that can be tracked | None                             | Mock path |
-| `mock_command`         | Mock provided command                      | `command_name`                   | Mock path |
-| `mock_set_output`      | Sets the output of the mock                | `mock`, `output`, `[call_index]` | None      |
-| `mock_set_status`      | Sets the exit status of the mock           | `mock`, `status`, `[call_index]` | None      |
-| `mock_set_side_effect` | Sets shell code to run when mock executes  | `mock`, `code`, `[call_index]`   | None      |
+| Function                | Description                                                | Arguments                        | Returns   |
+|-------------------------|------------------------------------------------------------|----------------------------------|-----------|
+| `mock_setup`            | Setup mock support. Call from `setup()`                    | None                             | None      |
+| `mock_create`           | Creates a mock program that can be tracked                 | None                             | Mock path |
+| `mock_command`          | Mock provided command                                      | `command_name`                   | Mock path |
+| `mock_set_output`       | Sets the output of the mock                                | `mock`, `output`, `[call_index]` | None      |
+| `mock_set_status`       | Sets the exit status of the mock                           | `mock`, `status`, `[call_index]` | None      |
+| `mock_set_side_effect`  | Sets shell code to run when mock executes                  | `mock`, `code`, `[call_index]`   | None      |
+| `mock_set_strict`       | Rejects the calls the mock's expectations do not cover     | `mock`, `[enabled]`              | None      |
+| `mock_set_forward`      | Runs the real command for calls no specification accepts   | `mock`, `[enabled]`              | None      |
+| `mock_spec_add`         | Adds an argument specification to the mock                 | `mock`                           | Spec      |
+| `mock_spec_arg`         | Constrains one argument position of a specification        | `spec`, `position`, `matcher`, `[value]` | None |
+| `mock_spec_count`       | Pins the number of arguments a specification accepts       | `spec`, `count`                  | None      |
+| `mock_spec_set_output`  | Sets the output a specification responds with              | `spec`, `output`                 | None      |
+| `mock_spec_set_status`  | Sets the exit status a specification responds with         | `spec`, `status`                 | None      |
+| `mock_spec_set_side_effect` | Sets shell code a specification runs                   | `spec`, `code`                   | None      |
+| `mock_log_exclude`      | Excludes commands from sequence comparisons                | `command_name...`                | None      |
 
 #### Assertion functions
 
-| Function                | Description                                                                    | Arguments                               | Returns          |
-|-------------------------|--------------------------------------------------------------------------------|-----------------------------------------|------------------|
-| `mock_get_call_args`    | Returns arguments the mock was called with                                     | `mock`, `[call_index]`                  | Arguments string |
-| `mock_get_call_num`     | Returns number of times mock was called                                        | `mock`                                  | Call count       |
-| `mock_get_call_user`    | Returns user the mock was called with                                          | `mock`, `[call_index]`                  | User name        |
-| `mock_get_call_env`     | Returns env variable value from mock call                                      | `mock`, `var_name`, `[call_index]`      | Variable value   |
-| `mock_assert_call_args` | Checks the arguments the mock was called with, where `*` matches any arguments | `mock`, `expected_args`, `[call_index]` | `0` when matched |
+| Function                 | Description                                                                    | Arguments                               | Returns          |
+|--------------------------|--------------------------------------------------------------------------------|-----------------------------------------|------------------|
+| `mock_get_call_args`     | Returns arguments the mock was called with                                     | `mock`, `[call_index]`                  | Arguments string |
+| `mock_get_call_num`      | Returns number of times mock was called                                        | `mock`                                  | Call count       |
+| `mock_get_call_user`     | Returns user the mock was called with                                          | `mock`, `[call_index]`                  | User name        |
+| `mock_get_call_env`      | Returns env variable value from mock call                                      | `mock`, `var_name`, `[call_index]`      | Variable value   |
+| `mock_assert_call_args`  | Checks the arguments the mock was called with, where `*` matches any arguments | `mock`, `expected_args`, `[call_index]` | `0` when matched |
+| `mock_assert_calls`      | Asserts the ordered sequence of every mocked call                              | `expected_call...`                      | None             |
+| `mock_assert_no_calls`   | Asserts that no mocked command outside the excluded ones was called            | None                                    | None             |
+| `mock_assert_called`     | Asserts that a command was called                                              | `command_name`                          | None             |
+| `mock_assert_not_called` | Asserts that a command was not called                                          | `command_name`                          | None             |
+| `mock_verify`            | Asserts that every expectation was met                                         | `[mock...]`                             | None             |
+| `mock_log_print`         | Returns every recorded call, in order                                          | None                                    | Call log         |
 
 #### Mock sandbox
 
-`mock_setup` writes the mocks to `${BATS_TEST_TMPDIR}/bats-mock-tmp` and puts that directory first on `PATH`, so BATS removes the mocks together with the rest of the test sandbox and concurrent runs cannot delete each other's mocks.
+`mock_setup` writes the mocks to `${BATS_TEST_TMPDIR}/bats-helpers-mock` and puts that directory first on `PATH`, so BATS removes the mocks together with the rest of the test sandbox and concurrent runs cannot delete each other's mocks.
 
-Set `BATS_HELPERS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-mock-tmp` directory below it. The guarantees above come from staying within the test sandbox - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
+Set `BATS_HELPERS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-helpers-mock` directory below it. The guarantees above come from staying within the test sandbox - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
 
 ```bash
 export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/mocks"
@@ -569,6 +585,172 @@ export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/mocks"
 ```bash
 export BATS_HELPERS_MOCK_USER="deploy"
 ```
+
+#### Call log
+
+Every mock appends each of its calls to one log shared by the whole test, so the order in which *different* commands ran is assertable. For a script whose correctness is its order of operations, that is usually the assertion that matters most:
+
+```bash
+mock_command "git" >/dev/null
+mock_command "curl" >/dev/null
+
+run ./deploy.sh
+
+mock_assert_calls \
+  "git 'clone' 'https://example.com/repo.git'" \
+  "curl '-s' 'https://example.com/hook'" \
+  "git 'checkout' 'main'"
+```
+
+A mismatch is reported as a unified diff, so the failure shows what ran instead of only that the two sequences differ.
+
+Each line is the command name followed by its arguments, every argument wrapped in single quotes. The quotes are not optional: they keep an empty argument visible as `''` and an argument holding whitespace a single field. Inside the quotes four characters are escaped, so no two distinct arguments serialise the same way:
+
+| Character    | Serialised as |
+|--------------|---------------|
+| `\`          | `\\`          |
+| `'`          | `\'`          |
+| Tab          | `\t`          |
+| Newline      | `\n`          |
+
+```bash
+mock_command "git" >/dev/null
+
+git commit -m "first line
+second line" ""
+
+mock_assert_calls "git 'commit' '-m' 'first line\nsecond line' ''"
+```
+
+`mock_assert_no_calls` asserts that nothing ran at all, and `mock_assert_called` and `mock_assert_not_called` ask about one command. The last two take a command name rather than a mock path and fail when no mock is registered under that name, so a typo cannot pass by describing a command that was never mocked:
+
+```bash
+mock_command "git" >/dev/null
+
+mock_assert_not_called "git"
+
+# Fails with "Command 'gti' is not mocked", rather than passing trivially.
+mock_assert_not_called "gti"
+```
+
+A command that runs constantly - a logger, an echo - would otherwise have to appear in every expected sequence in the suite. `mock_log_exclude` keeps such a command recorded and visible to `mock_log_print`, `mock_assert_called` and `mock_assert_not_called`, while `mock_assert_calls` and `mock_assert_no_calls` skip it:
+
+```bash
+mock_command "logger" >/dev/null
+mock_log_exclude "logger"
+```
+
+#### Argument specifications
+
+A response set with a call index answers the first call, the second call, and so on, which means the test has to know the order in which the script happens to invoke the command. An argument specification selects the response by what the call passes instead, so reordering the script without changing its behaviour leaves the test standing:
+
+```bash
+mock_git="$(mock_command "git")"
+
+status="$(mock_spec_add "${mock_git}")"
+mock_spec_arg "${status}" 1 equals "status"
+mock_spec_set_output "${status}" "nothing to commit"
+
+push="$(mock_spec_add "${mock_git}")"
+mock_spec_arg "${push}" 1 equals "push"
+mock_spec_arg "${push}" '*' equals "--force"
+mock_spec_set_status "${push}" 1
+mock_spec_set_output "${push}" "rejected"
+```
+
+Both forms coexist. A call is answered by the first specification that accepts it, in the order the specifications were added; a call that none of them accepts falls back to the response for that call index, and then to the response set without one.
+
+A response is written literally, whichever form sets it, so a value such as `-n`, or one holding a backslash, reaches the caller unchanged.
+
+The first argument of `mock_spec_arg` after the specification is the position: a one-based argument index, or `*` for "some argument". The second is the matcher:
+
+| Matcher       | Accepts when the argument                     |
+|---------------|-----------------------------------------------|
+| `equals`      | is exactly the value                          |
+| `starts_with` | starts with the value                         |
+| `ends_with`   | ends with the value                           |
+| `contains`    | holds the value anywhere                      |
+| `matches`     | matches the value as an extended regexp       |
+| `present`     | exists, whatever its value. Takes no value    |
+
+Every matcher takes a `not_` prefix. At a numeric position it negates that one argument; at `*` it requires that *no* argument matches, which is the negation of "some argument matches":
+
+```bash
+# Argument 2 is not a tag.
+mock_spec_arg "${spec}" 2 not_matches '^v[0-9]+$'
+
+# No argument is '--force'.
+mock_spec_arg "${spec}" '*' not_equals "--force"
+```
+
+Matching is case-sensitive, because a command's arguments are literal. `mock_spec_count` pins how many arguments the call carries:
+
+```bash
+mock_spec_count "${spec}" 2
+```
+
+A numeric position may be constrained only once per specification. Constraining it twice is rejected when the specification is configured rather than silently resolved at call time, since the outcome would otherwise depend on which of the two constraints was consulted first. Repeating `*` is allowed, and each repetition is a separate requirement.
+
+`mock_set_forward` runs the real command for the calls no specification accepts, which is what makes partial mocking possible:
+
+```bash
+mock_curl="$(mock_command "curl")"
+mock_set_forward "${mock_curl}"
+
+# Only the health check is answered by the mock; every other call is real.
+spec="$(mock_spec_add "${mock_curl}")"
+mock_spec_arg "${spec}" '*' ends_with "/health"
+mock_spec_set_output "${spec}" "OK"
+```
+
+The real command is found by searching `PATH` without the mock directory. A forwarded call is recorded in the call log like any other, and forwarding takes precedence over the response set without a call index.
+
+#### Strictness
+
+> [!IMPORTANT]
+> Mocks are strict by default. Once a response carrying a call index or an argument specification has declared an expectation, a call that the expectations do not cover fails the test rather than being answered with the default status and output. Set `BATS_HELPERS_MOCK_STRICT=0` to make a whole suite permissive.
+
+A mock with no configured response records calls without constraining them. Configuring a response *with* a call index, or adding an argument specification, declares an expectation - a statement that the call arrives. From then on the mock rejects the calls its expectations do not cover, rather than answering them with the default status and output and letting the script take a path the test does not know about:
+
+```bash
+mock_git="$(mock_command "git")"
+mock_set_status "${mock_git}" 0 1
+
+git status
+
+# Fails the call, writing "Mock 'git' received a call that no expectation
+# covers: git 'log'" to STDERR and exiting non-zero.
+git log
+```
+
+When the mock carries argument specifications, the diagnostic lists what each of them required, so the mismatch reads beside the call that caused it:
+
+```text
+Mock 'git' received a call that no expectation covers: git 'log' '--oneline'
+  specification 1: argument 1 equals 'status'
+  specification 2: argument 1 equals 'push', some argument not_equals '--force'
+```
+
+A response set *without* a call index is a catch-all that answers everything, so it exempts the mock from strictness. That is the per-mock escape hatch, `mock_set_strict "${mock_git}" 0` is the explicit one, and `BATS_HELPERS_MOCK_STRICT` is the suite-wide one:
+
+```bash
+setup() {
+  mock_setup
+  export BATS_HELPERS_MOCK_STRICT=0
+}
+```
+
+The strictness of a mock is fixed when the mock is created, so a suite-wide default has to be set before the first `mock_command` call.
+
+The other half of a mock that verifies nothing is an expectation that is never satisfied: a test can declare a response for a call that never arrives and still pass. `mock_verify` reports both that and any call that arrived unexpectedly. Call it from `teardown()` to cover every test in a file:
+
+```bash
+teardown() {
+  mock_verify
+}
+```
+
+With no arguments it verifies every mock of the test; with arguments it verifies only the mocks named. The [step runner](#step-runner) calls it for its own mocks at the end of the assert phase.
 
 #### Example
 
@@ -661,6 +843,7 @@ A step can be one of the following types:
 - [Command](#command) - mock a command
 - [Substring presence](#substring-presence) - assert output contains string
 - [Substring absence](#substring-absence) - assert output does NOT contain string
+- [Expected call](#expected-call) - assert the ordered sequence of mocked calls
 
 ##### Command
 
@@ -699,6 +882,32 @@ Assert that the output contains the given substring.
 `- <substring>`
 
 Assert that the output does not contain the specified substring. Starts with `- ` (minus followed by a space).
+
+##### Expected call
+
+`= <call>`
+
+Add a call to the expected sequence. Starts with `= ` (equals followed by a space), and the call is written in the serialisation the [call log](#call-log) documents. All such steps together are the complete ordered sequence of mocked calls, asserted once during the assert phase.
+
+A `@` step orders the calls of one command; these steps order the calls of every command against each other:
+
+```bash
+declare -a STEPS=(
+  "@git clone https://example.com/repo.git # 0"
+  "@curl -s https://example.com/hook # 0"
+  "@git checkout main # 0"
+
+  "= git 'clone' 'https://example.com/repo.git'"
+  "= curl '-s' 'https://example.com/hook'"
+  "= git 'checkout' 'main'"
+)
+
+mocks="$(steps_run "setup")"
+run ./deploy.sh
+steps_run "assert" "${mocks}"
+```
+
+The assert phase also verifies the expectations of every mock it created, so a command called more times than the steps declare fails the run, and a declared step that is never consumed fails it too.
 
 ##### Debugging
 
@@ -783,6 +992,7 @@ Every variable the library defines, in one place. Each is also covered by the se
 | `BATS_HELPERS_BACKUP_DIR`                      | `file_add_var`, `file_restore`, `file_backup_path`            | Backup root. Defaults to `${BATS_TEST_TMPDIR}/bats-helpers-backup`                          |
 | `BATS_HELPERS_MOCK_TMPDIR`                     | `mock_setup`, `mock_create`                                   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`, and `mock_setup` exports the resolved path |
 | `BATS_HELPERS_MOCK_USER`                       | `mock_get_call_user`                                          | User a mock call is reported as. Defaults to `id -un`                                       |
+| `BATS_HELPERS_MOCK_STRICT`                     | `mock_create`                                                 | Set to `0` to answer the calls a mock's expectations do not cover. Defaults to `1`, and is read when the mock is created |
 | `BATS_HELPERS_DEPRECATION_QUIET`               | every module                                                  | Set to any non-empty value to silence every deprecation notice                              |
 
 ### Deprecations
@@ -838,10 +1048,6 @@ Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence every not
 ```bash
 export BATS_HELPERS_DEPRECATION_QUIET=1
 ```
-
-## 🙏 Acknowledgments
-
-The mocking functionality is based on the [bats-mock](https://github.com/grayhemp/bats-mock) project. A special thank you to the contributors for their original work.
 
 ## 🤝 Contributing
 

@@ -16,7 +16,7 @@
 #   # ... code to be tested ...
 #   steps_run "assert" "${mocks}"
 #
-# Each step takes one of three forms:
+# Each step takes one of four forms:
 #
 #   @<command> [<args>] # <status> [ # <output> [ # <side_effect> ]]
 #     Mocks <command>. The status may be omitted and the output given in its
@@ -30,6 +30,11 @@
 #
 #   - <substring>
 #     Asserts that the output does not contain <substring>.
+#
+#   = <call>
+#     Adds <call> to the expected call sequence, in the serialisation
+#     'mock_log_quote' documents. All such steps together are the complete
+#     ordered sequence of mocked calls.
 #
 # See README.md for worked examples.
 #
@@ -77,6 +82,8 @@ steps_run() {
       mocked_commands["${key}"]="${value}"
     done <<<"${mocked_commands_var}"
   fi
+
+  local -a expected_calls=()
 
   local mock
   local command_index
@@ -217,6 +224,15 @@ steps_run() {
         assert_output_not_contains "${item:2}" || return 1 # Skip '-' and a space.
       fi
     ##
+    ## Expected call.
+    ##
+    elif [[ ${item} == "= "* ]]; then
+      steps_debug "Type: expected call"
+
+      if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
+        expected_calls+=("${item:2}") # Skip '=' and a space.
+      fi
+    ##
     ## String present.
     ##
     else
@@ -231,14 +247,30 @@ steps_run() {
     steps_debug
   done
 
+  local key
+
   # Return mocked commands as a string to pass it to the next phase.
   if [[ ${phase} == "${PHASE_SETUP}" ]]; then
     local mc_string=""
-    local key
     for key in "${!mocked_commands[@]}"; do
       mc_string+="${key}=${mocked_commands[${key}]}"$'\n'
     done
     echo "${mc_string}"
+
+    return 0
+  fi
+
+  if [ "${#expected_calls[@]}" -gt 0 ]; then
+    mock_assert_calls "${expected_calls[@]}" || return 1
+  fi
+
+  local -a owned=()
+  for key in "${!mocked_commands[@]}"; do
+    owned+=("${mocked_commands[${key}]}")
+  done
+
+  if [ "${#owned[@]}" -gt 0 ]; then
+    mock_verify "${owned[@]}" || return 1
   fi
 }
 

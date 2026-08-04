@@ -980,6 +980,73 @@ load _test_helper
   assert_equal 1 "${recovered}"
 }
 
+@test "Expected call sequence" {
+  declare -a STEPS=(
+    "@git clone https://example.com/repo.git # 0"
+    "@curl -s https://example.com/hook # 0"
+    "@git checkout main # 0"
+    "= git 'clone' 'https://example.com/repo.git'"
+    "= curl '-s' 'https://example.com/hook'"
+    "= git 'checkout' 'main'"
+  )
+
+  mocks="$(steps_run "setup")"
+  "${BATS_TEST_DIRNAME}/fixtures/mock_interleaved.sh"
+  steps_run "assert" "${mocks[@]}"
+}
+
+@test "Expected call sequence - out of order" {
+  declare -a STEPS=(
+    "@git clone https://example.com/repo.git # 0"
+    "@curl -s https://example.com/hook # 0"
+    "@git checkout main # 0"
+    "= curl '-s' 'https://example.com/hook'"
+    "= git 'clone' 'https://example.com/repo.git'"
+    "= git 'checkout' 'main'"
+  )
+
+  mocks="$(steps_run "setup")"
+  "${BATS_TEST_DIRNAME}/fixtures/mock_interleaved.sh"
+
+  run steps_run "assert" "${mocks[@]}"
+  assert_failure
+  assert_output_contains "Call log does not match the expected sequence"
+}
+
+@test "Expected call sequence - caller recovers" {
+  declare -a STEPS=(
+    "@curl example.com # 0"
+    "= curl 'example.org'"
+  )
+
+  mocks="$(steps_run "setup")"
+  run curl example.com
+  assert_success
+
+  recovered=0
+  steps_run "assert" "${mocks[@]}" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
+@test "Mocked command called more times than expected" {
+  declare -a STEPS=(
+    "@curl example.com # 0"
+  )
+
+  mocks="$(steps_run "setup")"
+  run curl example.com
+  assert_success
+
+  run curl example.org
+  assert_failure
+  assert_output_contains "Mock 'curl' received a call that no expectation covers: curl 'example.org'"
+
+  run steps_run "assert" "${mocks[@]}"
+  assert_failure
+  assert_output_contains "Mock 'curl' received a call that no expectation covers: curl 'example.org'"
+}
+
 @test "Loading the library leaves the consumer shell options alone" {
   assert_string_not_contains "$-" "u"
 }

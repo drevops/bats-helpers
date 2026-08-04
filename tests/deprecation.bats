@@ -180,7 +180,7 @@ fixture_add() {
   run mock_prepare_tmp 3>"${notice}"
 
   assert_success
-  assert_output "${BATS_TEST_TMPDIR}/custom/bats-mock-tmp"
+  assert_output "${BATS_TEST_TMPDIR}/custom/bats-helpers-mock"
   assert_file_contains "${notice}" "Deprecated: 'BATS_MOCK_TMPDIR' will be removed in the next version. Use 'BATS_HELPERS_MOCK_TMPDIR' instead."
 }
 
