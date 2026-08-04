@@ -34,7 +34,6 @@
   - [Helpers](#helpers) - Utility functions
   - [Environment variables](#environment-variables) - Full variable reference
   - [Deprecations](#deprecations) - Renamed functions and variables
-- [Acknowledgments](#-acknowledgments)
 - [Contributing](#-contributing)
 
 ## ✨ Features
@@ -1049,10 +1048,6 @@ Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence every not
 ```bash
 export BATS_HELPERS_DEPRECATION_QUIET=1
 ```
-
-## 🙏 Acknowledgments
-
-The mocking functionality is based on the [bats-mock](https://github.com/grayhemp/bats-mock) project. A special thank you to the contributors for their original work.
 
 ## 🤝 Contributing
 
