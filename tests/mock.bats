@@ -1036,6 +1036,309 @@ bats_require_minimum_version 1.13.0
 }
 
 ##
+## Sandbox mode.
+##
+## Every test here disables the sandbox before it ends, so that the assertions
+## that follow and BATS' own bookkeeping run with the real PATH.
+##
+
+@test "mock_sandbox_enable" {
+  mock_command "curl" >/dev/null
+
+  mock_sandbox_enable
+
+  run curl --version
+  assert_success
+
+  # 'run -127' stops bats warning about the status it would otherwise read as a
+  # mistake in the test.
+  run -127 definitely_not_a_real_command
+  mock_sandbox_disable
+
+  assert_failure --status 127
+  assert_output_contains "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox is enabled."
+}
+
+@test "mock_sandbox_enable - the library keeps working inside the sandbox" {
+  mock_command "curl" >/dev/null
+
+  mock_sandbox_enable
+
+  curl --version
+
+  # 'diff', 'cat' and 'sed' back these three, so passing here is what proves the
+  # commands the library itself runs stayed available.
+  mock_assert_calls "curl '--version'"
+  mock_verify
+
+  run assert_equal "one" "two"
+  mock_sandbox_disable
+
+  assert_failure
+}
+
+@test "mock_sandbox_enable - the allow-list can be seeded" {
+  mock_sandbox_enable "basename"
+
+  run basename "${BATS_TEST_TMPDIR}/real.txt"
+  mock_sandbox_disable
+
+  assert_success
+  assert_output "real.txt"
+}
+
+@test "mock_sandbox_allow" {
+  mock_sandbox_enable
+
+  run -127 basename "${BATS_TEST_TMPDIR}/real.txt"
+  assert_failure --status 127
+
+  mock_sandbox_allow "basename"
+
+  run basename "${BATS_TEST_TMPDIR}/real.txt"
+  mock_sandbox_disable
+
+  assert_success
+  assert_output "real.txt"
+
+  run mock_sandbox_report
+  assert_success
+  assert_output_contains "Command 'basename' is not mocked and the mock sandbox denied it"
+  assert_output_contains "Command 'basename' ran for real, allowed by the mock sandbox"
+}
+
+@test "mock_sandbox_allow - an allowed command is not replaced by a silent link" {
+  echo "content" >"${BATS_TEST_TMPDIR}/file.txt"
+
+  # 'cat' is one of the commands the library itself runs, so enabling the
+  # sandbox after it was allowed has a shim to leave alone.
+  mock_sandbox_allow "cat"
+  mock_sandbox_enable
+
+  run cat "${BATS_TEST_TMPDIR}/file.txt"
+  mock_sandbox_disable
+
+  assert_success
+  assert_output "content"
+
+  run mock_sandbox_report 'allowed'
+  assert_success
+  assert_output_contains "Command 'cat' ran for real, allowed by the mock sandbox"
+}
+
+@test "mock_sandbox_allow - validation" {
+  run mock_sandbox_allow
+  assert_failure
+  assert_output_contains "At least one command name is required."
+
+  run mock_sandbox_allow "definitely_not_a_real_command"
+  assert_failure
+  assert_output_contains "Command 'definitely_not_a_real_command' cannot be allowed: it is not on 'PATH'."
+}
+
+@test "mock_sandbox_disable" {
+  path_before="${PATH}"
+
+  mock_sandbox_enable
+  mock_sandbox_disable
+
+  assert_equal "${path_before}" "${PATH}"
+
+  # The handler is gone, so the shell reports the failed lookup in its own words.
+  run -127 definitely_not_a_real_command
+  assert_failure --status 127
+  assert_output_not_contains "the mock sandbox is enabled"
+
+  run mock_sandbox_disable
+  assert_failure
+  assert_output_contains "Mock sandbox is not enabled. Enable it with 'mock_sandbox_enable' first."
+}
+
+@test "mock_sandbox_enabled" {
+  run mock_sandbox_enabled
+  assert_failure
+
+  mock_sandbox_enable
+  mock_sandbox_enabled
+  mock_sandbox_disable
+
+  run mock_sandbox_enabled
+  assert_failure
+}
+
+@test "mock_sandbox_report" {
+  run mock_sandbox_report
+  assert_success
+  assert_output ""
+
+  run mock_sandbox_report "elsewhere"
+  assert_failure
+  assert_output_contains "Kind 'elsewhere' is not known. Use 'denied' or 'allowed'."
+
+  mock_sandbox_enable
+
+  run -127 definitely_not_a_real_command
+  run -127 definitely_not_a_real_command
+  mock_sandbox_disable
+
+  # Named once, however many times it was called.
+  run mock_sandbox_report 'denied'
+  assert_success
+  assert_output "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox denied it"
+
+  run mock_sandbox_report 'allowed'
+  assert_success
+  assert_output ""
+}
+
+@test "mock_sandbox_deny" {
+  # Without a report to write to, the diagnostic still names the command.
+  run -127 mock_sandbox_deny "curl"
+  assert_failure --status 127
+  assert_output_contains "Command 'curl' is not mocked and the mock sandbox is enabled."
+
+  mock_sandbox_enable
+
+  run -127 mock_sandbox_deny "curl"
+  mock_sandbox_disable
+
+  assert_failure --status 127
+
+  run mock_sandbox_report 'denied'
+  assert_success
+  assert_output "Command 'curl' is not mocked and the mock sandbox denied it"
+}
+
+@test "mock_sandbox_real_path" {
+  assert_equal "$(mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}")" "$(mock_sandbox_real_path)"
+
+  path_before="${PATH}"
+
+  mock_sandbox_enable
+  real_path="$(mock_sandbox_real_path)"
+  mock_sandbox_disable
+
+  assert_equal "$(mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}" "${path_before}")" "${real_path}"
+}
+
+@test "mock_sandbox_link_base - a command the machine does not have is skipped" {
+  mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+  echo "" >"${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
+
+  mock_sandbox_link_base "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+
+  assert_dir_empty "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+
+  # PATH was never replaced here, so only the saved value has to go back.
+  rm -f "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
+}
+
+@test "The sandbox reaches a Bash script under test" {
+  script="${BATS_TEST_TMPDIR}/script.sh"
+  echo '#!/usr/bin/env bash' >"${script}"
+  echo 'definitely_not_a_real_command' >>"${script}"
+  chmod +x "${script}"
+
+  mock_sandbox_enable
+
+  run -127 "${script}"
+  mock_sandbox_disable
+
+  assert_failure --status 127
+  assert_output_contains "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox is enabled."
+
+  run mock_sandbox_report 'denied'
+  assert_success
+  assert_output "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox denied it"
+}
+
+@test "A forwarding mock inside the sandbox needs the command allowed" {
+  mock_basename="$(mock_command "basename")"
+  mock_set_forward "${mock_basename}"
+
+  spec="$(mock_spec_add "${mock_basename}")"
+  mock_spec_arg "${spec}" 1 equals "mocked"
+  mock_spec_set_output "${spec}" "from the mock"
+
+  mock_sandbox_enable
+
+  run -127 basename "${BATS_TEST_TMPDIR}/real.txt"
+  assert_failure --status 127
+  assert_output_contains "is not available to forward to"
+
+  mock_sandbox_allow "basename"
+
+  # The command is both mocked and allowed, so the shim has to hold the real
+  # command rather than the mock that would hand the call straight back to it.
+  assert_file_not_contains "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/basename" "${BATS_HELPERS_MOCK_TMPDIR}/mock."
+
+  run basename "${BATS_TEST_TMPDIR}/real.txt"
+  mock_sandbox_disable
+
+  assert_success
+  assert_output "real.txt"
+}
+
+@test "mock_verify - a denied command fails the verification" {
+  mock_sandbox_enable
+
+  run -127 definitely_not_a_real_command
+  mock_sandbox_disable
+
+  run mock_verify
+  assert_failure
+  assert_output_contains "Command 'definitely_not_a_real_command' is not mocked and the mock sandbox denied it"
+}
+
+@test "mock_verify - an allowed command is reported without failing" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+
+  mock_sandbox_enable "basename"
+
+  basename "${BATS_TEST_TMPDIR}/real.txt" >/dev/null
+
+  mock_sandbox_disable
+
+  mock_verify 3>"${notice}"
+
+  assert_file_contains "${notice}" "Command 'basename' ran for real, allowed by the mock sandbox"
+}
+
+@test "mock_path_check" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+
+  mock_path_check 3>"${notice}"
+  assert_equal "" "$(cat "${notice}")"
+
+  PATH="${PATH}:${BATS_TEST_TMPDIR}/extra"
+  mock_path_check 3>"${notice}"
+  assert_file_contains "${notice}" "Warning: 'PATH' changed after 'mock_setup'. The mocks are still found, but a command the test did not mock may resolve differently."
+
+  PATH="/usr/bin:/bin"
+  mock_path_check 3>"${notice}"
+  assert_file_contains "${notice}" "and no longer holds the mock directory"
+  assert_file_contains "${notice}" "Mocked commands are not found and the real commands run instead."
+}
+
+@test "mock_path_check - without a record" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+
+  rm -f "${BATS_HELPERS_MOCK_TMPDIR}/.path"
+  PATH="/usr/bin:/bin"
+
+  mock_path_check 3>"${notice}"
+
+  assert_equal "" "$(cat "${notice}")"
+}
+
+@test "mock_path_contains" {
+  mock_path_contains "${BATS_HELPERS_MOCK_TMPDIR}"
+
+  run mock_path_contains "${BATS_TEST_TMPDIR}/not-on-path"
+  assert_failure
+}
+
+##
 ## Call log.
 ##
 
