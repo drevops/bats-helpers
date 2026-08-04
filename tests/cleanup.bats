@@ -2,8 +2,28 @@
 #
 # Tests for deferred cleanup.
 #
+# shellcheck disable=SC2030,SC2031
 
 load _test_helper
+
+##
+# Runs one test of the teardown fixture in a nested BATS process.
+#
+# Filtering down to a single test keeps the captured output specific to the
+# scenario the caller names.
+#
+# Arguments:
+#   1. name: Name of the fixture test to run.
+#
+# Globals:
+#   CLEANUP_FIXTURE_DIR: Set to the directory the fixture writes its markers to.
+##
+cleanup_fixture_run() {
+  export CLEANUP_FIXTURE_DIR="${BATS_TEST_TMPDIR}/fixture"
+  mkdir -p "${CLEANUP_FIXTURE_DIR}"
+
+  run "${BATS_ROOT}/bin/bats" --tap --filter "^${1}\$" "${BATS_TEST_DIRNAME}/fixtures/cleanup_teardown.bats"
+}
 
 @test "cleanup_register and cleanup_run" {
   cleanup_register touch "${BATS_TEST_TMPDIR}/marker"
@@ -159,7 +179,7 @@ two"
 
   run cleanup_register touch "${BATS_TEST_TMPDIR}/marker"
   assert_failure
-  assert_output_contains "Unable to create the cleanup registry directory"
+  assert_output_contains "cannot be created"
 
   assert_file_not_exists "${BATS_TEST_TMPDIR}/marker"
 }
@@ -179,7 +199,7 @@ two"
   chmod 700 "${BATS_HELPERS_CLEANUP_DIR}"
 
   assert_failure
-  assert_output_contains "Unable to drain the cleanup registry"
+  assert_output_contains "cannot be removed"
   assert_file_not_exists "${BATS_TEST_TMPDIR}/marker"
 }
 
@@ -266,23 +286,4 @@ two"
   # The reported failure is the test's own, not the one raised in teardown.
   assert_output_not_contains "from function \`teardown'"
   assert_output_contains "Cleanup command 'false' failed with exit status 1."
-}
-
-##
-# Runs one test of the teardown fixture in a nested BATS process.
-#
-# Filtering down to a single test keeps the captured output specific to the
-# scenario the caller names.
-#
-# Arguments:
-#   1. name: Name of the fixture test to run.
-#
-# Globals:
-#   CLEANUP_FIXTURE_DIR: Set to the directory the fixture writes its markers to.
-##
-cleanup_fixture_run() {
-  export CLEANUP_FIXTURE_DIR="${BATS_TEST_TMPDIR}/fixture"
-  mkdir -p "${CLEANUP_FIXTURE_DIR}"
-
-  run "${BATS_ROOT}/bin/bats" --tap --filter "^${1}\$" "${BATS_TEST_DIRNAME}/fixtures/cleanup_teardown.bats"
 }

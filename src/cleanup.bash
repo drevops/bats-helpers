@@ -25,7 +25,7 @@ cleanup_registry_path() {
   if [ -z "${dir}" ]; then
     # Written directly rather than through 'flunk', whose path rewriting needs
     # the non-empty BATS_TEST_TMPDIR that is missing here.
-    echo "Unable to resolve the cleanup registry: BATS_TEST_TMPDIR is not set. Set BATS_HELPERS_CLEANUP_DIR to a writable directory" >&2
+    echo "Cleanup registry cannot be resolved: 'BATS_TEST_TMPDIR' is not set. Set BATS_HELPERS_CLEANUP_DIR to a writable directory." >&2
     return 1
   fi
 
@@ -56,7 +56,7 @@ cleanup_register() {
   dir="$(dirname "${registry}")"
 
   if ! mkdir -p "${dir}"; then
-    flunk "Unable to create the cleanup registry directory '${dir}'."
+    flunk "Cleanup registry directory '${dir}' cannot be created."
     return 1
   fi
 
@@ -93,7 +93,7 @@ cleanup_run() {
   done <"${registry}"
 
   if ! rm -f "${registry}"; then
-    flunk "Unable to drain the cleanup registry '${registry}'."
+    flunk "Cleanup registry '${registry}' cannot be removed."
     return 1
   fi
 
