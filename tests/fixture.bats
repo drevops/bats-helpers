@@ -59,7 +59,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
 
   run fixture_export_codebase "${build_dir}" "${src_dir}"
   assert_failure
-  assert_output_contains "Failed to export codebase"
+  assert_output_contains "Unable to export codebase"
 }
 
 @test "Codebase export - export fails - caller recovers" {

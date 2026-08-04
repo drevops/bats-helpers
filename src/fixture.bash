@@ -49,7 +49,7 @@ fixture_export_codebase() {
   ) || export_status=$?
 
   if [ "${export_status}" -ne 0 ]; then
-    flunk "Failed to export codebase from '${src}' to '${dst}'."
+    flunk "Unable to export codebase from '${src}' to '${dst}'."
     return 1
   fi
 }

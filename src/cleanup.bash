@@ -110,7 +110,7 @@ cleanup_run() {
     if [ "${command_status}" -ne 0 ]; then
       # 'flunk' returns non-zero, so the assignment both records the failure and
       # keeps the remaining commands running under errexit.
-      flunk "Cleanup command '${commands[i]}' failed with exit status ${command_status}." || run_status=1
+      flunk "Cleanup command '${commands[i]}' failed with exit status '${command_status}'." || run_status=1
     fi
   done
 

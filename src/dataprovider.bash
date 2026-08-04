@@ -63,7 +63,7 @@ dataprovider_run() {
   fi
 
   if [ "$((${#TEST_CASES[@]} % args_per_row))" -ne 0 ]; then
-    flunk "Total elements in TEST_CASES must be a multiple of ${args_per_row}."
+    flunk "Total elements in TEST_CASES must be a multiple of '${args_per_row}'."
     return 1
   fi
 
@@ -71,7 +71,7 @@ dataprovider_run() {
   local data_set_idx
   for ((i = args_per_row - 1, data_set_idx = 0; i < ${#TEST_CASES[@]}; i += args_per_row, data_set_idx++)); do
     if [ -z "${TEST_CASES[i]}" ]; then
-      flunk "Expected value (last element) in the data set ${data_set_idx} is empty."
+      flunk "Expected value (last element) in the data set '${data_set_idx}' is empty."
       return 1
     fi
   done

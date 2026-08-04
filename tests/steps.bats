@@ -962,7 +962,7 @@ load _test_helper
 
   run steps_run "assert" "${mocks[@]}"
   assert_failure
-  assert_output_contains "Mocked command 'curl' was expected to be called at least 2 time(s), but was called fewer times."
+  assert_output_contains "Mocked command 'curl' was expected to be called at least '2' time(s), but was called fewer times."
 }
 
 @test "steps_run mocked command called fewer times than expected - caller recovers" {

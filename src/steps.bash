@@ -195,7 +195,7 @@ steps_run() {
         steps_debug_sub "        mock        : ${mock}"
         steps_debug_sub "        index       : ${command_index}"
         if ! mock_args_actual="$(mock_get_call_args "${mock}" "${command_index}" 2>/dev/null)"; then
-          flunk "Mocked command '${command_binary}' was expected to be called at least ${command_index} time(s), but was called fewer times."
+          flunk "Mocked command '${command_binary}' was expected to be called at least '${command_index}' time(s), but was called fewer times."
           return 1
         fi
         steps_debug_sub "        actual args : ${mock_args_actual}"

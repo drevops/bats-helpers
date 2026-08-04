@@ -206,7 +206,7 @@ provide_matrix_triples() {
   )
   run dataprovider_run "add_numbers" 3
   assert_failure
-  assert_output_contains "Total elements in TEST_CASES must be a multiple of 3."
+  assert_output_contains "Total elements in TEST_CASES must be a multiple of '3'."
 
   declare -a TEST_CASES=(
     1 2 3
@@ -215,7 +215,7 @@ provide_matrix_triples() {
   )
   run dataprovider_run "add_numbers" 3
   assert_failure
-  assert_output_contains "Expected value (last element) in the data set 1 is empty."
+  assert_output_contains "Expected value (last element) in the data set '1' is empty."
 }
 
 @test "dataprovider_run with a custom assertion - success" {
