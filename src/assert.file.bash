@@ -498,28 +498,28 @@ file_compare_failed() {
 #   1. file1: First file.
 #   2. file2: Second file.
 #   3. ignore_spaces: Set to '1' to ignore blank lines and whitespace changes.
-#      Optional, defaults to '0'.
+#      Optional, defaults to '0'. Deprecated, use
+#      'assert_files_equal_ignore_spaces' instead.
 ##
 assert_files_equal() {
-  local file1="${1}"
-  local file2="${2}"
   local ignore_spaces="${3:-0}"
 
-  local diff_opts=(--normal)
-  [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
+  if [ "${ignore_spaces}" = 1 ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'ignore_spaces' argument of 'assert_files_equal' will be removed in the next version. Use 'assert_files_equal_ignore_spaces' instead." >&3
+  fi
 
-  assert_file_exists "${file1}" || return 1
-  assert_file_exists "${file2}" || return 1
+  file_assert_equal 0 "${ignore_spaces}" "${1}" "${2}"
+}
 
-  local difference
-  local compare_status=0
-  difference="$(diff "${diff_opts[@]}" "${file1}" "${file2}" 2>&1)" || compare_status=$?
-
-  [ "${compare_status}" -eq 0 ] && return 0
-
-  file_compare_failed "${compare_status}" "${difference}" || return 1
-
-  format_error "Files are not equal" "file" "${file1}" "other file" "${file2}" "difference" "${difference}" | flunk
+##
+# Asserts that two text files are equal, ignoring whitespace.
+#
+# Arguments:
+#   1. file1: First file.
+#   2. file2: Second file.
+##
+assert_files_equal_ignore_spaces() {
+  file_assert_equal 0 1 "${1}" "${2}"
 }
 
 ##
@@ -529,12 +529,44 @@ assert_files_equal() {
 #   1. file1: First file.
 #   2. file2: Second file.
 #   3. ignore_spaces: Set to '1' to ignore blank lines and whitespace changes.
-#      Optional, defaults to '0'.
+#      Optional, defaults to '0'. Deprecated, use
+#      'assert_files_not_equal_ignore_spaces' instead.
 ##
 assert_files_not_equal() {
-  local file1="${1}"
-  local file2="${2}"
   local ignore_spaces="${3:-0}"
+
+  if [ "${ignore_spaces}" = 1 ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'ignore_spaces' argument of 'assert_files_not_equal' will be removed in the next version. Use 'assert_files_not_equal_ignore_spaces' instead." >&3
+  fi
+
+  file_assert_equal 1 "${ignore_spaces}" "${1}" "${2}"
+}
+
+##
+# Asserts that two text files are not equal, ignoring whitespace.
+#
+# Arguments:
+#   1. file1: First file.
+#   2. file2: Second file.
+##
+assert_files_not_equal_ignore_spaces() {
+  file_assert_equal 1 1 "${1}" "${2}"
+}
+
+##
+# Asserts that two text files are equal, reporting the difference on failure.
+#
+# Arguments:
+#   1. negate: '1' to assert that the files differ.
+#   2. ignore_spaces: '1' to ignore blank lines and whitespace changes.
+#   3. file1: First file.
+#   4. file2: Second file.
+##
+file_assert_equal() {
+  local negate="${1}"
+  local ignore_spaces="${2}"
+  local file1="${3}"
+  local file2="${4}"
 
   local diff_opts=(--normal)
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
@@ -546,11 +578,23 @@ assert_files_not_equal() {
   local compare_status=0
   difference="$(diff "${diff_opts[@]}" "${file1}" "${file2}" 2>&1)" || compare_status=$?
 
+  # A comparison that could not run is checked before the outcome, so that its
+  # status is never read as a difference between the files.
   file_compare_failed "${compare_status}" "${difference}" || return 1
 
-  [ "${compare_status}" -ne 0 ] && return 0
+  if [ "${negate}" = 1 ]; then
+    [ "${compare_status}" -ne 0 ] && return 0
 
-  format_error "Files are equal, but should not be" "file" "${file1}" "other file" "${file2}" | flunk
+    format_error "Files are equal, but should not be" "file" "${file1}" "other file" "${file2}" | flunk
+
+    return 1
+  fi
+
+  [ "${compare_status}" -eq 0 ] && return 0
+
+  format_error "Files are not equal" "file" "${file1}" "other file" "${file2}" "difference" "${difference}" | flunk
+
+  return 1
 }
 
 ##

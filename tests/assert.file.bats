@@ -515,6 +515,36 @@ load _test_helper
   assert_failure
 }
 
+@test "assert_files_equal_ignore_spaces" {
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  assert_files_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+
+  run assert_files_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+  assert_failure
+  assert_output_contains "-- Files are not equal --"
+
+  run assert_files_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/missing.txt"
+  assert_failure
+}
+
+@test "assert_files_not_equal_ignore_spaces" {
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  assert_files_not_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  run assert_files_not_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  assert_failure
+  assert_output_contains "-- Files are equal, but should not be --"
+
+  run assert_files_not_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/missing.txt"
+  assert_failure
+}
+
 @test "assert_binary_files_equal" {
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/binary.png"
   echo "some other file" >"${BATS_TEST_TMPDIR}/binary_changed.png"

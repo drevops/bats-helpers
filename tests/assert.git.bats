@@ -57,6 +57,8 @@ load _test_helper
   file_mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/uncommitted_file"
   run assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
   assert_failure
+  assert_output_contains "-- Repository has uncommitted changes --"
+  assert_output_contains "directory"
 
   # Now, commit first file and create another, but do not add.
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" add -A >/dev/null
@@ -79,6 +81,8 @@ load _test_helper
 
   run assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
   assert_failure
+  assert_output_contains "-- Repository has no uncommitted changes, but should have --"
+  assert_output_contains "directory"
 
   file_mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/uncommitted_file"
   assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"

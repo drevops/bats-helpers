@@ -106,6 +106,39 @@ add_numbers() {
   assert_file_contains "${notice}" "Deprecated: 'mktouch' will be removed in the next version. Use 'file_mktouch' instead."
 }
 
+@test "BATS_HELPERS_BACKUP_DIR" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  export BATS_HELPERS_BACKUP_DIR="${BATS_TEST_TMPDIR}/backups"
+  echo "line1" >>"${BATS_TEST_TMPDIR}/.env"
+
+  file_add_var "${BATS_TEST_TMPDIR}/.env" "VAR" "value" 3>"${notice}"
+
+  assert_file_exists "${BATS_TEST_TMPDIR}/backups/${BATS_TEST_TMPDIR#/}/.env"
+  assert_file_contains "${notice}" "Deprecated: 'BATS_HELPERS_BACKUP_DIR' will be removed in the next version. Use 'BATS_HELPERS_FILE_BACKUP_DIR' instead."
+}
+
+@test "assert_failure --status" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+
+  run bash -c 'exit 2'
+  assert_failure --status 2 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'assert_failure --status' will be removed in the next version. Use 'assert_failure_status' instead."
+}
+
+@test "assert_files_equal and assert_files_not_equal ignore_spaces argument" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt" 1 3>"${notice}"
+  assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt" 1 3>>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: the 'ignore_spaces' argument of 'assert_files_equal' will be removed in the next version. Use 'assert_files_equal_ignore_spaces' instead."
+  assert_file_contains "${notice}" "Deprecated: the 'ignore_spaces' argument of 'assert_files_not_equal' will be removed in the next version. Use 'assert_files_not_equal_ignore_spaces' instead."
+}
+
 @test "trim_file" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   echo "line1" >>"${BATS_TEST_TMPDIR}/file.txt"

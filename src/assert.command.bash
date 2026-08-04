@@ -33,7 +33,8 @@ assert_success() {
 #
 # Arguments:
 #   1. --status expected: Exact exit status to assert on, as two arguments.
-#      Optional, recognised only in first position.
+#      Optional, recognised only in first position. Deprecated, use
+#      'assert_failure_status' instead.
 #   2. output: Exact output to additionally assert on. Optional.
 #
 # Globals:
@@ -45,6 +46,8 @@ assert_failure() {
   local expected=""
 
   if [ "${1-}" = "--status" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_failure --status' will be removed in the next version. Use 'assert_failure_status' instead." >&3
+
     if [ "$#" -lt 2 ]; then
       flunk "Option '--status' requires an exit status."
       return 1
@@ -78,6 +81,33 @@ assert_failure() {
   if [ "$#" -gt 0 ]; then
     assert_output "${1}"
   fi
+}
+
+##
+# Asserts that the last command failed with an exact exit status.
+#
+# Arguments:
+#   1. expected: Exit status to assert on.
+#   2. output: Exact output to additionally assert on. Optional.
+#
+# Globals:
+#   status: Exit status of the last 'run' call.
+#   output: Output captured by the last 'run' call.
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+##
+assert_failure_status() {
+  command_validate_status "${1-}" || return 1
+
+  if [ "${1}" -eq 0 ]; then
+    flunk "A failure cannot have exit status 0. Use 'assert_success' instead."
+    return 1
+  fi
+
+  local expected="${1}"
+  shift
+
+  assert_failure "$@" || return 1
+  assert_status "${expected}"
 }
 
 ##

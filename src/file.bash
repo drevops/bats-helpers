@@ -70,9 +70,10 @@ file_read_env() {
 #   1. file: File whose backup path to resolve.
 #
 # Globals:
-#   BATS_HELPERS_BACKUP_DIR: Backup root. Defaults to a directory within the
-#     per-test temporary directory, so that BATS removes the backups with the
-#     rest of the test sandbox.
+#   BATS_HELPERS_FILE_BACKUP_DIR: Backup root. Defaults to a directory within
+#     the per-test temporary directory, so that BATS removes the backups with
+#     the rest of the test sandbox.
+#   BATS_HELPERS_BACKUP_DIR: Deprecated name of the above.
 #
 # Outputs:
 #   STDOUT: The backup path.
@@ -87,10 +88,18 @@ file_backup_path() {
       ;;
   esac
 
-  local root="${BATS_HELPERS_BACKUP_DIR:-${BATS_TEST_TMPDIR:+${BATS_TEST_TMPDIR}/bats-helpers-backup}}"
+  local root
+  if [ -n "${BATS_HELPERS_FILE_BACKUP_DIR-}" ]; then
+    root="${BATS_HELPERS_FILE_BACKUP_DIR}"
+  elif [ -n "${BATS_HELPERS_BACKUP_DIR-}" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'BATS_HELPERS_BACKUP_DIR' will be removed in the next version. Use 'BATS_HELPERS_FILE_BACKUP_DIR' instead." >&3
+    root="${BATS_HELPERS_BACKUP_DIR}"
+  else
+    root="${BATS_TEST_TMPDIR:+${BATS_TEST_TMPDIR}/bats-helpers-backup}"
+  fi
 
   if [ -z "${root}" ]; then
-    flunk "Unable to resolve the backup directory: BATS_TEST_TMPDIR is not set. Set BATS_HELPERS_BACKUP_DIR to a writable directory."
+    flunk "Unable to resolve the backup directory: 'BATS_TEST_TMPDIR' is not set. Set BATS_HELPERS_FILE_BACKUP_DIR to a writable directory."
     return 1
   fi
 

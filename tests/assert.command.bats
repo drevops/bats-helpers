@@ -100,6 +100,36 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Exit status 'two' is not an integer between 0 and 255."
 }
 
+@test "assert_failure_status" {
+  status=2
+  output=""
+  assert_failure_status 2
+
+  status=0
+  output=""
+  run assert_failure_status 2
+  assert_failure
+  assert_output_contains "-- Command succeeded, but should have failed --"
+
+  status=3
+  output=""
+  run assert_failure_status 2
+  assert_failure
+  assert_output_contains "-- Command exited with an unexpected status --"
+
+  status=2
+  output=""
+  run assert_failure_status 0
+  assert_failure
+  assert_output_contains "A failure cannot have exit status 0. Use 'assert_success' instead."
+
+  status=2
+  output=""
+  run assert_failure_status two
+  assert_failure
+  assert_output_contains "Exit status 'two' is not an integer between 0 and 255."
+}
+
 @test "assert_status" {
   status=0
   assert_status 0
