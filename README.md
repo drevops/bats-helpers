@@ -29,7 +29,7 @@
   - [Load library](#load-library)
   - [Assertions](#assertions) - Command run, Line, Exit statuses, Standard error, String, Match modes, File, Git
   - [Data provider](#data-provider) - Parameterized tests, named cases, matrices
-  - [Mocking](#mocking) - Command mocking, Call log, Argument specifications, Strictness
+  - [Mocking](#mocking) - Command mocking, Call log, Argument specifications, Strictness, Sandbox mode
   - [Step runner](#step-runner) - Sequential test assertions
   - [Cleanup](#cleanup) - Deferred per-test cleanup
   - [Retry](#retry) - Conditions that become true shortly
@@ -45,6 +45,7 @@
 - Command mocking with per-call output, exit status and side effects, and responses selected by matched arguments.
 - An ordered log of every mocked call, asserted as a sequence and reported as a unified diff.
 - Mock expectations that fail the test when they go unused or when an unanticipated call arrives.
+- An opt-in sandbox mode where an unmocked command is denied by name, with an allow-list for the commands that must run for real and a report of everything that left the mock boundary.
 - Step runner for sequences of mocked calls and output assertions.
 - Deferred cleanup registered next to the code that created the thing it removes.
 - Retry for anything asynchronous, bounded by an attempt count, a delay and an optional deadline.
@@ -667,7 +668,7 @@ This is a very powerful feature that allows to test complex scenarios as unit te
 | `mock_verify`            | Asserts that every expectation was met                                         | `[mock...]`                             | None             |
 | `mock_log_print`         | Returns every recorded call, in order                                          | None                                    | Call log         |
 
-#### Mock sandbox
+#### Mock directory
 
 `mock_setup` writes the mocks to `${BATS_TEST_TMPDIR}/bats-helpers-mock` and puts that directory first on `PATH`, so BATS removes the mocks together with the rest of the test sandbox and concurrent runs cannot delete each other's mocks.
 
@@ -850,6 +851,89 @@ teardown() {
 ```
 
 With no arguments it verifies every mock of the test; with arguments it verifies only the mocks named. The [step runner](#step-runner) calls it for its own mocks at the end of the assert phase.
+
+#### Sandbox mode
+
+Mocks are prepended to `PATH`, so a command the test forgot to mock resolves to the real one on the machine. A test that misses a network call, a package manager or a destructive command runs it for real, slowly and non-hermetically. Sandbox mode replaces `PATH` with the mock directory and a directory of the commands the test allowed, so a command that is neither mocked nor allowed does not run:
+
+```bash
+setup() {
+  mock_setup
+  mock_sandbox_enable
+}
+
+@test "Deploy" {
+  mock_command "curl" >/dev/null
+
+  run ./deploy.sh
+
+  # 'curl' is answered by its mock. An unmocked 'aws' fails the call with
+  # "Command 'aws' is not mocked and the mock sandbox is enabled" instead of
+  # reaching the real one.
+}
+```
+
+| Function                          | Description                                                     | Arguments        | Returns |
+|-----------------------------------|-----------------------------------------------------------------|------------------|---------|
+| `mock_sandbox_enable`             | Enables the mode. Arguments seed the allow-list                 | `[command...]`   | None    |
+| `mock_sandbox_allow`              | Allows commands to run for real                                 | `command...`     | None    |
+| `mock_sandbox_disable`            | Restores the `PATH` saved when the mode was enabled             | None             | None    |
+| `mock_sandbox_enabled`            | Reports whether the mode is enabled                             | None             | `0` when enabled |
+| `mock_sandbox_report`             | Prints the denied and the escaped commands                      | `[kind]`         | Report  |
+| `mock_path_check`                 | Warns when `PATH` changed after `mock_setup`                    | None             | None    |
+
+The mode is off until `mock_sandbox_enable` is called, so a suite that does not call it is unaffected. Calling it from `setup` turns it on for a whole file, and `mock_sandbox_disable` reopens the real `PATH` mid-test. BATS runs each test in its own process, so nothing has to be restored at the end of one.
+
+> [!WARNING]
+> This is not a security boundary. An absolute path reaches the real command whatever `PATH` holds, so `/usr/bin/curl` and `./script.sh` still run. The mode catches the command a test forgot to mock, not a command determined to run.
+
+#### Allowing a command to run for real
+
+Some commands have to run: a `date` the test cannot predict, a `tar` that has to produce a real archive. `mock_sandbox_allow` puts them back within reach, and every call reaching one is recorded so that it stays visible:
+
+```bash
+mock_sandbox_enable "date" "tar"
+
+# The same, after the fact.
+mock_sandbox_allow "git"
+```
+
+An allowed command has to have a file on `PATH` when it is allowed, so a typo is reported at that line rather than as a puzzling failure later. A shell builtin never needs allowing: the shell answers it without a `PATH` lookup, so the mode never denies it.
+
+The commands the library and the BATS harness run stay available, because the assertions, the file helpers, the generated mocks and `run` itself are built out of them: `bash`, `cat`, `chmod`, `cp`, `diff`, `dirname`, `find`, `grep`, `head`, `id`, `ln`, `ls`, `mkdir`, `mktemp`, `rm`, `sed`, `stat`, `touch` and `wc`. Mocking one of them shadows the sandbox entry, since the mock directory still comes first on `PATH`. `git` and `tar` are deliberately not in that set, so [git assertions](#git-assertions) and `fixture_export_codebase` need them allowed to run inside the mode.
+
+A [forwarding mock](#argument-specifications) reaches the real command the same way, so `mock_set_forward` inside the sandbox needs its command allowed as well.
+
+#### What escaped
+
+`mock_sandbox_report` names every command that left the mock boundary, each one once, in the order they were first seen:
+
+```text
+Command 'aws' is not mocked and the mock sandbox denied it
+Command 'date' ran for real, allowed by the mock sandbox
+```
+
+Pass `denied` or `allowed` to print one kind alone. `mock_verify` reads both: a denied command fails the verification, because it is a hole in the test, while an allowed one is printed to file descriptor 3, because it ran as the test asked and only has to stay visible.
+
+```bash
+teardown() {
+  mock_verify
+}
+```
+
+Without that call a script that swallows the failed command's exit status leaves the test passing, so wire `mock_verify` up whenever the mode is on.
+
+The message reaches a Bash script under test, not only the test shell, because the mode installs an exported `command_not_found_handle`. A lookup that never consults it - `exec`, a compiled program starting a child, or a shell that does not implement the hook - fails with a plain `command not found` and exit status `127`, and leaves no entry in the report.
+
+#### When PATH is rewritten
+
+Code under test that rewrites `PATH` disables the mocking silently, and the test then passes while exercising the real system - the same failure the sandbox exists to prevent, arriving through a different door. `mock_setup` records the `PATH` it produced and `mock_verify` compares it, so the rewrite is reported rather than left to be guessed at:
+
+```text
+Warning: 'PATH' changed after 'mock_setup' and no longer holds the mock directory '/.../bats-helpers-mock'. Mocked commands are not found and the real commands run instead.
+```
+
+A change that leaves the mock directory in place is reported too, in its own words, since the mocks still answer but everything else may resolve differently. Both go to file descriptor 3, alongside the deprecation notices, and neither fails the test on its own. `mock_path_check` performs the same check on demand.
 
 #### Example
 
@@ -1438,6 +1522,7 @@ Every variable the library defines, in one place. Each is also covered by the se
 | `BATS_HELPERS_MOCK_TMPDIR`                     | `mock_setup`, `mock_create`                                   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`, and `mock_setup` exports the resolved path |
 | `BATS_HELPERS_MOCK_USER`                       | `mock_get_call_user`                                          | User a mock call is reported as. Defaults to `id -un`                                       |
 | `BATS_HELPERS_MOCK_STRICT`                     | `mock_create`                                                 | Set to `0` to answer the calls a mock's expectations do not cover. Defaults to `1`, and is read when the mock is created |
+| `BATS_HELPERS_MOCK_SANDBOX_REPORT`             | `mock_sandbox_deny`                                           | Path to the sandbox report. Exported by `mock_sandbox_enable` so that a denial recorded in a child process reaches it |
 | `BATS_HELPERS_REPORT_COLOR`                    | `format_error`                                                | `0` to never colour a diff, `1` to colour it whenever `diff` supports the flag. Unset or empty defers to `NO_COLOR` |
 | `BATS_HELPERS_DEPRECATION_QUIET`               | every module                                                  | Set to any non-empty value to silence every deprecation notice                              |
 

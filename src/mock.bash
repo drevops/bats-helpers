@@ -14,7 +14,7 @@
 # shellcheck disable=SC1090
 
 ##
-## Sandbox.
+## Mock directory.
 ##
 
 ##
@@ -34,6 +34,8 @@ mock_setup() {
   # The mock directory goes first so that a mocked name is found ahead of the
   # real command. Bats restores PATH after the test, so this reaches no further.
   PATH="${BATS_HELPERS_MOCK_TMPDIR}:${PATH}"
+
+  mock_path_record
 }
 
 ##
@@ -84,6 +86,81 @@ mock_prepare_tmp() {
   mkdir -p "${dir}/bats-helpers-mock" || return 1
 
   echo "${dir}/bats-helpers-mock"
+}
+
+##
+# Records the PATH that the mocks are found on.
+#
+# Globals:
+#   PATH: Written to the record so that a later change to it is detectable.
+##
+mock_path_record() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  printf '%s\n' "${PATH}" >"${dir}/.path"
+}
+
+##
+# Warns when PATH changed after the mocks were put on it.
+#
+# Code under test that rewrites PATH disables the mocking silently: the test
+# then passes while exercising the real system, which is the failure this
+# reports.
+#
+# Globals:
+#   PATH: Compared against the record.
+#
+# Outputs:
+#   File descriptor 3: The warning, when PATH no longer matches the record.
+#
+# Returns:
+#   0 always. The change is reported as a warning rather than by the exit
+#   status, so that a caller can report it without failing on it.
+##
+mock_path_check() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  local record="${dir}/.path"
+  [ -e "${record}" ] || return 0
+
+  local recorded
+  recorded="$(cat "${record}")"
+
+  [ "${recorded}" = "${PATH}" ] && return 0
+
+  if mock_path_contains "${dir}"; then
+    echo "Warning: 'PATH' changed after 'mock_setup'. The mocks are still found, but a command the test did not mock may resolve differently." >&3
+    return 0
+  fi
+
+  echo "Warning: 'PATH' changed after 'mock_setup' and no longer holds the mock directory '${dir}'. Mocked commands are not found and the real commands run instead." >&3
+
+  return 0
+}
+
+##
+# Reports whether a directory is on PATH.
+#
+# Arguments:
+#   1. dir: Directory to look for.
+#
+# Globals:
+#   PATH: Searched for the directory.
+##
+mock_path_contains() {
+  local dir="${1}"
+
+  local -a entries=()
+  IFS=':' read -ra entries <<<"${PATH}"
+
+  local entry
+  for entry in "${entries[@]}"; do
+    [ "${entry}" = "${dir}" ] && return 0
+  done
+
+  return 1
 }
 
 ##
@@ -1014,16 +1091,18 @@ mock_forward_exec() {
 #
 # Arguments:
 #   1. dir: Directory to remove.
+#   2. path: Value to remove it from. Optional, defaults to the current PATH.
 #
 # Outputs:
 #   STDOUT: The remaining PATH entries.
 ##
 mock_forward_path() {
   local dir="${1}"
+  local path="${2-${PATH}}"
   local -a entries=()
   local -a kept=()
 
-  IFS=':' read -ra entries <<<"${PATH}"
+  IFS=':' read -ra entries <<<"${path}"
 
   local entry
   for entry in "${entries[@]}"; do
@@ -1168,6 +1247,347 @@ mock_strict_reject() {
   mock_spec_describe_all "${mock}" >&2
 
   printf '%s\n' "${line}" >>"${mock}.unexpected"
+}
+
+##
+## Sandbox mode.
+##
+## Off until a test enables it. Once enabled, PATH holds the mock directory and
+## a directory of the commands the test allowed, so a command the test neither
+## mocked nor allowed does not run.
+##
+## This is not a security boundary. An absolute path reaches the real command
+## whatever PATH holds, and the commands the library and the BATS harness run
+## stay available so that both keep working inside the mode.
+##
+
+##
+# Enables the sandbox mode for the current test.
+#
+# Arguments:
+#   1+. command: Commands that must run for real, as 'mock_sandbox_allow' takes
+#       them. Optional.
+#
+# Globals:
+#   PATH: Replaced with the mock directory and the sandbox directory.
+#   BATS_HELPERS_MOCK_SANDBOX_REPORT: Exported with the path to the report, so
+#     that the denial reaches it from whichever process hit the failed lookup.
+##
+mock_sandbox_enable() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  local sandbox="${dir}/.sandbox"
+
+  if ! mkdir -p "${sandbox}/bin"; then
+    flunk "Sandbox directory '${sandbox}/bin' cannot be created."
+    return 1
+  fi
+
+  # The value is saved once, so that enabling an already-enabled sandbox does
+  # not record the sandbox over the PATH it has to be restored to.
+  [ -e "${sandbox}/path" ] || printf '%s\n' "${PATH}" >"${sandbox}/path"
+
+  mock_sandbox_link_base "${sandbox}/bin" || return 1
+
+  if [ "$#" -gt 0 ]; then
+    mock_sandbox_allow "$@" || return 1
+  fi
+
+  BATS_HELPERS_MOCK_SANDBOX_REPORT="${sandbox}/report"
+  export BATS_HELPERS_MOCK_SANDBOX_REPORT
+
+  # Bash consults this on every failed lookup. It is defined here rather than at
+  # file scope so that loading the library leaves the shell's lookups alone, and
+  # exported so that a Bash script under test reports the same way the test
+  # shell does.
+  # shellcheck disable=SC2329 # Bash calls this itself on a failed lookup.
+  command_not_found_handle() { mock_sandbox_deny "$@"; }
+  export -f mock_sandbox_deny
+  export -f command_not_found_handle
+
+  PATH="${dir}:${sandbox}/bin"
+
+  mock_path_record
+}
+
+##
+# Allows commands to run for real inside the sandbox.
+#
+# Each call reaching an allowed command is recorded as an escape, so that
+# 'mock_sandbox_report' names what left the mock boundary.
+#
+# Arguments:
+#   1+. command: Command names.
+##
+mock_sandbox_allow() {
+  if [ "$#" -eq 0 ]; then
+    flunk "At least one command name is required."
+    return 1
+  fi
+
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  local sandbox="${dir}/.sandbox"
+
+  if ! mkdir -p "${sandbox}/bin"; then
+    flunk "Sandbox directory '${sandbox}/bin' cannot be created."
+    return 1
+  fi
+
+  local real_path
+  real_path="$(mock_sandbox_real_path)" || return 1
+
+  local name
+  local real
+  for name in "$@"; do
+    # 'type -P' searches PATH even when a builtin or a function carries the same
+    # name, which is what the shim needs: a file to hand the call to.
+    real="$(PATH="${real_path}" type -P "${name}")" || real=""
+
+    case "${real}" in
+      /*) ;;
+      *)
+        flunk "Command '${name}' cannot be allowed: it is not on 'PATH'."
+        return 1
+        ;;
+    esac
+
+    mock_sandbox_write_shim "${sandbox}/bin/${name}" "${name}" "${real}" "${sandbox}/report"
+    chmod +x "${sandbox}/bin/${name}"
+  done
+}
+
+##
+# Disables the sandbox mode.
+#
+# Globals:
+#   PATH: Restored to the value saved when the mode was enabled.
+#   BATS_HELPERS_MOCK_SANDBOX_REPORT: Unset. The report itself is kept, so that
+#     'mock_verify' still reads it from a teardown.
+##
+mock_sandbox_disable() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  local saved="${dir}/.sandbox/path"
+
+  if [ ! -e "${saved}" ]; then
+    flunk "Mock sandbox is not enabled. Enable it with 'mock_sandbox_enable' first."
+    return 1
+  fi
+
+  PATH="$(cat "${saved}")"
+  rm -f "${saved}"
+
+  unset -f command_not_found_handle
+  export -fn mock_sandbox_deny
+  unset BATS_HELPERS_MOCK_SANDBOX_REPORT
+
+  mock_path_record
+}
+
+##
+# Reports whether the sandbox mode is enabled.
+##
+mock_sandbox_enabled() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  [ -e "${dir}/.sandbox/path" ]
+}
+
+##
+# Prints what left the mock boundary.
+#
+# Arguments:
+#   1. kind: 'denied' for the commands the sandbox did not resolve, 'allowed'
+#      for the ones it let run for real. Optional, defaults to both.
+#
+# Outputs:
+#   STDOUT: One line per command, each named once, in the order the commands
+#           were first seen.
+##
+mock_sandbox_report() {
+  local kind="${1-}"
+
+  case "${kind}" in
+    '' | denied | allowed) ;;
+    *)
+      flunk "Kind '${kind}' is not known. Use 'denied' or 'allowed'."
+      return 1
+      ;;
+  esac
+
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  local report="${dir}/.sandbox/report"
+  [ -e "${report}" ] || return 0
+
+  local -a seen=()
+  local line
+  local entry
+  local skip
+
+  while IFS= read -r line; do
+    [ -n "${kind}" ] && [ "${line%% *}" != "${kind}" ] && continue
+
+    skip=0
+    for entry in "${seen[@]}"; do
+      [ "${entry}" = "${line}" ] && skip=1
+    done
+
+    [ "${skip}" = "1" ] && continue
+
+    seen+=("${line}")
+
+    case "${line}" in
+      denied\ *) echo "Command '${line#denied }' is not mocked and the mock sandbox denied it" ;;
+      *) echo "Command '${line#allowed }' ran for real, allowed by the mock sandbox" ;;
+    esac
+  done <"${report}"
+
+  return 0
+}
+
+##
+# Records a command the sandbox did not resolve and reports it.
+#
+# Runs in whichever process hit the failed lookup, where the library is not
+# loaded, so it uses builtins alone and must never call 'flunk'.
+#
+# Arguments:
+#   1. name: Command name.
+#
+# Globals:
+#   BATS_HELPERS_MOCK_SANDBOX_REPORT: Path to the report.
+#
+# Outputs:
+#   STDERR: A diagnostic naming the command.
+#
+# Returns:
+#   127 always, the status of a command that was not found.
+##
+mock_sandbox_deny() {
+  local name="${1}"
+
+  if [ -n "${BATS_HELPERS_MOCK_SANDBOX_REPORT-}" ]; then
+    printf 'denied %s\n' "${name}" >>"${BATS_HELPERS_MOCK_SANDBOX_REPORT}"
+  fi
+
+  printf "Command '%s' is not mocked and the mock sandbox is enabled\n" "${name}" >&2
+
+  return 127
+}
+
+##
+# Writes the commands the library and the BATS harness run.
+#
+# These stay available inside the sandbox, so that the assertions, the file
+# helpers, the generated mocks and 'run' itself keep working there. A test that
+# needs one of them denied mocks it: the mock directory comes first on PATH and
+# shadows the link. 'git' and 'tar' are left out, because a mode that allows
+# them by default answers none of the questions it exists to answer.
+#
+# Outputs:
+#   STDOUT: The command names, separated by spaces.
+##
+mock_sandbox_base_commands() {
+  echo 'bash cat chmod cp diff dirname find grep head id ln ls mkdir mktemp rm sed stat touch wc'
+}
+
+##
+# Links the commands the library and the BATS harness run into the sandbox.
+#
+# Arguments:
+#   1. bin: Directory to link them into.
+##
+mock_sandbox_link_base() {
+  local bin="${1}"
+
+  local real_path
+  real_path="$(mock_sandbox_real_path)" || return 1
+
+  local -a names=()
+  read -ra names <<<"$(mock_sandbox_base_commands)"
+
+  local name
+  local real
+  for name in "${names[@]}"; do
+    # An allowed command reports what it lets through, so its shim is not
+    # replaced by a link that would let the same command through silently.
+    [ -e "${bin}/${name}" ] && continue
+
+    real="$(PATH="${real_path}" type -P "${name}")" || real=""
+
+    # A command the machine does not have is nothing to link.
+    case "${real}" in
+      /*) ln -sf "${real}" "${bin}/${name}" ;;
+    esac
+  done
+
+  return 0
+}
+
+##
+# Writes the PATH that the real commands are found on.
+#
+# The mock directory is dropped from it, so that a command which is both mocked
+# and allowed resolves to the real command rather than back into its own mock.
+#
+# Globals:
+#   PATH: Used when the sandbox has no saved value yet.
+#
+# Outputs:
+#   STDOUT: The PATH saved when the sandbox was enabled, else the current one,
+#           in both cases without the mock directory.
+##
+mock_sandbox_real_path() {
+  local dir
+  dir="$(mock_resolve_tmp)" || return 1
+
+  local saved="${dir}/.sandbox/path"
+  local path="${PATH}"
+
+  [ -e "${saved}" ] && path="$(cat "${saved}")"
+
+  mock_forward_path "${dir}" "${path}"
+}
+
+##
+# Writes the script that runs an allowed command and records the escape.
+#
+# Arguments:
+#   1. shim: Path to write the script to.
+#   2. name: Command name.
+#   3. real: Path to the real command.
+#   4. report: Path to the report.
+##
+mock_sandbox_write_shim() {
+  local shim="${1}"
+  local name="${2}"
+  local real="${3}"
+  local report="${4}"
+
+  # Every value is quoted for the shell rather than interpolated raw, for the
+  # same reason 'mock_write' quotes: the directory holding them is
+  # consumer-supplied through BATS_HELPERS_MOCK_TMPDIR.
+  local name_quoted
+  local real_quoted
+  local report_quoted
+  printf -v name_quoted '%q' "${name}"
+  printf -v real_quoted '%q' "${real}"
+  printf -v report_quoted '%q' "${report}"
+
+  cat <<EOF >"${shim}"
+#!/usr/bin/env bash
+
+printf 'allowed %s\n' ${name_quoted} >>${report_quoted}
+
+exec ${real_quoted} "\$@"
+EOF
 }
 
 ##
@@ -1650,8 +2070,15 @@ mock_assert_not_called() {
 ##
 # Asserts that every expectation of every mock was met.
 #
+# The sandbox is a property of the test rather than of one mock, so its report
+# is covered whichever mocks are named.
+#
 # Arguments:
 #   1+. Mocks to verify. Optional, defaults to every mock of the test.
+#
+# Outputs:
+#   File descriptor 3: The commands the sandbox allowed to run for real, and
+#     the warning that PATH changed after 'mock_setup'.
 ##
 mock_verify() {
   local -a mocks=()
@@ -1678,6 +2105,19 @@ mock_verify() {
       problems+=("${problem}")
     done < <(mock_verify_mock "${mock}")
   done
+
+  mock_path_check
+
+  # A denied command is a hole in the test, so it fails the verification. An
+  # allowed one ran as the test asked it to and only has to stay visible.
+  while IFS= read -r problem; do
+    problems+=("${problem}")
+  done < <(mock_sandbox_report 'denied')
+
+  local escape
+  while IFS= read -r escape; do
+    echo "${escape}" >&3
+  done < <(mock_sandbox_report 'allowed')
 
   [ "${#problems[@]}" -eq 0 ] && return 0
 
