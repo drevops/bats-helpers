@@ -59,11 +59,12 @@ bats_require_minimum_version 1.13.0
   assert_output_not_contains "output :"
   assert_output_not_contains "stderr :"
 
-  output=""
+  output="captured output"
   stderr="stderr needle"
   status=0
   run assert_failure
   [ "${status}" -eq 1 ]
+  assert_output_contains "output : captured output"
   assert_output_contains "stderr : stderr needle"
 
   status=2
@@ -74,6 +75,7 @@ bats_require_minimum_version 1.13.0
   assert_failure --status 2 "some output"
 
   output=""
+  unset stderr
   status=2
   run assert_failure --status 3
   assert_failure
@@ -129,6 +131,15 @@ bats_require_minimum_version 1.13.0
   run assert_status 2
   assert_failure
   assert_output_contains "actual   : 137 (killed by SIGKILL)"
+
+  output="captured output"
+  stderr="stderr needle"
+  status=2
+  run assert_status 3
+  assert_failure
+  assert_output_contains "output   : captured output"
+  assert_output_contains "stderr   : stderr needle"
+  unset stderr
 
   status=2
   run assert_status
