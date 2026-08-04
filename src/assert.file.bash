@@ -460,6 +460,27 @@ assert_dir_not_contains_string() {
 }
 
 ##
+# Raises the error a comparison command reported instead of comparing files.
+#
+# 'diff' and 'cmp' both answer "the files differ" with status 1 and report a
+# failure of their own with a higher one. Reading the two the same way would let
+# an unreadable file satisfy an assertion that the files differ.
+#
+# Arguments:
+#   1. status: Status the comparison command exited with.
+#   2. message: What it wrote while exiting.
+#
+# Returns:
+#   0 when the status is a comparison result, non-zero via 'flunk' when it is
+#   not.
+##
+file_compare_failed() {
+  [ "${1}" -le 1 ] && return 0
+
+  flunk "Unable to compare the files: ${2}"
+}
+
+##
 # Asserts that the contents of two text files are equal.
 #
 # Arguments:
@@ -480,7 +501,12 @@ assert_files_equal() {
   assert_file_exists "${file2}" || return 1
 
   local difference
-  difference="$(diff "${diff_opts[@]}" "${file1}" "${file2}")" && return 0
+  local compare_status=0
+  difference="$(diff "${diff_opts[@]}" "${file1}" "${file2}" 2>&1)" || compare_status=$?
+
+  [ "${compare_status}" -eq 0 ] && return 0
+
+  file_compare_failed "${compare_status}" "${difference}" || return 1
 
   format_error "Files are not equal" "file" "${file1}" "other file" "${file2}" "difference" "${difference}" | flunk
 }
@@ -505,7 +531,13 @@ assert_files_not_equal() {
   assert_file_exists "${file1}" || return 1
   assert_file_exists "${file2}" || return 1
 
-  diff "${diff_opts[@]}" "${file1}" "${file2}" >/dev/null || return 0
+  local difference
+  local compare_status=0
+  difference="$(diff "${diff_opts[@]}" "${file1}" "${file2}" 2>&1)" || compare_status=$?
+
+  file_compare_failed "${compare_status}" "${difference}" || return 1
+
+  [ "${compare_status}" -ne 0 ] && return 0
 
   format_error "Files are equal, but should not be" "file" "${file1}" "other file" "${file2}" | flunk
 }
@@ -525,7 +557,12 @@ assert_binary_files_equal() {
   assert_file_exists "${file2}" || return 1
 
   local difference
-  difference="$(cmp "${file1}" "${file2}" 2>&1)" && return 0
+  local compare_status=0
+  difference="$(cmp "${file1}" "${file2}" 2>&1)" || compare_status=$?
+
+  [ "${compare_status}" -eq 0 ] && return 0
+
+  file_compare_failed "${compare_status}" "${difference}" || return 1
 
   format_error "Files are not equal" "file" "${file1}" "other file" "${file2}" "difference" "${difference}" | flunk
 }
@@ -544,7 +581,13 @@ assert_binary_files_not_equal() {
   assert_file_exists "${file1}" || return 1
   assert_file_exists "${file2}" || return 1
 
-  cmp "${file1}" "${file2}" >/dev/null 2>&1 || return 0
+  local difference
+  local compare_status=0
+  difference="$(cmp "${file1}" "${file2}" 2>&1)" || compare_status=$?
+
+  file_compare_failed "${compare_status}" "${difference}" || return 1
+
+  [ "${compare_status}" -ne 0 ] && return 0
 
   format_error "Files are equal, but should not be" "file" "${file1}" "other file" "${file2}" | flunk
 }
