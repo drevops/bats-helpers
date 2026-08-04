@@ -80,7 +80,7 @@ file_backup_path() {
 
   case "/${file}/" in
     */../*)
-      format_error "Unable to resolve the backup path: the file contains a parent directory reference" "file" "${file}" | flunk
+      flunk "Unable to resolve the backup path: file '${file}' contains a parent directory reference."
       return 1
       ;;
   esac
@@ -88,7 +88,7 @@ file_backup_path() {
   local root="${BATS_HELPERS_BACKUP_DIR:-${BATS_TEST_TMPDIR:+${BATS_TEST_TMPDIR}/bats-helpers-backup}}"
 
   if [ -z "${root}" ]; then
-    format_error "Unable to resolve the backup directory: BATS_TEST_TMPDIR is not set. Set BATS_HELPERS_BACKUP_DIR to a writable directory" | flunk
+    flunk "Unable to resolve the backup directory: BATS_TEST_TMPDIR is not set. Set BATS_HELPERS_BACKUP_DIR to a writable directory."
     return 1
   fi
 
