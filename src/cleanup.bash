@@ -29,7 +29,7 @@ cleanup_registry_path() {
     return 1
   fi
 
-  echo "${dir%/}/bats-helpers-cleanup"
+  printf '%s\n' "${dir%/}/bats-helpers-cleanup"
 }
 
 ##

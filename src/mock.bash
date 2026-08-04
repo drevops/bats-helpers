@@ -69,7 +69,7 @@ mock_resolve_tmp() {
     return 1
   fi
 
-  echo "${dir%/}"
+  printf '%s\n' "${dir%/}"
 }
 
 ##
@@ -85,7 +85,7 @@ mock_prepare_tmp() {
   rm -rf "${dir}/bats-helpers-mock" >/dev/null || return 1
   mkdir -p "${dir}/bats-helpers-mock" || return 1
 
-  echo "${dir}/bats-helpers-mock"
+  printf '%s\n' "${dir}/bats-helpers-mock"
 }
 
 ##
@@ -197,8 +197,8 @@ mock_create() {
   echo -n 0 >"${mock}.status"
   echo -n '' >"${mock}.output"
   echo -n '' >"${mock}.side_effect"
-  echo -n "${mock##*/}" >"${mock}.name"
-  echo -n "${BATS_HELPERS_MOCK_STRICT:-1}" >"${mock}.strict"
+  printf '%s' "${mock##*/}" >"${mock}.name"
+  printf '%s' "${BATS_HELPERS_MOCK_STRICT:-1}" >"${mock}.strict"
 
   # The modules are resolved to an absolute path because the code under test may
   # run the mock from any working directory.
@@ -208,7 +208,7 @@ mock_create() {
   mock_write "${mock}" "${src_dir}" "${BATS_HELPERS_MOCK_TMPDIR}/mock.log"
   chmod +x "${mock}"
 
-  echo "${mock}"
+  printf '%s\n' "${mock}"
 }
 
 ##
@@ -232,7 +232,7 @@ mock_command() {
   # The call log and the name-based assertions read the mocked command here.
   printf '%s' "${name}" >"${mock}.name"
 
-  echo "${mock}"
+  printf '%s\n' "${mock}"
 }
 
 ##
@@ -253,7 +253,7 @@ mock_next_index() {
 
   echo -n "$((index + 1))" >"${counter}"
 
-  echo "${index}"
+  printf '%s\n' "${index}"
 }
 
 ##
@@ -451,7 +451,7 @@ mock_spec_add() {
   echo -n 0 >"${spec}.arg_num"
   echo -n 0 >"${spec}.hits"
 
-  echo "${spec}"
+  printf '%s\n' "${spec}"
 }
 
 ##
@@ -688,7 +688,7 @@ mock_match_index() {
   local i
   for ((i = 1; i <= spec_num; i++)); do
     if mock_spec_matches "${mock}.spec.${i}" "$@"; then
-      echo "${i}"
+      printf '%s\n' "${i}"
       return 0
     fi
   done
@@ -926,7 +926,7 @@ mock_spec_describe() {
 
   [ -z "${description}" ] && description="any call"
 
-  echo "${description}"
+  printf '%s\n' "${description}"
 }
 
 ##
@@ -979,16 +979,16 @@ mock_response_file() {
   local spec="${4-}"
 
   if [ -n "${spec}" ] && [ -e "${mock}.spec.${spec}.${property}" ]; then
-    echo "${mock}.spec.${spec}.${property}"
+    printf '%s\n' "${mock}.spec.${spec}.${property}"
     return 0
   fi
 
   if [ -e "${mock}.${property}.${call_num}" ]; then
-    echo "${mock}.${property}.${call_num}"
+    printf '%s\n' "${mock}.${property}.${call_num}"
     return 0
   fi
 
-  echo "${mock}.${property}"
+  printf '%s\n' "${mock}.${property}"
 }
 
 ##
@@ -1095,7 +1095,7 @@ mock_forward_path() {
   local joined
   printf -v joined '%s:' "${kept[@]}"
 
-  echo "${joined%:}"
+  printf '%s\n' "${joined%:}"
 }
 
 ##
@@ -1660,7 +1660,7 @@ mock_log_path() {
   local dir
   dir="$(mock_resolve_tmp)" || return 1
 
-  echo "${dir}/mock.log"
+  printf '%s\n' "${dir}/mock.log"
 }
 
 ##
@@ -1936,7 +1936,7 @@ mock_paths() {
   local name_file
   for name_file in "${dir}"/*.name; do
     [ -e "${name_file}" ] || continue
-    echo "${name_file%.name}"
+    printf '%s\n' "${name_file%.name}"
   done
 
   return 0

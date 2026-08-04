@@ -620,7 +620,7 @@ string_random() {
     ret="${ret}${alphabet:RANDOM%${#alphabet}:1}"
   done
 
-  echo "${ret}"
+  printf '%s\n' "${ret}"
 }
 
 ##

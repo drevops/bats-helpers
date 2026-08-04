@@ -103,7 +103,7 @@ file_backup_path() {
     return 1
   fi
 
-  echo "${root%/}/${file#/}"
+  printf '%s\n' "${root%/}/${file#/}"
 }
 
 ##
@@ -130,7 +130,7 @@ file_add_var() {
   mkdir -p "$(dirname "${backup}")" || return 1
   cp -f "${file}" "${backup}" || return 1
 
-  echo "${name}=${value}" >>"${file}"
+  printf '%s\n' "${name}=${value}" >>"${file}"
 }
 
 ##
