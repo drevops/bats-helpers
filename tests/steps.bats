@@ -20,7 +20,7 @@ load _test_helper
   run echo "Some Substring"
   steps_run "assert"
 
-  # Full with mocks
+  # Full with mocks.
   mocks="$(steps_run "setup")"
   run echo "Some Substring"
   steps_run "assert" "${mocks[@]}"
@@ -58,7 +58,7 @@ load _test_helper
   run echo "Some other"
   steps_run "assert"
 
-  # Full with mocks
+  # Full with mocks.
   mocks="$(steps_run "setup")"
   run echo "Some other"
   steps_run "assert" "${mocks[@]}"
@@ -135,7 +135,7 @@ load _test_helper
 
   run steps_run "assert" "${mocks[@]}"
   assert_failure
-  assert_output_contains "ERROR: Mocked command 'somebin' was called with arguments '--opt1 --opt2 --opt3', but '--opt1 --opt2' was expected."
+  assert_output_contains "Mocked command 'somebin' was called with arguments '--opt1 --opt2 --opt3', but '--opt1 --opt2' was expected."
 }
 
 @test "Command, args - negative: wrong args - caller recovers" {
@@ -159,7 +159,7 @@ load _test_helper
 
   run steps_run "assert" "otherbin=/some/mock/path"
   assert_failure
-  assert_output_contains "ERROR: Mock for the binary 'somebin' does not exist."
+  assert_output_contains "Mock for the binary 'somebin' does not exist."
 }
 
 @test "Command - negative: mock does not exist - caller recovers" {
@@ -216,7 +216,7 @@ load _test_helper
 
   run steps_run "setup" "${mocks[@]}"
   assert_failure
-  assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
+  assert_output_contains "The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
 
 @test "Command, args - negative: incorrect input - delim - caller recovers" {
@@ -482,7 +482,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify side effect was executed
+  # Verify side effect was executed.
   assert_file_exists "${BATS_TEST_TMPDIR}/side_effect_file"
 }
 
@@ -493,7 +493,7 @@ load _test_helper
 
   mocks="$(steps_run "setup")"
 
-  # Side effects are executed in the mock's context, not the test context
+  # Side effects are executed in the mock's context, not the test context.
   run somebin --opt1
   assert_output_contains "success"
   assert_success
@@ -513,7 +513,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify side effect output
+  # Verify side effect output.
   assert_file_exists "${BATS_TEST_TMPDIR}/side_effect_output"
   run cat "${BATS_TEST_TMPDIR}/side_effect_output"
   assert_output_contains "side effect executed"
@@ -531,7 +531,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify both side effects were executed
+  # Verify both side effects were executed.
   assert_file_exists "${BATS_TEST_TMPDIR}/file1"
   assert_file_exists "${BATS_TEST_TMPDIR}/file2"
   run cat "${BATS_TEST_TMPDIR}/file2"
@@ -550,7 +550,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify side effect was executed even with failure status
+  # Verify side effect was executed even with failure status.
   assert_file_exists "${BATS_TEST_TMPDIR}/error_log"
   run cat "${BATS_TEST_TMPDIR}/error_log"
   assert_output_contains "error logged"
@@ -567,7 +567,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify side effect was executed
+  # Verify side effect was executed.
   assert_file_exists "${BATS_TEST_TMPDIR}/no_output_side_effect"
 }
 
@@ -583,7 +583,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify side effect was executed
+  # Verify side effect was executed.
   assert_file_exists "${BATS_TEST_TMPDIR}/shorthand_side_effect"
 }
 
@@ -605,7 +605,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify both side effects were executed
+  # Verify both side effects were executed.
   assert_file_exists "${BATS_TEST_TMPDIR}/cmd1_file"
   assert_file_exists "${BATS_TEST_TMPDIR}/cmd2_file"
   run cat "${BATS_TEST_TMPDIR}/cmd2_file"
@@ -630,7 +630,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify both side effects were executed
+  # Verify both side effects were executed.
   assert_file_exists "${BATS_TEST_TMPDIR}/call1_file"
   assert_file_exists "${BATS_TEST_TMPDIR}/call2_file"
 }
@@ -642,7 +642,7 @@ load _test_helper
 
   run steps_run "setup"
   assert_failure
-  assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
+  assert_output_contains "The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
 
 @test "Command with side effect - consecutive ## still forbidden" {
@@ -652,7 +652,7 @@ load _test_helper
 
   run steps_run "setup"
   assert_failure
-  assert_output_contains "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
+  assert_output_contains "The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
 
 @test "Wildcard command - any arguments accepted" {
@@ -664,7 +664,7 @@ load _test_helper
 
   mocks="$(steps_run "setup")"
 
-  # Test with different arguments - all should work
+  # Test with different arguments - all should work.
   run somebin --opt1 --opt2
   assert_output_contains "wildcard output 1"
   assert_success
@@ -712,7 +712,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify side effect was executed
+  # Verify side effect was executed.
   assert_file_exists "${BATS_TEST_TMPDIR}/wildcard_file"
 }
 
@@ -739,17 +739,17 @@ load _test_helper
 
   mocks="$(steps_run "setup")"
 
-  # This should match the exact command
+  # This should match the exact command.
   run git status
   assert_output_contains "exact status output"
   assert_success
 
-  # This should match the wildcard
+  # This should match the wildcard.
   run git commit -m "test"
   assert_output_contains "wildcard git output"
   assert_success
 
-  # This should match the npm wildcard
+  # This should match the npm wildcard.
   run npm install --save express
   assert_output_contains "npm error"
   assert_failure
@@ -833,7 +833,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify side effect contains unescaped hash
+  # Verify side effect contains unescaped hash.
   assert_file_exists "${BATS_TEST_TMPDIR}/escaped_hash"
   run cat "${BATS_TEST_TMPDIR}/escaped_hash"
   assert_output_contains "Comment # starts here"
@@ -877,7 +877,7 @@ load _test_helper
 
   steps_run "assert" "${mocks[@]}"
 
-  # Verify side effect
+  # Verify side effect.
   assert_file_exists "${BATS_TEST_TMPDIR}/all_escaped"
   run cat "${BATS_TEST_TMPDIR}/all_escaped"
   assert_output_contains "Comment # here"

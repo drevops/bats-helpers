@@ -29,7 +29,7 @@
 ##
 mock_setup() {
   BATS_HELPERS_MOCK_TMPDIR="$(mock_prepare_tmp)" || return 1
-  export "BATS_HELPERS_MOCK_TMPDIR"
+  export BATS_HELPERS_MOCK_TMPDIR
 
   # The mock directory goes first so that a mocked name is found ahead of the
   # real command. Bats restores PATH after the test, so this reaches no further.
@@ -352,9 +352,6 @@ mock_set_status() {
 #   1. mock: Path to the mock.
 #   2. output: Output or '-' for STDIN.
 #   3. n: Index of the call. Optional, defaults to every call.
-#
-# Inputs:
-#   STDIN: Output if 2 is '-'.
 ##
 mock_set_output() {
   local mock="${1?'Mock must be specified'}"
@@ -371,9 +368,6 @@ mock_set_output() {
 #   1. mock: Path to the mock.
 #   2. side_effect: Bash code or '-' for STDIN.
 #   3. n: Index of the call. Optional, defaults to every call.
-#
-# Inputs:
-#   STDIN: Side effect if 2 is '-'.
 ##
 mock_set_side_effect() {
   local mock="${1?'Mock must be specified'}"
@@ -391,9 +385,6 @@ mock_set_side_effect() {
 #   2. property_name: Property name.
 #   3. property_value: Property value or '-' for STDIN.
 #   4. n: Index of the call. Optional, defaults to every call.
-#
-# Inputs:
-#   STDIN: Property value if 3 is '-'.
 ##
 mock_set_property() {
   local mock="${1?'Mock must be specified'}"
@@ -587,9 +578,6 @@ mock_spec_set_status() {
 # Arguments:
 #   1. spec: Specification returned by 'mock_spec_add'.
 #   2. output: Output or '-' for STDIN.
-#
-# Inputs:
-#   STDIN: Output if 2 is '-'.
 ##
 mock_spec_set_output() {
   local spec="${1?'Specification must be specified'}"
@@ -604,9 +592,6 @@ mock_spec_set_output() {
 # Arguments:
 #   1. spec: Specification returned by 'mock_spec_add'.
 #   2. side_effect: Side effect or '-' for STDIN.
-#
-# Inputs:
-#   STDIN: Side effect if 2 is '-'.
 ##
 mock_spec_set_side_effect() {
   local spec="${1?'Specification must be specified'}"
@@ -622,14 +607,11 @@ mock_spec_set_side_effect() {
 #   1. spec: Specification returned by 'mock_spec_add'.
 #   2. property_name: Property name.
 #   3. property_value: Property value or '-' for STDIN.
-#
-# Inputs:
-#   STDIN: Property value if 3 is '-'.
 ##
 mock_spec_set_property() {
-  local spec="${1}"
-  local property_name="${2}"
-  local property_value="${3}"
+  local spec="${1?'Specification must be specified'}"
+  local property_name="${2?'Property name must be specified'}"
+  local property_value="${3?'Property value must be specified'}"
 
   if [ ! -e "${spec}.arg_num" ]; then
     flunk "Specification '${spec}' does not exist. Create it with 'mock_spec_add' first."
@@ -1819,7 +1801,7 @@ mock_get_call_num() {
 mock_get_call_args() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_resolve_n "${mock}" "${2-}")" || return "$?"
+  n="$(mock_resolve_n "${mock}" "${2-}")" || return 1
 
   cat "${mock}.args.${n}"
 }
@@ -1837,7 +1819,7 @@ mock_get_call_args() {
 mock_get_call_user() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_resolve_n "${mock}" "${2-}")" || return "$?"
+  n="$(mock_resolve_n "${mock}" "${2-}")" || return 1
 
   cat "${mock}.user.${n}"
 }
@@ -1857,7 +1839,7 @@ mock_get_call_env() {
   local mock="${1?'Mock must be specified'}"
   local var="${2?'Variable name must be specified'}"
   local n
-  n="$(mock_resolve_n "${mock}" "${3-}")" || return "$?"
+  n="$(mock_resolve_n "${mock}" "${3-}")" || return 1
 
   source "${mock}.env.${n}"
 
@@ -2032,10 +2014,10 @@ mock_assert_no_calls() {
 mock_assert_called() {
   local name="${1?'Command name must be specified'}"
 
-  mock_name_registered "${name}" || {
+  if ! mock_name_registered "${name}"; then
     flunk "Command '${name}' is not mocked. Register it with 'mock_command' first."
     return 1
-  }
+  fi
 
   local matched
   matched="$(mock_log_calls_of "${name}")" || return 1
@@ -2054,10 +2036,10 @@ mock_assert_called() {
 mock_assert_not_called() {
   local name="${1?'Command name must be specified'}"
 
-  mock_name_registered "${name}" || {
+  if ! mock_name_registered "${name}"; then
     flunk "Command '${name}' is not mocked. Register it with 'mock_command' first."
     return 1
-  }
+  fi
 
   local matched
   matched="$(mock_log_calls_of "${name}")" || return 1

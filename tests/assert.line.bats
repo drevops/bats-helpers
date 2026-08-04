@@ -71,12 +71,12 @@ context (3 lines):
   capture
   run assert_line 4 "Done."
   assert_failure
-  assert_output_contains "Line index 4 is out of range for output with 4 lines."
+  assert_output_contains "Line index '4' is out of range for output with 4 lines."
 
   capture
   run assert_line -5 "Usage: tool.sh"
   assert_failure
-  assert_output_contains "Line index -5 is out of range for output with 4 lines."
+  assert_output_contains "Line index '-5' is out of range for output with 4 lines."
 }
 
 @test "assert_line_not" {
@@ -127,7 +127,7 @@ context (4 lines):
   capture
   run assert_line_contains 9 "config"
   assert_failure
-  assert_output_contains "Line index 9 is out of range for output with 4 lines."
+  assert_output_contains "Line index '9' is out of range for output with 4 lines."
 }
 
 @test "assert_line_contains_case" {
@@ -546,10 +546,10 @@ line count : 4
   assert_failure
   assert_output_contains "-- Output does not have the expected number of lines containing substring --
 substring  : error
-expected   : 3
-actual     : 2
 match mode : literal
 case       : insensitive
+expected   : 3
+actual     : 2
 --"
 }
 
@@ -602,10 +602,10 @@ actual     : 4"
   assert_failure
   assert_output_contains "-- Output does not have the expected number of lines matching regular expression --
 regular expression : ^error
-expected           : 1
-actual             : 2
 match mode         : regex
 case               : insensitive
+expected           : 1
+actual             : 2
 --"
 }
 
@@ -657,10 +657,10 @@ actual             : 4"
   assert_failure
   assert_output_contains "-- Output does not have the expected number of lines matching format --
 format     : Deleted %d files
-expected   : 1
-actual     : 2
 match mode : format
 case       : insensitive
+expected   : 1
+actual     : 2
 --"
 }
 
@@ -729,17 +729,17 @@ actual     : 2"
   capture
   run line_resolve_index 010
   assert_failure
-  assert_output_contains "Line index 010 is out of range for output with 4 lines."
+  assert_output_contains "Line index '010' is out of range for output with 4 lines."
 
   capture
   run line_resolve_index 4
   assert_failure
-  assert_output_contains "Line index 4 is out of range for output with 4 lines."
+  assert_output_contains "Line index '4' is out of range for output with 4 lines."
 
   capture
   run line_resolve_index -5
   assert_failure
-  assert_output_contains "Line index -5 is out of range for output with 4 lines."
+  assert_output_contains "Line index '-5' is out of range for output with 4 lines."
 
   capture
   run line_resolve_index "two"

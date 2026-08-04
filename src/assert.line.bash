@@ -238,7 +238,7 @@ assert_line_not_matches_format_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line() {
-  line_assert_any_equal 1 "$@"
+  line_assert_any_equal 0 "$@"
 }
 
 ##
@@ -251,7 +251,7 @@ assert_any_line() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line() {
-  line_assert_any_equal 0 "$@"
+  line_assert_any_equal 1 "$@"
 }
 
 ##
@@ -268,7 +268,7 @@ assert_no_line() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_contains() {
-  line_assert_any_match 1 "literal" 0 "$@"
+  line_assert_any_match 0 "literal" 0 "$@"
 }
 
 ##
@@ -281,7 +281,7 @@ assert_any_line_contains() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_contains_case() {
-  line_assert_any_match 1 "literal" 1 "$@"
+  line_assert_any_match 0 "literal" 1 "$@"
 }
 
 ##
@@ -294,7 +294,7 @@ assert_any_line_contains_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_contains() {
-  line_assert_any_match 0 "literal" 0 "$@"
+  line_assert_any_match 1 "literal" 0 "$@"
 }
 
 ##
@@ -307,7 +307,7 @@ assert_no_line_contains() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_contains_case() {
-  line_assert_any_match 0 "literal" 1 "$@"
+  line_assert_any_match 1 "literal" 1 "$@"
 }
 
 ##
@@ -324,7 +324,7 @@ assert_no_line_contains_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_matches() {
-  line_assert_any_match 1 "regex" 0 "$@"
+  line_assert_any_match 0 "regex" 0 "$@"
 }
 
 ##
@@ -337,7 +337,7 @@ assert_any_line_matches() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_matches_case() {
-  line_assert_any_match 1 "regex" 1 "$@"
+  line_assert_any_match 0 "regex" 1 "$@"
 }
 
 ##
@@ -350,7 +350,7 @@ assert_any_line_matches_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_matches() {
-  line_assert_any_match 0 "regex" 0 "$@"
+  line_assert_any_match 1 "regex" 0 "$@"
 }
 
 ##
@@ -363,7 +363,7 @@ assert_no_line_matches() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_matches_case() {
-  line_assert_any_match 0 "regex" 1 "$@"
+  line_assert_any_match 1 "regex" 1 "$@"
 }
 
 ##
@@ -380,7 +380,7 @@ assert_no_line_matches_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_matches_format() {
-  line_assert_any_match 1 "format" 0 "$@"
+  line_assert_any_match 0 "format" 0 "$@"
 }
 
 ##
@@ -393,7 +393,7 @@ assert_any_line_matches_format() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_matches_format_case() {
-  line_assert_any_match 1 "format" 1 "$@"
+  line_assert_any_match 0 "format" 1 "$@"
 }
 
 ##
@@ -406,7 +406,7 @@ assert_any_line_matches_format_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_matches_format() {
-  line_assert_any_match 0 "format" 0 "$@"
+  line_assert_any_match 1 "format" 0 "$@"
 }
 
 ##
@@ -419,7 +419,7 @@ assert_no_line_matches_format() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_matches_format_case() {
-  line_assert_any_match 0 "format" 1 "$@"
+  line_assert_any_match 1 "format" 1 "$@"
 }
 
 ##
@@ -640,7 +640,7 @@ assert_line_count_not_matches_format_case() {
 # Resolves a line index into an offset into the captured lines.
 #
 # Arguments:
-#   1. index: Line index. A negative value counts back from the last line, so
+#   1. given: Line index. A negative value counts back from the last line, so
 #      '-1' is the last one.
 #
 # Globals:
@@ -650,31 +650,31 @@ assert_line_count_not_matches_format_case() {
 #   STDOUT: The resolved offset.
 ##
 line_resolve_index() {
-  local index="${1-}"
+  local given="${1-}"
 
-  if ! [[ ${index} =~ ^-?[0-9]+$ ]]; then
-    flunk "Line index '${index}' is not an integer."
+  if ! [[ ${given} =~ ^-?[0-9]+$ ]]; then
+    flunk "Line index '${given}' is not an integer."
     return 1
   fi
 
   local total="${#lines[@]}"
-  local resolved
+  local index
 
   # Base 10 is explicit so that a zero-padded index is not read as octal.
-  if [ "${index:0:1}" = "-" ]; then
-    resolved=$((total - 10#${index#-}))
+  if [ "${given:0:1}" = "-" ]; then
+    index=$((total - 10#${given#-}))
   else
-    resolved=$((10#${index}))
+    index=$((10#${given}))
   fi
 
   # An out-of-range index would otherwise compare against an empty string,
   # which reads as an ordinary mismatch and hides where the fault is.
-  if [ "${resolved}" -lt 0 ] || [ "${resolved}" -ge "${total}" ]; then
-    flunk "Line index ${index} is out of range for output with $(report_plural_lines "${total}")."
+  if [ "${index}" -lt 0 ] || [ "${index}" -ge "${total}" ]; then
+    flunk "Line index '${given}' is out of range for output with $(report_plural_lines "${total}")."
     return 1
   fi
 
-  printf '%s\n' "${resolved}"
+  printf '%s\n' "${index}"
 }
 
 ##
@@ -992,7 +992,7 @@ line_assert_index_equal() {
 # Asserts that some or no line matches a needle, reporting how on failure.
 #
 # Arguments:
-#   1. present: '1' to assert that some line matches, '0' that none does.
+#   1. negate: '1' to assert that no line matches, '0' that some does.
 #   2. mode: How the needle is read - 'literal', 'regex' or 'format'.
 #   3. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
 #   4. needle: String to search for.
@@ -1006,7 +1006,7 @@ line_assert_any_match() {
     return 1
   fi
 
-  local present="${1}"
+  local negate="${1}"
   local mode="${2}"
   local case_sensitive="${3}"
   local needle="${4}"
@@ -1017,10 +1017,10 @@ line_assert_any_match() {
   # shellcheck disable=SC2206
   local -a indices=(${matched})
 
-  if [ "${present}" = "1" ]; then
-    [ "${#indices[@]}" -gt 0 ] && return 0
-  else
+  if [ "${negate}" = "1" ]; then
     [ "${#indices[@]}" -eq 0 ] && return 0
+  else
+    [ "${#indices[@]}" -gt 0 ] && return 0
   fi
 
   local opposite
@@ -1030,10 +1030,10 @@ line_assert_any_match() {
   local -a opposite_indices=(${opposite})
 
   local case_decided=0
-  if [ "${present}" = "1" ]; then
-    [ "${#opposite_indices[@]}" -gt 0 ] && case_decided=1
-  else
+  if [ "${negate}" = "1" ]; then
     [ "${#opposite_indices[@]}" -eq 0 ] && case_decided=1
+  else
+    [ "${#opposite_indices[@]}" -gt 0 ] && case_decided=1
   fi
 
   local noun
@@ -1043,10 +1043,10 @@ line_assert_any_match() {
   participle="$(line_participle "${mode}" 0)"
 
   local title
-  if [ "${present}" = "1" ]; then
-    title="Output has no line ${participle} ${noun}"
-  else
+  if [ "${negate}" = "1" ]; then
     title="Output has a line ${participle} ${noun}, but should not"
+  else
+    title="Output has no line ${participle} ${noun}"
   fi
 
   local -a footer=()
@@ -1065,7 +1065,7 @@ line_assert_any_match() {
 # Asserts that some or no line equals a string, reporting it on failure.
 #
 # Arguments:
-#   1. present: '1' to assert that some line equals it, '0' that none does.
+#   1. negate: '1' to assert that no line equals it, '0' that some does.
 #   2. expected: String to compare against.
 #
 # Globals:
@@ -1077,7 +1077,7 @@ line_assert_any_equal() {
     return 1
   fi
 
-  local present="${1}"
+  local negate="${1}"
   local expected="${2}"
 
   local matched
@@ -1086,17 +1086,17 @@ line_assert_any_equal() {
   # shellcheck disable=SC2206
   local -a indices=(${matched})
 
-  if [ "${present}" = "1" ]; then
-    [ "${#indices[@]}" -gt 0 ] && return 0
-  else
+  if [ "${negate}" = "1" ]; then
     [ "${#indices[@]}" -eq 0 ] && return 0
+  else
+    [ "${#indices[@]}" -gt 0 ] && return 0
   fi
 
   local title
-  if [ "${present}" = "1" ]; then
-    title="Output has no line equal to string"
-  else
+  if [ "${negate}" = "1" ]; then
     title="Output has a line equal to string, but should not"
+  else
+    title="Output has no line equal to string"
   fi
 
   local -a rows=("string" "${expected}")
@@ -1199,7 +1199,7 @@ line_assert_count_match() {
 
   format_error "Output does not have the expected number of lines ${participle} ${noun}" \
     "${noun}" "${needle}" \
+    "${footer[@]}" \
     "expected" "${expected}" \
-    "actual" "${actual}" \
-    "${footer[@]}" | flunk
+    "actual" "${actual}" | flunk
 }

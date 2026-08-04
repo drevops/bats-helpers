@@ -12,6 +12,8 @@
 #
 # Globals:
 #   status: Exit status of the last 'run' call.
+#   output: Output captured by the last 'run' call.
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
 ##
 assert_success() {
   # shellcheck disable=SC2154
@@ -36,6 +38,8 @@ assert_success() {
 #
 # Globals:
 #   status: Exit status of the last 'run' call.
+#   output: Output captured by the last 'run' call.
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
 ##
 assert_failure() {
   local expected=""
@@ -88,6 +92,8 @@ assert_failure() {
 #
 # Globals:
 #   status: Exit status of the last 'run' call.
+#   output: Output captured by the last 'run' call.
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
 ##
 assert_status() {
   if [ "$#" -eq 0 ]; then
@@ -230,10 +236,11 @@ command_assert_match() {
 ##
 
 ##
-# Asserts that the output of the last command contains a string, ignoring case.
+# Asserts that the output of the last command contains a substring,
+# ignoring case.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
@@ -244,11 +251,11 @@ assert_output_contains() {
 }
 
 ##
-# Asserts that the output of the last command contains a string,
+# Asserts that the output of the last command contains a substring,
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
@@ -259,11 +266,11 @@ assert_output_contains_case() {
 }
 
 ##
-# Asserts that the output of the last command does not contain a string,
+# Asserts that the output of the last command does not contain a substring,
 # ignoring case.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
@@ -274,11 +281,11 @@ assert_output_not_contains() {
 }
 
 ##
-# Asserts that the output of the last command does not contain a string,
+# Asserts that the output of the last command does not contain a substring,
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
@@ -297,7 +304,7 @@ assert_output_not_contains_case() {
 # ignoring case.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -313,7 +320,7 @@ assert_output_matches() {
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -329,7 +336,7 @@ assert_output_matches_case() {
 # expression, ignoring case.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -345,7 +352,7 @@ assert_output_not_matches() {
 # expression, case-sensitively.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -365,7 +372,7 @@ assert_output_not_matches_case() {
 # case.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -381,7 +388,7 @@ assert_output_matches_format() {
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -397,7 +404,7 @@ assert_output_matches_format_case() {
 # ignoring case.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -413,7 +420,7 @@ assert_output_not_matches_format() {
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -486,11 +493,11 @@ assert_stderr_empty() {
 ##
 
 ##
-# Asserts that the standard error of the last command contains a string,
+# Asserts that the standard error of the last command contains a substring,
 # ignoring case.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -502,11 +509,11 @@ assert_stderr_contains() {
 }
 
 ##
-# Asserts that the standard error of the last command contains a string,
+# Asserts that the standard error of the last command contains a substring,
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -518,11 +525,11 @@ assert_stderr_contains_case() {
 }
 
 ##
-# Asserts that the standard error of the last command does not contain a string,
-# ignoring case.
+# Asserts that the standard error of the last command does not contain
+# a substring, ignoring case.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -534,11 +541,11 @@ assert_stderr_not_contains() {
 }
 
 ##
-# Asserts that the standard error of the last command does not contain a string,
-# case-sensitively.
+# Asserts that the standard error of the last command does not contain
+# a substring, case-sensitively.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -558,7 +565,7 @@ assert_stderr_not_contains_case() {
 # expression, ignoring case.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -575,7 +582,7 @@ assert_stderr_matches() {
 # expression, case-sensitively.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -592,7 +599,7 @@ assert_stderr_matches_case() {
 # expression, ignoring case.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -609,7 +616,7 @@ assert_stderr_not_matches() {
 # expression, case-sensitively.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -630,7 +637,7 @@ assert_stderr_not_matches_case() {
 # ignoring case.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -647,7 +654,7 @@ assert_stderr_matches_format() {
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -664,7 +671,7 @@ assert_stderr_matches_format_case() {
 # string, ignoring case.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -681,7 +688,7 @@ assert_stderr_not_matches_format() {
 # string, case-sensitively.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:

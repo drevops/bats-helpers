@@ -73,8 +73,7 @@ steps_run() {
   steps_debug "Total steps : ${#STEPS[@]}"
   steps_debug
 
-  # Create associative array for mocked commands.
-  if [[ -n ${mocked_commands_var} ]]; then
+  if [ -n "${mocked_commands_var}" ]; then
     local line
     while IFS= read -r line; do
       local key="${line%%=*}"
@@ -106,20 +105,18 @@ steps_run() {
 
       steps_debug_sub "PARSE: STARTED"
 
-      # Replace escaped hashes with a placeholder before parsing.
       local ESCAPED_HASH_PLACEHOLDER="__ESCAPED_HASH__"
       local item_with_placeholders="${item//\\#/${ESCAPED_HASH_PLACEHOLDER}}"
 
       if [[ ${item_with_placeholders} =~ (##) || $(echo "${item_with_placeholders}" | grep -o "#" | wc -l) -gt 3 ]]; then
-        flunk "ERROR: The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
+        flunk "The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
         return 1
       fi
 
-      # Split command, status, and optional output.
       local command_parts
       IFS='#' read -ra command_parts <<<"${item_with_placeholders}"
-      command_parts=("${command_parts[@]/# /}") # Remove leading spaces.
-      command_parts=("${command_parts[@]/% /}") # Remove trailing spaces.
+      command_parts=("${command_parts[@]/# /}")
+      command_parts=("${command_parts[@]/% /}")
 
       # Extract the command binary and its arguments from the first command part.
       local full_command
@@ -155,13 +152,12 @@ steps_run() {
       ## Processing the command.
       ##
 
-      # Track the index of the command call per binary.
       command_index=${command_indexes[${command_binary}]:-1}
       steps_debug_sub "Command index for '${command_binary}' is '${command_index}'."
 
-      if [[ ${phase} == "${PHASE_SETUP}" ]]; then
+      if [ "${phase}" = "${PHASE_SETUP}" ]; then
         # Get mock from passed array or create a new one.
-        if [[ -z ${mocked_commands["${command_binary}"]-} ]]; then
+        if [ -z "${mocked_commands["${command_binary}"]-}" ]; then
           mock=$(mock_command "${command_binary}")
           mocked_commands["${command_binary}"]=${mock}
           steps_debug_sub "SETUP: Created new mock for '${command_binary}' with value '${mocked_commands[${command_binary}]}'."
@@ -173,20 +169,20 @@ steps_run() {
         steps_debug_sub "SETUP: Setting mock status to '${mock_status}'."
         mock_set_status "${mock}" "${mock_status}" "${command_index}"
 
-        if [[ -n ${mock_output} ]]; then
+        if [ -n "${mock_output}" ]; then
           steps_debug_sub "SETUP: Setting mock output to '${mock_output}'."
           mock_set_output "${mock}" "${mock_output}" "${command_index}"
         fi
 
-        if [[ -n ${mock_side_effect} ]]; then
+        if [ -n "${mock_side_effect}" ]; then
           steps_debug_sub "SETUP: Setting mock side effect to '${mock_side_effect}'."
           mock_set_side_effect "${mock}" "${mock_side_effect}" "${command_index}"
         fi
 
         steps_debug_sub "SETUP: Setup mock for binary '${command_binary}' complete."
       else
-        if [[ -z ${mocked_commands["${command_binary}"]-} ]]; then
-          flunk "ERROR: Mock for the binary '${command_binary}' does not exist."
+        if [ -z "${mocked_commands["${command_binary}"]-}" ]; then
+          flunk "Mock for the binary '${command_binary}' does not exist."
           return 1
         fi
 
@@ -199,14 +195,14 @@ steps_run() {
         steps_debug_sub "        mock        : ${mock}"
         steps_debug_sub "        index       : ${command_index}"
         if ! mock_args_actual="$(mock_get_call_args "${mock}" "${command_index}" 2>/dev/null)"; then
-          flunk "ERROR: Mocked command '${command_binary}' was expected to be called at least ${command_index} time(s), but was called fewer times."
+          flunk "Mocked command '${command_binary}' was expected to be called at least ${command_index} time(s), but was called fewer times."
           return 1
         fi
         steps_debug_sub "        actual args : ${mock_args_actual}"
 
         # Use wildcard-aware assertion.
         if ! mock_assert_call_args "${mock}" "${command_args}" "${command_index}"; then
-          flunk "ERROR: Mocked command '${command_binary}' was called with arguments '${mock_args_actual}', but '${command_args}' was expected."
+          flunk "Mocked command '${command_binary}' was called with arguments '${mock_args_actual}', but '${command_args}' was expected."
           return 1
         fi
       fi
@@ -220,7 +216,7 @@ steps_run() {
     elif [[ ${item} == "-"* ]]; then
       steps_debug "Type: string absent"
 
-      if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
+      if [ "${phase}" = "${PHASE_ASSERT}" ]; then
         assert_output_not_contains "${item:2}" || return 1 # Skip '-' and a space.
       fi
     ##
@@ -229,7 +225,7 @@ steps_run() {
     elif [[ ${item} == "= "* ]]; then
       steps_debug "Type: expected call"
 
-      if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
+      if [ "${phase}" = "${PHASE_ASSERT}" ]; then
         expected_calls+=("${item:2}") # Skip '=' and a space.
       fi
     ##
@@ -238,7 +234,7 @@ steps_run() {
     else
       steps_debug "Type: string present"
 
-      if [[ ${phase} == "${PHASE_ASSERT}" ]]; then
+      if [ "${phase}" = "${PHASE_ASSERT}" ]; then
         assert_output_contains "${item}" || return 1
       fi
     fi
@@ -249,13 +245,12 @@ steps_run() {
 
   local key
 
-  # Return mocked commands as a string to pass it to the next phase.
-  if [[ ${phase} == "${PHASE_SETUP}" ]]; then
+  if [ "${phase}" = "${PHASE_SETUP}" ]; then
     local mc_string=""
     for key in "${!mocked_commands[@]}"; do
       mc_string+="${key}=${mocked_commands[${key}]}"$'\n'
     done
-    echo "${mc_string}"
+    printf '%s\n' "${mc_string}"
 
     return 0
   fi
