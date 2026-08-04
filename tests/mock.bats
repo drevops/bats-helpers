@@ -1239,7 +1239,11 @@ bats_require_minimum_version 1.13.0
 
 @test "mock_sandbox_link_base - a command the machine does not have is skipped" {
   mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
-  echo "" >"${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
+  mkdir -p "${BATS_TEST_TMPDIR}/empty"
+
+  # A directory holding nothing resolves no command, where an empty PATH would
+  # resolve the working directory instead.
+  echo "${BATS_TEST_TMPDIR}/empty" >"${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
 
   mock_sandbox_link_base "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
 
@@ -1322,16 +1326,19 @@ bats_require_minimum_version 1.13.0
 
 @test "mock_path_check" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
+  path_before="${PATH}"
 
   mock_path_check 3>"${notice}"
   assert_equal "" "$(cat "${notice}")"
 
   PATH="${PATH}:${BATS_TEST_TMPDIR}/extra"
   mock_path_check 3>"${notice}"
+  PATH="${path_before}"
   assert_file_contains "${notice}" "Warning: 'PATH' changed after 'mock_setup'. The mocks are still found, but a command the test did not mock may resolve differently."
 
   PATH="/usr/bin:/bin"
   mock_path_check 3>"${notice}"
+  PATH="${path_before}"
   assert_file_contains "${notice}" "and no longer holds the mock directory"
   assert_file_contains "${notice}" "Mocked commands are not found and the real commands run instead."
 }

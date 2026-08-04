@@ -108,6 +108,9 @@ mock_path_record() {
 # then passes while exercising the real system, which is the failure this
 # reports.
 #
+# Globals:
+#   PATH: Compared against the record.
+#
 # Outputs:
 #   File descriptor 3: The warning, when PATH no longer matches the record.
 #
@@ -133,6 +136,8 @@ mock_path_check() {
   fi
 
   echo "Warning: 'PATH' changed after 'mock_setup' and no longer holds the mock directory '${dir}'. Mocked commands are not found and the real commands run instead." >&3
+
+  return 0
 }
 
 ##
@@ -140,6 +145,9 @@ mock_path_check() {
 #
 # Arguments:
 #   1. dir: Directory to look for.
+#
+# Globals:
+#   PATH: Searched for the directory.
 ##
 mock_path_contains() {
   local dir="${1}"
@@ -1293,6 +1301,7 @@ mock_sandbox_enable() {
   # file scope so that loading the library leaves the shell's lookups alone, and
   # exported so that a Bash script under test reports the same way the test
   # shell does.
+  # shellcheck disable=SC2329 # Bash calls this itself on a failed lookup.
   command_not_found_handle() { mock_sandbox_deny "$@"; }
   export -f mock_sandbox_deny
   export -f command_not_found_handle
@@ -1351,7 +1360,12 @@ mock_sandbox_allow() {
 }
 
 ##
-# Disables the sandbox mode and restores PATH.
+# Disables the sandbox mode.
+#
+# Globals:
+#   PATH: Restored to the value saved when the mode was enabled.
+#   BATS_HELPERS_MOCK_SANDBOX_REPORT: Unset. The report itself is kept, so that
+#     'mock_verify' still reads it from a teardown.
 ##
 mock_sandbox_disable() {
   local dir
@@ -1522,6 +1536,9 @@ mock_sandbox_link_base() {
 #
 # The mock directory is dropped from it, so that a command which is both mocked
 # and allowed resolves to the real command rather than back into its own mock.
+#
+# Globals:
+#   PATH: Used when the sandbox has no saved value yet.
 #
 # Outputs:
 #   STDOUT: The PATH saved when the sandbox was enabled, else the current one,
