@@ -41,6 +41,30 @@ report_trace_wrapper() {
   assert_output_contains 'Path ${BATS_TEST_TMPDIR}/some.txt'
 }
 
+@test "flunk marks where the failure starts and ends" {
+  run report_trace_wrapper
+  assert_failure
+
+  # The banner wraps the stack trace as well as the report, so nothing of the
+  # failure is printed outside the two markers.
+  assert_line 0 "##################################################"
+  assert_line 1 "#             BEGIN ERROR MESSAGE                #"
+  assert_line 2 "##################################################"
+  assert_line 3 "-- File does not exist --"
+  assert_line -3 "##################################################"
+  assert_line -2 "#              END ERROR MESSAGE                 #"
+  assert_line -1 "##################################################"
+  assert_line -4 "--"
+
+  # A message raised without a report is bounded the same way.
+  run flunk "Some message"
+  assert_failure
+  assert_line 0 "##################################################"
+  assert_line 1 "#             BEGIN ERROR MESSAGE                #"
+  assert_line 3 "Some message"
+  assert_line -1 "##################################################"
+}
+
 @test "flunk appends the stack trace of the caller" {
   run report_trace_wrapper
   assert_failure

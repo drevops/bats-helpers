@@ -1252,9 +1252,12 @@ assert_output_contains "SCRIPT_FILE is not set."
 
 A bare call still fails the test at that point, because BATS runs tests with `errexit` enabled.
 
-Every assertion reports through one path, so a failure always reads the same way: a title naming what went wrong, then the values that decided it as aligned rows.
+Every assertion reports through one path, so a failure always reads the same way: a banner marking where the failure starts and ends, a title naming what went wrong, then the values that decided it as aligned rows. A run prints the output of the code under test alongside the library's own, so the banner is what makes the failure findable in it. It closes below the stack trace rather than above it, so nothing belonging to the failure falls outside the two markers.
 
 ```text
+##################################################
+#             BEGIN ERROR MESSAGE                #
+##################################################
 -- String does not contain substring --
 string     : some text
 substring  : SOME
@@ -1266,7 +1269,12 @@ note       : it matches without the '_case' suffix
 -- stack trace --
 ${PWD}/tests/example.bats:12: assert_string_contains_case
 --
+##################################################
+#              END ERROR MESSAGE                 #
+##################################################
 ```
+
+The examples below show the block on its own, without the surrounding banner.
 
 When any value spans lines, every row switches to a labelled form carrying its line count. They switch together, so two values stay comparable rather than one collapsing onto a single line and the other not:
 

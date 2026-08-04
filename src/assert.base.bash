@@ -15,8 +15,9 @@
 #     of the stack trace back to the files the consumer wrote.
 #
 # Outputs:
-#   STDERR: The message, followed by the stack trace of the caller, with the
-#           volatile paths rewritten to the names of the variables holding them.
+#   STDERR: The message and the stack trace of the caller, between the banners
+#           marking where the failure starts and ends, with the volatile paths
+#           rewritten to the names of the variables holding them.
 #
 # Returns:
 #   1 always.
@@ -37,7 +38,7 @@ flunk() {
     message="${message}"$'\n\n'"$(report_decorate "stack trace" "${trace}")"
   fi
 
-  report_normalise_paths "${message}" >&2
+  report_normalise_paths "$(report_banner "${message}")" >&2
 
   return 1
 }
@@ -140,6 +141,31 @@ format_error() {
 ##
 ## Rendering.
 ##
+
+##
+# Marks where a failure starts and ends.
+#
+# A run prints the output of the code under test as well as its own, so a
+# failure has to be findable in a wall of text that is mostly not about it. The
+# banner is deliberately louder than anything either side of it, and it wraps
+# the stack trace as well as the report so that nothing of the failure falls
+# outside the two markers.
+#
+# Arguments:
+#   1. body: Failure to wrap.
+#
+# Outputs:
+#   STDOUT: The body, between the opening and the closing banner.
+##
+report_banner() {
+  echo "##################################################"
+  echo "#             BEGIN ERROR MESSAGE                #"
+  echo "##################################################"
+  printf '%s\n' "${1}"
+  echo "##################################################"
+  echo "#              END ERROR MESSAGE                 #"
+  echo "##################################################"
+}
 
 ##
 # Wraps a block of text in a titled border.
