@@ -231,6 +231,7 @@ As with `--separate-stderr`, that declaration has to be `1.5.0` or newer, or bat
 | Function Name                     | Description                                             |
 |-----------------------------------|---------------------------------------------------------|
 | `assert_status`                   | Asserts that a command exits with an exact status       |
+| `assert_failure_status`           | Asserts that a command fails with an exact status       |
 | `assert_status_general_error`     | Asserts that a command exits with status `1`            |
 | `assert_status_command_not_found` | Asserts that a command exits with status `127`          |
 
@@ -242,7 +243,16 @@ run ./script.sh --nonsense
 assert_status 2
 ```
 
-`assert_failure` takes the same expectation through a `--status` option, so that one call still covers both the failure and the status it failed with:
+`assert_failure_status` covers both the failure and the status it failed with in one call:
+
+```bash
+run ./script.sh --nonsense
+
+assert_failure_status 2
+assert_failure_status 2 "Usage: script.sh [--verbose] <path>"
+```
+
+`assert_failure` takes the same expectation through the deprecated `--status` option, recognised only as the first argument, with everything after it and its value read as the exact output, as before. An output that is itself the string `--status` is asserted with `assert_output` instead:
 
 ```bash
 run ./script.sh --nonsense
@@ -250,8 +260,6 @@ run ./script.sh --nonsense
 assert_failure --status 2
 assert_failure --status 2 "Usage: script.sh [--verbose] <path>"
 ```
-
-The option is recognised only as the first argument, and everything after it and its value is the exact output, as before. An output that is itself the string `--status` is asserted with `assert_output` instead.
 
 ##### Statuses that mean more than a failure
 
@@ -464,7 +472,9 @@ string_format_to_regex "Deleted %d files"
 | `assert_file_matches_format`     | Checks if a file matches a format string               |
 | `assert_file_not_matches_format` | Checks if a file does not match a format string        |
 | `assert_files_equal`             | Asserts that two files are equal                       |
+| `assert_files_equal_ignore_spaces` | Asserts that two files are equal, ignoring blank lines and whitespace changes |
 | `assert_files_not_equal`         | Asserts that two files are not equal                   |
+| `assert_files_not_equal_ignore_spaces` | Asserts that two files are not equal, ignoring blank lines and whitespace changes |
 | `assert_file_mode`               | Checks the file permission mode                        |
 | `assert_binary_files_equal`      | Checks if two binary files are equal                   |
 | `assert_binary_files_not_equal`  | Checks if two binary files are not equal               |
@@ -486,6 +496,15 @@ The six `contains`, `matches` and `matches_format` assertions each have a `_case
 assert_file_exists "${dir}/*.txt"
 assert_file_not_exists "${dir}/*.rtf"
 ```
+
+`assert_files_equal_ignore_spaces` and `assert_files_not_equal_ignore_spaces` compare two text files ignoring blank lines and whitespace changes:
+
+```bash
+assert_files_equal_ignore_spaces "${file1}" "${file2}"
+assert_files_not_equal_ignore_spaces "${file1}" "${file2}"
+```
+
+`assert_files_equal` and `assert_files_not_equal` take the same comparison through a deprecated `ignore_spaces` third argument, `1` to ignore whitespace and `0` by default.
 
 `assert_dir_contains_string` and `assert_dir_not_contains_string` search recursively, skip binary files, and always exclude `.git`, `.idea`, `vendor` and `node_modules`. They have no match mode variants: they always match case-sensitively and always read the string as a `grep` basic regular expression. Set `BATS_HELPERS_ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
 
@@ -1499,10 +1518,10 @@ The stack trace names the file, line and function of each of your own frames, le
 
 `file_add_var` backs a file up before modifying it and `file_restore` puts that backup back. Backups are written below `${BATS_TEST_TMPDIR}/bats-helpers-backup`, mirroring the source path, so BATS removes them together with the rest of the test sandbox and concurrent runs cannot overwrite each other's backups.
 
-Set `BATS_HELPERS_BACKUP_DIR` to store them elsewhere. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
+Set `BATS_HELPERS_FILE_BACKUP_DIR` to store them elsewhere. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
 
 ```bash
-export BATS_HELPERS_BACKUP_DIR="${BATS_TEST_TMPDIR}/backups"
+export BATS_HELPERS_FILE_BACKUP_DIR="${BATS_TEST_TMPDIR}/backups"
 ```
 
 Use `file_backup_path` to resolve where a given file's backup is stored:
@@ -1608,7 +1627,7 @@ Every variable the library defines, in one place. Each is also covered by the se
 | `BATS_HELPERS_STEPS_DEBUG`                     | `steps_run`                                                   | Set to `1` to print every parsing and matching decision to file descriptor 3                |
 | `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              | `assert_dir_contains_string`, `assert_dir_not_contains_string` | Array of directory names to exclude from the search, on top of the always-excluded four     |
 | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `fixture_export_codebase`                                     | Set to `1` to enable the export; anything else makes the function a no-op                   |
-| `BATS_HELPERS_BACKUP_DIR`                      | `file_add_var`, `file_restore`, `file_backup_path`            | Backup root. Defaults to `${BATS_TEST_TMPDIR}/bats-helpers-backup`                          |
+| `BATS_HELPERS_FILE_BACKUP_DIR`                 | `file_add_var`, `file_restore`, `file_backup_path`            | Backup root. Defaults to `${BATS_TEST_TMPDIR}/bats-helpers-backup`                          |
 | `BATS_HELPERS_CLEANUP_DIR`                     | `cleanup_register`, `cleanup_run`, `cleanup_registry_path`    | Directory holding the cleanup registry. Defaults to `${BATS_TEST_TMPDIR}`                   |
 | `BATS_HELPERS_RETRY_TIMEOUT`                   | `retry_run`                                                   | Overall deadline in whole seconds, on top of the attempt count. Unset means no deadline     |
 | `BATS_HELPERS_RETRY_ATTEMPTS`                  | `retry_run`                                                   | Set by `retry_run` to the attempts made, which on success is the attempt that succeeded     |
@@ -1650,6 +1669,7 @@ The variables follow the same pattern. The old name is read only when the new on
 | `BATS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` |
 | `BATS_MOCK_TMPDIR`                     | `BATS_HELPERS_MOCK_TMPDIR`                     |
 | `_USER`                                | `BATS_HELPERS_MOCK_USER`                       |
+| `BATS_HELPERS_BACKUP_DIR`              | `BATS_HELPERS_FILE_BACKUP_DIR`                 |
 
 `mock_setup` now exports `BATS_HELPERS_MOCK_TMPDIR` rather than `BATS_MOCK_TMPDIR`. The old name is still read as an input, but it is no longer written, so a test that reads the mock directory back after `mock_setup` has to read the new name. `mock_resolve_tmp` also names the new variable when it cannot resolve a directory, so a test asserting on `Set BATS_MOCK_TMPDIR to a writable directory` has to be updated.
 
@@ -1682,6 +1702,8 @@ Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence every not
 ```bash
 export BATS_HELPERS_DEPRECATION_QUIET=1
 ```
+
+See [`MIGRATION.md`](MIGRATION.md) for every deprecated function, variable and argument, together with its replacement, in one place.
 
 ## 🤝 Contributing
 

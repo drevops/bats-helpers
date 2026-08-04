@@ -12,7 +12,7 @@ This is a BATS (Bash Automated Testing System) helpers library that provides ass
 
 - **load.bash**: Central loading point that sources all helper modules
 - **src/**: Contains all helper modules:
-  - `assert.*.bash`: Various assertion helpers (base, command, string, file, git)
+  - `assert.*.bash`: Various assertion helpers (base, command, string, line, file, git); `assert.line.bash` holds assertions for the individual lines of a captured stream
   - `cleanup.bash`: Deferred cleanup that runs once the current test has finished
   - `retry.bash`: Retry runner for conditions that become true shortly
   - `file.bash`: File utilities for creating, trimming, backing up and restoring files
@@ -84,7 +84,7 @@ Every variable the library reads from the wider environment carries the `BATS_HE
 
 `STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the three exceptions and stay unprefixed. They are not environment configuration but the test data itself, written on the lines directly above the call that reads them, so the declaration and its use are read together and a long prefix costs more in daily ergonomics than the collision risk costs in rare confusion. `STEPS` and `TEST_CASES` are arrays declared with `declare -a`; `SCRIPT_FILE` is a scalar path.
 
-A deprecated name is read only when its replacement is unset **or empty**, so exporting the replacement as an empty string falls back rather than taking precedence. Every fallback in the library follows that one rule.
+A deprecated name is read only when its replacement is unset **or empty**, so exporting the replacement as an empty string falls back rather than taking precedence. Every fallback in the library follows that one rule, except when the replacement is an array: a value test such as `-n "${VAR-}"` reads only element 0, which would fall back wrongly for an array like `('' 'foo')`, so an array-valued fallback tests with `[ -n "${VAR+x}" ]` instead, falling back only when the replacement is unset. `file_dir_exclude_params` in `src/assert.file.bash` follows this for `BATS_HELPERS_ASSERT_DIR_EXCLUDE`.
 
 The prefix rule covers what the library provides, not what it consumes - bats-core's own `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME` and `BATS_VERBOSE_RUN` keep their names.
 
@@ -112,7 +112,7 @@ The banner belongs to `flunk` rather than to `format_error` because a run prints
 - **The title carries no values.** It names the subject and what failed - `File does not exist`, `String does not contain substring`, `Command exited with an unexpected status` - and the paths, strings and counts that fill it in go in rows. A value interpolated into a sentence is unreadable the moment it spans lines, which is the whole reason the rows exist.
 - **Open the title with the capitalised subject noun** naming the thing under assertion: `File`, `Directory`, `Symlink`, `Regular file`, `String`, `Line`, `Output`, `Command`. Row keys are lowercase and name the value they hold: `file`, `directory`, `string`, `substring`, `regular expression`, `format`, `expected`, `actual`, `context`.
 - **Row values are written raw, not quoted.** The aligned column already bounds the value, and a quote around `insensitive` or `literal` reads as noise. Single quotes stay in the sentences a direct `flunk` call raises, where there is nothing else to bound the value: `Line index '${index}' is not an integer.`
-- **Name the pair `expected` and `actual` whenever two values are compared**, and in that order. That is what turns a multi-line mismatch into a diff rather than two blobs.
+- **Name the pair `expected` and `actual` whenever two values are compared**, and in that order. That is what turns a multi-line mismatch into a diff rather than two blobs. An assertion that compares two artifacts by reference and attaches its own precomputed difference is exempt - the file-equality assertions in `src/assert.file.bash` use `file`, `other file` and `difference` rows instead, because a difference from `diff` or `cmp` filtered by `ignore_spaces` or taken over binaries cannot be regenerated generically from the two values.
 - **State the actual fact in the title, and append an expectation clause only when the fact alone does not convey it.** A positive assertion states the negated fact with no clause (`Directory is not empty`); a negative assertion states the positive fact plus a clause (`Directory is empty, but should not be`). Use the terse `, but should not` after a plain verb and `, but should not be` after a copula when the expectation is simply the negation; name the expectation outright whenever that is clearer (`Regular file exists, but should be a symlink`, `Command succeeded, but should have failed`).
 - **Choose the kind by what the message is about.** `format_error` reports a fact about a subject the caller can go and inspect - a file, a directory, a string, a line - and the subject and its values become the title and the rows. A direct `flunk` raises an error about the call itself: a malformed argument, a missing precondition of the library, a command that could not run. `File does not exist` with a `file` row is the first kind; `Unable to resolve the backup path: file '${file}' contains a parent directory reference.` is the second.
 - **Punctuate by message kind**: a `format_error` title takes no trailing full stop; validation and runtime errors raised by a direct `flunk` call read as sentences and end with one; row keys take neither.
@@ -140,7 +140,7 @@ File headers and function docblocks follow one house style so the library reads 
 
 - **Describe what the file holds**, specifically enough to tell it apart from its siblings. `Assertions for strings.` not `Bats test helpers.`
 - **Test file headers** read `Tests for <subject>.`, with the subject lowercase unless it is an acronym: `Tests for git assertions.`, `Tests for TUI helpers.`
-- **Function docblocks** are `##`-fenced, open with a third-person summary ending in a full stop, and carry only the sections that add something. `Arguments:` whenever the function takes any, `Globals:` whenever it reads or writes one, `Outputs:` when STDOUT is the result, and `Returns:` only where the return semantics differ from the library norm of "zero, or non-zero via `flunk`". Argument entries are numbered `1. name: Description.`
+- **Function docblocks** are `##`-fenced, open with a third-person summary ending in a full stop, and carry only the sections that add something. `Arguments:` whenever the function takes any, `Globals:` whenever it reads or writes one, `Outputs:` when STDOUT is the result, `Returns:` only where the return semantics differ from the library norm of "zero, or non-zero via `flunk`", and `Examples:` when the call shape is not obvious from the argument list alone, as with `src/dataprovider.bash`'s DSL-shaped functions. Argument entries are numbered `1. name: Description.`
 
 ```bash
 ##
@@ -180,8 +180,11 @@ The `steps.bash` module provides a DSL for defining test sequences with both com
 - `@<command> # <status> [ # <output> [ # <side_effect> ]]` - Mock command with status/output/side effect
 - `<substring>` - Assert output contains substring  
 - `- <substring>` - Assert output does NOT contain substring
+- `= <call>` - Add `<call>` to the expected ordered call sequence, checked across every mocked command
 
 Side effects are Bash code executed when the mock is called, useful for file creation, environment changes, or complex mock behaviors.
+
+A `<call>` is the command name followed by its arguments quoted as `mock_log_quote` renders them, e.g. `git 'clone' 'https://example.com/repo.git'`, and the `= <call>` steps together assert the order calls happened in across every mocked command, which a `@<command>` step alone cannot check since it only tracks one command's own calls.
 
 ## Testing Notes
 
@@ -189,7 +192,7 @@ Side effects are Bash code executed when the mock is called, useful for file cre
 - Test files follow BATS naming convention (*.bats)
 - Coverage reports are generated in the `coverage/` directory
 - The library includes comprehensive test coverage for all helper functions
-- Every assertion is tested for both its positive and its negative behaviour, in one `@test` per assertion
+- Every assertion is tested for both its positive and its negative behaviour; the `assert.*` test files cover both in one `@test` per assertion, while `mock.bats` and `steps.bats` split them into adjacent tests instead, trading that packaging for finer scenario granularity
 
 ### Assertion Call Style
 
