@@ -31,6 +31,7 @@
   - [Data provider](#data-provider) - Parameterized tests, named cases, matrices
   - [Mocking](#mocking) - Command mocking, Call log, Argument specifications, Strictness
   - [Step runner](#step-runner) - Sequential test assertions
+  - [Cleanup](#cleanup) - Deferred per-test cleanup
   - [Helpers](#helpers) - Utility functions
   - [Environment variables](#environment-variables) - Full variable reference
   - [Deprecations](#deprecations) - Renamed functions and variables
@@ -44,6 +45,7 @@
 - An ordered log of every mocked call, asserted as a sequence and reported as a unified diff.
 - Mock expectations that fail the test when they go unused or when an unanticipated call arrives.
 - Step runner for sequences of mocked calls and output assertions.
+- Deferred cleanup registered next to the code that created the thing it removes.
 - Data provider for running one function over many test cases, with named cases, per-case arity, a chosen assertion and matrix expansion.
 - Fixture and file utilities for building and restoring test sandboxes.
 - TUI helper for driving interactive scripts with scripted answers.
@@ -999,6 +1001,99 @@ Set `BATS_HELPERS_STEPS_DEBUG` to `1` to print the parsing and matching decision
 export BATS_HELPERS_STEPS_DEBUG=1
 ```
 
+### Cleanup
+
+Cleanup that belongs to one test can be registered next to the code that created the thing it removes, instead of being written into a shared `teardown` or repeated on every early-exit path:
+
+```bash
+@test "Build writes an artifact" {
+  build_dir="${BATS_TEST_TMPDIR}/build"
+  mkdir -p "${build_dir}"
+  cleanup_register rm -rf "${build_dir}"
+
+  run ./build.sh "${build_dir}"
+  assert_success
+  assert_file_exists "${build_dir}/artifact.tar"
+}
+```
+
+| Function                | Description                                                           | Arguments              | Returns       |
+|-------------------------|-----------------------------------------------------------------------|------------------------|---------------|
+| `cleanup_register`      | Registers a command to run once the current test has finished         | `command`, `[args...]` | None          |
+| `cleanup_run`           | Runs the registered commands in reverse order. Call from `teardown()` | None                   | None          |
+| `cleanup_registry_path` | Resolves the file the registry is stored in                           | None                   | Registry path |
+
+#### Composing with your teardown
+
+`teardown` belongs to your test file, so the library does not define it. Call `cleanup_run` from your own `teardown`, the way `mock_setup` is called from `setup`:
+
+```bash
+setup() {
+  mock_setup
+}
+
+teardown() {
+  cleanup_run
+}
+```
+
+Without that call nothing is ever run, so wire it up once per test file - or once in the helper every test file loads.
+
+#### Order and statuses
+
+Registrations run in reverse order, so a resource created inside another one is removed while the outer one still exists:
+
+```bash
+cleanup_register rm -rf "${repo_dir}"
+cleanup_register git -C "${repo_dir}" worktree remove "${worktree_dir}"
+```
+
+BATS runs `teardown` after a test whether it passed or failed, so the registered commands run either way. From there:
+
+- A cleanup that succeeds leaves the test's own result alone. A test that failed still reports its own failure, not the cleanup.
+- A cleanup that fails fails an otherwise-passing test, and reports the command and its exit status. A cleanup that silently fails is how leaked state accumulates.
+- A cleanup that fails does not stop the ones registered before it, and does not mask a failure that preceded it.
+
+#### Registering a command
+
+Arguments are quoted when they are registered, so reassigning a variable afterwards cannot redirect the command:
+
+```bash
+dir="${BATS_TEST_TMPDIR}/first"
+cleanup_register rm -rf "${dir}"
+
+# The registered command still removes "first".
+dir="${BATS_TEST_TMPDIR}/second"
+```
+
+Anything that needs a pipeline, a redirection or several statements is registered as a function:
+
+```bash
+archive_logs() {
+  tar -czf "${1}.tar.gz" "${1}"
+}
+
+cleanup_register archive_logs "${log_dir}"
+```
+
+#### Cleanup sandbox
+
+The registry is the file `${BATS_TEST_TMPDIR}/bats-helpers-cleanup`, so BATS removes it together with the rest of the test sandbox and concurrent runs cannot overwrite each other's registrations. Keeping it on disk rather than in a variable also means a registration made inside a subshell - under `run`, a command substitution or a pipeline - still reaches `cleanup_run`.
+
+Set `BATS_HELPERS_CLEANUP_DIR` to store the registry elsewhere. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
+
+```bash
+export BATS_HELPERS_CLEANUP_DIR="${BATS_TEST_TMPDIR}/cleanup"
+```
+
+Use `cleanup_registry_path` to resolve where the registry is stored:
+
+```bash
+assert_file_not_exists "$(cleanup_registry_path)"
+```
+
+`cleanup_run` drains the registry before running anything, so calling it a second time - from the test body and again from `teardown`, say - runs nothing.
+
 ### Helpers
 
 | Function Name             | Description                                                                   |
@@ -1072,6 +1167,7 @@ Every variable the library defines, in one place. Each is also covered by the se
 | `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              | `assert_dir_contains_string`, `assert_dir_not_contains_string` | Array of directory names to exclude from the search, on top of the always-excluded four     |
 | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `fixture_export_codebase`                                     | Set to `1` to enable the export; anything else makes the function a no-op                   |
 | `BATS_HELPERS_BACKUP_DIR`                      | `file_add_var`, `file_restore`, `file_backup_path`            | Backup root. Defaults to `${BATS_TEST_TMPDIR}/bats-helpers-backup`                          |
+| `BATS_HELPERS_CLEANUP_DIR`                     | `cleanup_register`, `cleanup_run`, `cleanup_registry_path`    | Directory holding the cleanup registry. Defaults to `${BATS_TEST_TMPDIR}`                   |
 | `BATS_HELPERS_MOCK_TMPDIR`                     | `mock_setup`, `mock_create`                                   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`, and `mock_setup` exports the resolved path |
 | `BATS_HELPERS_MOCK_USER`                       | `mock_get_call_user`                                          | User a mock call is reported as. Defaults to `id -un`                                       |
 | `BATS_HELPERS_MOCK_STRICT`                     | `mock_create`                                                 | Set to `0` to answer the calls a mock's expectations do not cover. Defaults to `1`, and is read when the mock is created |
