@@ -33,6 +33,7 @@
   - [Step runner](#step-runner) - Sequential test assertions
   - [Cleanup](#cleanup) - Deferred per-test cleanup
   - [Retry](#retry) - Conditions that become true shortly
+  - [Interactive scripts](#interactive-scripts) - Scripted answers, deadline, prompt order
   - [Helpers](#helpers) - Utility functions, inline fixture trees
   - [Environment variables](#environment-variables) - Full variable reference
   - [Deprecations](#deprecations) - Renamed functions and variables
@@ -52,7 +53,7 @@
 - Data provider for running one function over many test cases, with named cases, per-case arity, a chosen assertion and matrix expansion.
 - Fixture and file utilities for building and restoring test sandboxes.
 - A plain-text archive for declaring a whole fixture file tree inline in the test, serialising a directory back to it, and asserting a directory against it with per-file diffs.
-- TUI helper for driving interactive scripts with scripted answers.
+- TUI helper for driving interactive scripts with scripted answers, bounded by a deadline and asserted against the prompts the script printed.
 
 ## 📦 Installation
 
@@ -1291,6 +1292,76 @@ binary_is_installed() {
 retry_run 10 1 binary_is_installed "mytool"
 ```
 
+### Interactive scripts
+
+A script that asks questions is driven by naming it in `SCRIPT_FILE` and handing `tui_run` one answer per prompt, in the order the script asks for them:
+
+```bash
+@test "Installer" {
+  export SCRIPT_FILE="./install.sh"
+
+  tui_run "My site" "" "yes"
+
+  assert_output_contains "Installation complete"
+}
+```
+
+| Function                  | Description                                                          | Arguments      | Returns |
+|---------------------------|----------------------------------------------------------------------|----------------|---------|
+| `tui_run`                 | Runs the script named by `SCRIPT_FILE`, feeding it answers on STDIN  | `[answers...]` | None    |
+| `tui_assert_prompts`      | Asserts the prompts appeared in order, ignoring case                 | `[prompts...]` | None    |
+| `tui_assert_prompts_case` | Asserts the prompts appeared in order, case-sensitively              | `[prompts...]` | None    |
+
+Each answer is submitted followed by a newline, and an empty answer submits a blank line, so a prompt is left at its default by passing `""`. Answers reach the script byte for byte: an apostrophe, a `%` directive, a backslash escape or a space is not decoded on the way in.
+
+`tui_run` fills `output`, `status` and `lines` the way `run` does, so the script is asserted on with the usual command assertions.
+
+#### Deadline
+
+Every run is bounded. A script that keeps asking after its answers are spent is terminated and reported, rather than blocking until the whole suite is killed:
+
+```text
+Script './install.sh' did not finish within the 60 second timeout
+elapsed: 60 second(s)
+```
+
+The report carries everything the script printed before it was terminated, so the last prompt it reached names the answer that is missing.
+
+`BATS_HELPERS_TUI_TIMEOUT` sets the deadline, and defaults to `60`:
+
+```bash
+export BATS_HELPERS_TUI_TIMEOUT=5
+```
+
+It is in whole seconds, because `SECONDS` is the only clock available across the Bash versions the library supports. It cannot be turned off: a script that legitimately takes longer is given a larger number, which keeps every run bounded by something.
+
+#### Prompt order
+
+Answers are matched to prompts by position alone, so a test that answered every question one field early looks exactly like one that answered correctly. `tui_assert_prompts` asserts what the script asked, and in which order:
+
+```bash
+tui_run "My site" "" "yes"
+
+tui_assert_prompts "Site name" "Machine name" "Install profile"
+```
+
+Each prompt is searched for in what is left of the output after the prompt before it matched, so the same prompts in another order are reported rather than passed:
+
+```text
+Prompt 'Install profile' does not appear in the remaining output
+matched: 2 of 3
+```
+
+The number of prompts must also match the number of answers the last run submitted, in either direction, which is what catches an answer sequence that has drifted:
+
+```text
+Script was answered 3 time(s), but 2 prompt(s) are expected
+```
+
+`BATS_HELPERS_TUI_ANSWERS` holds that count. Calling the assertion before any script has run is an error rather than a pass.
+
+A prompt is matched as a substring, ignoring case; `tui_assert_prompts_case` matches case-sensitively. Only what the script prints itself can be asserted on: Bash writes a `read -p` prompt only when STDIN is a terminal, so a script asking that way leaves nothing in the output to match.
+
 ### Helpers
 
 | Function Name             | Description                                                                   |
@@ -1309,7 +1380,6 @@ retry_run 10 1 binary_is_installed "mytool"
 | `string_random`           | Generates a random alphanumeric string, 8 characters long by default          |
 | `string_match`            | Reports whether a needle matches a haystack, without asserting on it          |
 | `string_format_to_regex`  | Translates a format string into an extended regular expression                |
-| `tui_run`                 | Runs the script named by `SCRIPT_FILE`, feeding it a list of answers on STDIN |
 | `flunk`                   | Fails the test with a message, its stack trace and stable paths               |
 | `format_error`            | Formats a failure report as a titled block of aligned rows                    |
 
@@ -1510,6 +1580,8 @@ Every variable the library defines, in one place. Each is also covered by the se
 | `STEPS`                                        | `steps_run`                                                   | Array of steps to process                                                                   |
 | `TEST_CASES`                                   | `dataprovider_run`                                            | Array of test cases, each row ending with its expected value                                |
 | `SCRIPT_FILE`                                  | `tui_run`                                                     | Path to the script to run, relative to the current directory                                |
+| `BATS_HELPERS_TUI_TIMEOUT`                     | `tui_run`                                                     | Whole seconds the script is given to finish. Defaults to `60`                               |
+| `BATS_HELPERS_TUI_ANSWERS`                     | `tui_assert_prompts`, `tui_assert_prompts_case`               | Set by `tui_run` to the number of answers submitted                                         |
 | `BATS_HELPERS_STEPS_DEBUG`                     | `steps_run`                                                   | Set to `1` to print every parsing and matching decision to file descriptor 3                |
 | `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              | `assert_dir_contains_string`, `assert_dir_not_contains_string` | Array of directory names to exclude from the search, on top of the always-excluded four     |
 | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `fixture_export_codebase`                                     | Set to `1` to enable the export; anything else makes the function a no-op                   |
@@ -1566,6 +1638,14 @@ Every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `str
 assert_contains "needle" "some needle in a haystack"
 
 assert_string_contains "some needle in a haystack" "needle"
+```
+
+The `nothing` answer to `tui_run` is deprecated in the same way. An empty string is what sends a blank line now, which makes the literal string `nothing` answerable again:
+
+```bash
+tui_run "My site" "nothing" "yes"
+
+tui_run "My site" "" "yes"
 ```
 
 The notice is written to file descriptor 3, so it shows up in the BATS output without being captured by `run` or by command substitution:
