@@ -1171,7 +1171,7 @@ assert_string_contains "${BATS_HELPERS_RETRY_OUTPUT}" "\"status\":\"ok\""
 When every bound is exhausted the failure names the elapsed time, the attempt count and the last observed state, so the run does not have to be reproduced by hand to find out what it was doing:
 
 ```text
-Command 'curl' did not succeed within 5 attempt(s)
+Command 'curl' did not succeed within 5 attempt(s).
 attempts: 5
 elapsed: 4 second(s)
 last status: 7

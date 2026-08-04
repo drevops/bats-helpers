@@ -97,7 +97,7 @@ fixture_assert_elapsed() {
 
   run retry_run 3 0.1 fixture_probe 99
   assert_failure
-  assert_output_contains "Command 'fixture_probe' did not succeed within 3 attempt(s)"
+  assert_output_contains "Command 'fixture_probe' did not succeed within 3 attempt(s)."
   assert_output_contains "attempts: 3"
   assert_output_matches_format "elapsed: %d second(s)"
   assert_output_contains "last status: 1"
@@ -136,7 +136,7 @@ fixture_assert_elapsed() {
 
   run retry_run 1 5 false
   assert_failure
-  assert_output_contains "did not succeed within 1 attempt(s)"
+  assert_output_contains "did not succeed within 1 attempt(s)."
 
   fixture_assert_elapsed "$((SECONDS - start))" 0 1
 }
@@ -158,7 +158,7 @@ fixture_assert_elapsed() {
 
   run retry_run 5 1 false
   assert_failure
-  assert_output_contains "Command 'false' did not succeed within the 0 second deadline"
+  assert_output_contains "Command 'false' did not succeed within the 0 second deadline."
   assert_output_contains "attempts: 1"
 
   mock_assert_not_called "sleep"
@@ -173,7 +173,7 @@ fixture_assert_elapsed() {
 
   run retry_run 10 1 false
   assert_failure
-  assert_output_contains "Command 'false' did not succeed within the 1 second deadline"
+  assert_output_contains "Command 'false' did not succeed within the 1 second deadline."
   assert_output_matches "attempts: [12]"
 
   # The attempt count alone would have taken nine seconds.
@@ -188,7 +188,7 @@ fixture_assert_elapsed() {
 
   run retry_run 3 0.1 false
   assert_failure
-  assert_output_contains "did not succeed within 3 attempt(s)"
+  assert_output_contains "did not succeed within 3 attempt(s)."
 
   assert_equal 2 "$(mock_get_call_num "${mock_sleep}")"
 }
