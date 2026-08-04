@@ -195,6 +195,10 @@ bats_require_minimum_version 1.13.0
   mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}"
   mock_curl=$(mock_command "curl")
 
+  # The injected 'touch' would write to the mock process's working directory,
+  # which it inherits from here, so the assertion below has to watch that one.
+  cd "${BATS_TEST_TMPDIR}" || return 1
+
   PATH="${BATS_HELPERS_MOCK_TMPDIR}":${PATH} run curl example.com
 
   assert_success
