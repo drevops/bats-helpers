@@ -9,12 +9,6 @@
 
 load _test_helper
 
-add_numbers() {
-  local num1="${1}"
-  local num2="${2}"
-  echo $((num1 + num2))
-}
-
 @test "assert_not_git_repo" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"

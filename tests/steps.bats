@@ -214,7 +214,7 @@ load _test_helper
     "@somebin --opt1 --opt2 # 0 ## someval"
   )
 
-  run steps_run "setup" "${mocks[@]}"
+  run steps_run "setup"
   assert_failure
   assert_output_contains "The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
@@ -515,8 +515,7 @@ load _test_helper
 
   # Verify side effect output.
   assert_file_exists "${BATS_TEST_TMPDIR}/side_effect_output"
-  run cat "${BATS_TEST_TMPDIR}/side_effect_output"
-  assert_output_contains "side effect executed"
+  assert_file_contains "${BATS_TEST_TMPDIR}/side_effect_output" "side effect executed"
 }
 
 @test "steps_run command with side effect - multiple commands" {
@@ -534,8 +533,7 @@ load _test_helper
   # Verify both side effects were executed.
   assert_file_exists "${BATS_TEST_TMPDIR}/file1"
   assert_file_exists "${BATS_TEST_TMPDIR}/file2"
-  run cat "${BATS_TEST_TMPDIR}/file2"
-  assert_output_contains "data"
+  assert_file_contains "${BATS_TEST_TMPDIR}/file2" "data"
 }
 
 @test "steps_run command with side effect - exit status and output" {
@@ -552,8 +550,7 @@ load _test_helper
 
   # Verify side effect was executed even with failure status.
   assert_file_exists "${BATS_TEST_TMPDIR}/error_log"
-  run cat "${BATS_TEST_TMPDIR}/error_log"
-  assert_output_contains "error logged"
+  assert_file_contains "${BATS_TEST_TMPDIR}/error_log" "error logged"
 }
 
 @test "steps_run command with side effect - no output, only side effect" {
@@ -608,8 +605,7 @@ load _test_helper
   # Verify both side effects were executed.
   assert_file_exists "${BATS_TEST_TMPDIR}/cmd1_file"
   assert_file_exists "${BATS_TEST_TMPDIR}/cmd2_file"
-  run cat "${BATS_TEST_TMPDIR}/cmd2_file"
-  assert_output_contains "cmd2 executed"
+  assert_file_contains "${BATS_TEST_TMPDIR}/cmd2_file" "cmd2 executed"
 }
 
 @test "steps_run command with side effect - repeated calls with different side effects" {
@@ -835,8 +831,7 @@ load _test_helper
 
   # Verify side effect contains unescaped hash.
   assert_file_exists "${BATS_TEST_TMPDIR}/escaped_hash"
-  run cat "${BATS_TEST_TMPDIR}/escaped_hash"
-  assert_output_contains "Comment # starts here"
+  assert_file_contains "${BATS_TEST_TMPDIR}/escaped_hash" "Comment # starts here"
 }
 
 @test "steps_run escaped hash - complex URL with query and fragment" {
@@ -879,8 +874,7 @@ load _test_helper
 
   # Verify side effect.
   assert_file_exists "${BATS_TEST_TMPDIR}/all_escaped"
-  run cat "${BATS_TEST_TMPDIR}/all_escaped"
-  assert_output_contains "Comment # here"
+  assert_file_contains "${BATS_TEST_TMPDIR}/all_escaped" "Comment # here"
 }
 
 @test "steps_run escaped hash - real-world example from user" {

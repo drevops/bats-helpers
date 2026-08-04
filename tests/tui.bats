@@ -147,18 +147,6 @@ process_is_gone() {
   assert_output_contains "Script file 'tests/fixtures/tui_script_nonexisting.sh' does not exist."
 }
 
-@test "SCRIPT_FILE is not a regular file" {
-  export SCRIPT_FILE="tests/fixtures"
-
-  declare -a answers=(
-    ""
-    "custom answer2"
-  )
-  run tui_run "${answers[@]}"
-  assert_failure
-  assert_output_contains "Script file 'tests/fixtures' is not a regular file."
-}
-
 @test "Non-existing SCRIPT_FILE - caller recovers" {
   export SCRIPT_FILE="tests/fixtures/tui_script_nonexisting.sh"
 
@@ -171,6 +159,18 @@ process_is_gone() {
   tui_run "${answers[@]}" 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
+}
+
+@test "SCRIPT_FILE is not a regular file" {
+  export SCRIPT_FILE="tests/fixtures"
+
+  declare -a answers=(
+    ""
+    "custom answer2"
+  )
+  run tui_run "${answers[@]}"
+  assert_failure
+  assert_output_contains "Script file 'tests/fixtures' is not a regular file."
 }
 
 @test "Sandbox cannot be resolved" {

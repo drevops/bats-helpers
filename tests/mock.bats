@@ -74,8 +74,7 @@ bats_require_minimum_version 1.13.0
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
 
-  run mock_assert_call_args "${mock_curl}" "-L -s -o /dev/null -w %{http_code} example.com" 1
-  assert_success
+  mock_assert_call_args "${mock_curl}" "-L -s -o /dev/null -w %{http_code} example.com" 1
 }
 
 @test "mock_assert_call_args wildcard match" {
@@ -83,8 +82,7 @@ bats_require_minimum_version 1.13.0
 
   curl -L -s -o /dev/null -w '%{http_code}' example.com
 
-  run mock_assert_call_args "${mock_curl}" "*" 1
-  assert_success
+  mock_assert_call_args "${mock_curl}" "*" 1
 }
 
 @test "mock_assert_call_args exact mismatch" {
@@ -102,11 +100,9 @@ bats_require_minimum_version 1.13.0
   curl -L -s -o /dev/null -w '%{http_code}' example.com
   curl example.com
 
-  run mock_assert_call_args "${mock_curl}" "*" 1
-  assert_success
+  mock_assert_call_args "${mock_curl}" "*" 1
 
-  run mock_assert_call_args "${mock_curl}" "*" 2
-  assert_success
+  mock_assert_call_args "${mock_curl}" "*" 2
 }
 
 @test "mock_resolve_n when the mock was not called enough times" {

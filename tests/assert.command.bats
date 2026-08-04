@@ -78,25 +78,25 @@ bats_require_minimum_version 1.13.0
   unset stderr
   status=2
   run assert_failure --status 3
-  assert_failure
+  [ "${status}" -eq 1 ]
   assert_output_contains "expected : 3"
   assert_output_contains "actual   : 2"
 
   status=2
   run assert_failure --status
-  assert_failure
+  [ "${status}" -eq 1 ]
   assert_output_contains "Option '--status' requires an exit status."
 
   status=2
   run assert_failure --status 0
-  assert_failure
+  [ "${status}" -eq 1 ]
   assert_output_contains "A failure cannot have exit status 0. Use 'assert_success' instead."
 
   # The command succeeded, so only validating the option first surfaces the
   # malformed value rather than the failure that did not happen.
   status=0
   run assert_failure --status two
-  assert_failure
+  [ "${status}" -eq 1 ]
   assert_output_contains "Exit status 'two' is not an integer between 0 and 255."
 }
 

@@ -455,12 +455,6 @@ EXPECTED
   assert_output_contains "Fixture file 'binary.bin' is not a text file"
 }
 
-@test "fixture_list_files with a directory it cannot walk" {
-  run fixture_list_files "${BATS_TEST_TMPDIR}/missing"
-  assert_failure
-  assert_output_contains "Unable to list the files"
-}
-
 @test "fixture_dump_dir with a newline in a file name" {
   dir="${BATS_TEST_TMPDIR}/tree"
   mkdir -p "${dir}"
@@ -469,6 +463,12 @@ EXPECTED
   run fixture_dump_dir "${dir}"
   assert_failure
   assert_output_contains "contains a newline"
+}
+
+@test "fixture_list_files with a directory it cannot walk" {
+  run fixture_list_files "${BATS_TEST_TMPDIR}/missing"
+  assert_failure
+  assert_output_contains "Unable to list the files"
 }
 
 @test "fixture_assert_dir" {
