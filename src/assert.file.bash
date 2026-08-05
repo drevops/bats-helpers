@@ -203,21 +203,22 @@ assert_file_mode() {
 # handed to 'cat'.
 #
 # Arguments:
-#   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
-#   2. negate: '1' to assert that the needle does not match.
-#   3. mode: How the needle is read - 'literal', 'regex' or 'format'.
-#   4. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
-#   5. file: File to search.
-#   6. string: String to search for.
+#   1. subject: What the haystack is reported as - 'file'.
+#   2. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
+#   3. negate: '1' to assert that the needle does not match.
+#   4. mode: How the needle is read - 'literal', 'regex' or 'format'.
+#   5. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   6. file: File to search.
+#   7. string: String to search for.
 ##
 file_assert_match() {
-  if [ "$#" -ne 6 ]; then
+  if [ "$#" -ne 7 ]; then
     flunk "A file and a string are required."
     return 1
   fi
 
-  local negate="${2}"
-  local file="${5}"
+  local negate="${3}"
+  local file="${6}"
 
   if [ "${negate}" = "1" ]; then
     [ ! -f "${file}" ] && return 0
@@ -233,7 +234,7 @@ file_assert_match() {
   local contents
   contents="$(cat "${file}")"
 
-  string_assert_match "${1}" "${2}" "${3}" "${4}" "${contents}" "${6}"
+  string_assert_match "${1}" "${2}" "${3}" "${4}" "${5}" "${contents}" "${7}" "${file}"
 }
 
 ##
@@ -244,7 +245,7 @@ file_assert_match() {
 #   2. string: String to search for.
 ##
 assert_file_contains() {
-  file_assert_match "anywhere" 0 "literal" 0 "$@"
+  file_assert_match "file" "anywhere" 0 "literal" 0 "$@"
 }
 
 ##
@@ -255,7 +256,7 @@ assert_file_contains() {
 #   2. string: String to search for.
 ##
 assert_file_contains_case() {
-  file_assert_match "anywhere" 0 "literal" 1 "$@"
+  file_assert_match "file" "anywhere" 0 "literal" 1 "$@"
 }
 
 ##
@@ -268,7 +269,7 @@ assert_file_contains_case() {
 #   2. string: String to search for.
 ##
 assert_file_not_contains() {
-  file_assert_match "anywhere" 1 "literal" 0 "$@"
+  file_assert_match "file" "anywhere" 1 "literal" 0 "$@"
 }
 
 ##
@@ -281,7 +282,7 @@ assert_file_not_contains() {
 #   2. string: String to search for.
 ##
 assert_file_not_contains_case() {
-  file_assert_match "anywhere" 1 "literal" 1 "$@"
+  file_assert_match "file" "anywhere" 1 "literal" 1 "$@"
 }
 
 ##
@@ -292,7 +293,7 @@ assert_file_not_contains_case() {
 #   2. string: Extended regular expression to match.
 ##
 assert_file_matches() {
-  file_assert_match "anywhere" 0 "regex" 0 "$@"
+  file_assert_match "file" "anywhere" 0 "regex" 0 "$@"
 }
 
 ##
@@ -303,7 +304,7 @@ assert_file_matches() {
 #   2. string: Extended regular expression to match.
 ##
 assert_file_matches_case() {
-  file_assert_match "anywhere" 0 "regex" 1 "$@"
+  file_assert_match "file" "anywhere" 0 "regex" 1 "$@"
 }
 
 ##
@@ -316,7 +317,7 @@ assert_file_matches_case() {
 #   2. string: Extended regular expression to match.
 ##
 assert_file_not_matches() {
-  file_assert_match "anywhere" 1 "regex" 0 "$@"
+  file_assert_match "file" "anywhere" 1 "regex" 0 "$@"
 }
 
 ##
@@ -329,7 +330,7 @@ assert_file_not_matches() {
 #   2. string: Extended regular expression to match.
 ##
 assert_file_not_matches_case() {
-  file_assert_match "anywhere" 1 "regex" 1 "$@"
+  file_assert_match "file" "anywhere" 1 "regex" 1 "$@"
 }
 
 ##
@@ -340,7 +341,7 @@ assert_file_not_matches_case() {
 #   2. string: Format string, see 'string_format_to_regex'.
 ##
 assert_file_matches_format() {
-  file_assert_match "anywhere" 0 "format" 0 "$@"
+  file_assert_match "file" "anywhere" 0 "format" 0 "$@"
 }
 
 ##
@@ -351,7 +352,7 @@ assert_file_matches_format() {
 #   2. string: Format string, see 'string_format_to_regex'.
 ##
 assert_file_matches_format_case() {
-  file_assert_match "anywhere" 0 "format" 1 "$@"
+  file_assert_match "file" "anywhere" 0 "format" 1 "$@"
 }
 
 ##
@@ -364,7 +365,7 @@ assert_file_matches_format_case() {
 #   2. string: Format string, see 'string_format_to_regex'.
 ##
 assert_file_not_matches_format() {
-  file_assert_match "anywhere" 1 "format" 0 "$@"
+  file_assert_match "file" "anywhere" 1 "format" 0 "$@"
 }
 
 ##
@@ -377,7 +378,7 @@ assert_file_not_matches_format() {
 #   2. string: Format string, see 'string_format_to_regex'.
 ##
 assert_file_not_matches_format_case() {
-  file_assert_match "anywhere" 1 "format" 1 "$@"
+  file_assert_match "file" "anywhere" 1 "format" 1 "$@"
 }
 
 ##

@@ -227,40 +227,63 @@ command_describe_status() {
 #   output: Output captured by the last 'run' call.
 ##
 assert_output() {
-  local expected
-  if [ "$#" -eq 0 ]; then
-    expected="$(cat -)"
-  else
-    expected="${1}"
-  fi
   # shellcheck disable=SC2154
-  assert_equal "${expected}" "${output}"
+  command_assert_equal "output" "${output-}" "$@"
 }
 
 ##
 # Asserts that a needle matches a captured stream.
 #
 # Arguments:
-#   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
-#   2. negate: '1' to assert that the needle does not match.
-#   3. mode: How the needle is read - 'literal', 'regex' or 'format'.
-#   4. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
-#   5. haystack: Captured stream to search.
-#   6. needle: String to search for. Optional, read from STDIN when omitted.
+#   1. subject: Which stream the haystack is - 'output' or 'stderr'. Opens the
+#      title and keys the row the stream is reported under.
+#   2. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
+#   3. negate: '1' to assert that the needle does not match.
+#   4. mode: How the needle is read - 'literal', 'regex' or 'format'.
+#   5. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   6. haystack: Captured stream to search.
+#   7. needle: String to search for. Optional, read from STDIN when omitted.
 ##
 command_assert_match() {
   local needle
 
-  if [ "$#" -eq 5 ]; then
+  if [ "$#" -eq 6 ]; then
     needle="$(cat -)"
-  elif [ "$#" -eq 6 ]; then
-    needle="${6}"
+  elif [ "$#" -eq 7 ]; then
+    needle="${7}"
   else
     flunk "A needle is required."
     return 1
   fi
 
-  string_assert_match "${1}" "${2}" "${3}" "${4}" "${5}" "${needle}"
+  string_assert_match "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${needle}"
+}
+
+##
+# Asserts that a captured stream equals a string.
+#
+# Arguments:
+#   1. subject: Which stream the value is - 'output' or 'stderr'. Opens the
+#      title of the report.
+#   2. actual: Captured stream to compare.
+#   3. expected: Expected value. Optional, read from STDIN when omitted.
+##
+command_assert_equal() {
+  local subject="${1}"
+  local actual="${2}"
+
+  local expected
+  if [ "$#" -eq 2 ]; then
+    expected="$(cat -)"
+  else
+    expected="${3}"
+  fi
+
+  if [ "${expected}" = "${actual}" ]; then
+    return 0
+  fi
+
+  format_error "$(string_subject_noun "${subject}") does not equal string" "expected" "${expected}" "actual" "${actual}" | flunk
 }
 
 ##
@@ -279,7 +302,7 @@ command_assert_match() {
 ##
 assert_output_contains() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "literal" 0 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 0 "literal" 0 "${output-}" "$@"
 }
 
 ##
@@ -294,7 +317,7 @@ assert_output_contains() {
 ##
 assert_output_contains_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "literal" 1 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 0 "literal" 1 "${output-}" "$@"
 }
 
 ##
@@ -309,7 +332,7 @@ assert_output_contains_case() {
 ##
 assert_output_not_contains() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "literal" 0 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 1 "literal" 0 "${output-}" "$@"
 }
 
 ##
@@ -324,7 +347,7 @@ assert_output_not_contains() {
 ##
 assert_output_not_contains_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "literal" 1 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 1 "literal" 1 "${output-}" "$@"
 }
 
 ##
@@ -344,7 +367,7 @@ assert_output_not_contains_case() {
 ##
 assert_output_matches() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "regex" 0 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 0 "regex" 0 "${output-}" "$@"
 }
 
 ##
@@ -360,7 +383,7 @@ assert_output_matches() {
 ##
 assert_output_matches_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "regex" 1 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 0 "regex" 1 "${output-}" "$@"
 }
 
 ##
@@ -376,7 +399,7 @@ assert_output_matches_case() {
 ##
 assert_output_not_matches() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "regex" 0 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 1 "regex" 0 "${output-}" "$@"
 }
 
 ##
@@ -392,7 +415,7 @@ assert_output_not_matches() {
 ##
 assert_output_not_matches_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "regex" 1 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 1 "regex" 1 "${output-}" "$@"
 }
 
 ##
@@ -412,7 +435,7 @@ assert_output_not_matches_case() {
 ##
 assert_output_matches_format() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "format" 0 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 0 "format" 0 "${output-}" "$@"
 }
 
 ##
@@ -428,7 +451,7 @@ assert_output_matches_format() {
 ##
 assert_output_matches_format_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "format" 1 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 0 "format" 1 "${output-}" "$@"
 }
 
 ##
@@ -444,7 +467,7 @@ assert_output_matches_format_case() {
 ##
 assert_output_not_matches_format() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "format" 0 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 1 "format" 0 "${output-}" "$@"
 }
 
 ##
@@ -460,7 +483,7 @@ assert_output_not_matches_format() {
 ##
 assert_output_not_matches_format_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "format" 1 "${output-}" "$@"
+  command_assert_match "output" "anywhere" 1 "format" 1 "${output-}" "$@"
 }
 
 ##
@@ -498,14 +521,7 @@ assert_stderr_captured() {
 assert_stderr() {
   assert_stderr_captured || return 1
 
-  local expected
-  if [ "$#" -eq 0 ]; then
-    expected="$(cat -)"
-  else
-    expected="${1}"
-  fi
-
-  assert_equal "${expected}" "${stderr}"
+  command_assert_equal "stderr" "${stderr}" "$@"
 }
 
 ##
@@ -517,7 +533,11 @@ assert_stderr() {
 assert_stderr_empty() {
   assert_stderr_captured || return 1
 
-  assert_empty "${stderr}"
+  if [ -z "${stderr}" ]; then
+    return 0
+  else
+    format_error "Stderr is not empty" "stderr" "${stderr}" | flunk
+  fi
 }
 
 ##
@@ -537,7 +557,7 @@ assert_stderr_empty() {
 assert_stderr_contains() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "literal" 0 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 0 "literal" 0 "${stderr}" "$@"
 }
 
 ##
@@ -553,7 +573,7 @@ assert_stderr_contains() {
 assert_stderr_contains_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "literal" 1 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 0 "literal" 1 "${stderr}" "$@"
 }
 
 ##
@@ -569,7 +589,7 @@ assert_stderr_contains_case() {
 assert_stderr_not_contains() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "literal" 0 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 1 "literal" 0 "${stderr}" "$@"
 }
 
 ##
@@ -585,7 +605,7 @@ assert_stderr_not_contains() {
 assert_stderr_not_contains_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "literal" 1 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 1 "literal" 1 "${stderr}" "$@"
 }
 
 ##
@@ -606,7 +626,7 @@ assert_stderr_not_contains_case() {
 assert_stderr_matches() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "regex" 0 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 0 "regex" 0 "${stderr}" "$@"
 }
 
 ##
@@ -623,7 +643,7 @@ assert_stderr_matches() {
 assert_stderr_matches_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "regex" 1 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 0 "regex" 1 "${stderr}" "$@"
 }
 
 ##
@@ -640,7 +660,7 @@ assert_stderr_matches_case() {
 assert_stderr_not_matches() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "regex" 0 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 1 "regex" 0 "${stderr}" "$@"
 }
 
 ##
@@ -657,7 +677,7 @@ assert_stderr_not_matches() {
 assert_stderr_not_matches_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "regex" 1 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 1 "regex" 1 "${stderr}" "$@"
 }
 
 ##
@@ -678,7 +698,7 @@ assert_stderr_not_matches_case() {
 assert_stderr_matches_format() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "format" 0 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 0 "format" 0 "${stderr}" "$@"
 }
 
 ##
@@ -695,7 +715,7 @@ assert_stderr_matches_format() {
 assert_stderr_matches_format_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "format" 1 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 0 "format" 1 "${stderr}" "$@"
 }
 
 ##
@@ -712,7 +732,7 @@ assert_stderr_matches_format_case() {
 assert_stderr_not_matches_format() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "format" 0 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 1 "format" 0 "${stderr}" "$@"
 }
 
 ##
@@ -729,5 +749,5 @@ assert_stderr_not_matches_format() {
 assert_stderr_not_matches_format_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "format" 1 "${stderr}" "$@"
+  command_assert_match "stderr" "anywhere" 1 "format" 1 "${stderr}" "$@"
 }

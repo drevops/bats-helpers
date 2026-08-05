@@ -350,6 +350,25 @@ load _test_helper
   assert_failure
 }
 
+@test "Failure report names the file and its contents" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_report"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_file_report/1.txt"
+
+  run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_report/1.txt" "absent"
+  assert_failure
+  assert_output_contains '-- File does not contain substring --
+file       : ${BATS_TEST_TMPDIR}/fixture_file_report/1.txt
+contents   : some existing text
+substring  : absent
+match mode : literal
+case       : insensitive
+--'
+
+  run assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_report/1.txt" "existing"
+  assert_failure
+  assert_output_contains "-- File contains substring, but should not --"
+}
+
 @test "assert_dir_empty" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dir1"
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dir2"

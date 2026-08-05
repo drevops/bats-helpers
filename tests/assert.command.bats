@@ -639,3 +639,53 @@ bats_require_minimum_version 1.13.0
   assert_failure
   assert_output_contains "A needle is required."
 }
+
+@test "Failure report names the captured stream" {
+  run echo "some text"
+  run assert_output_contains "absent"
+  assert_failure
+  assert_output_contains "-- Output does not contain substring --
+output     : some text
+substring  : absent
+match mode : literal
+case       : insensitive
+--"
+
+  run echo "some text"
+  run assert_output_not_contains "some"
+  assert_failure
+  assert_output_contains "-- Output contains substring, but should not --"
+
+  output="some text"
+  run assert_output "other text"
+  assert_failure
+  assert_output_contains "-- Output does not equal string --
+expected : other text
+actual   : some text
+--"
+
+  run --separate-stderr bash -c 'echo "some error" >&2'
+  run assert_stderr_contains "absent"
+  assert_failure
+  assert_output_contains "-- Stderr does not contain substring --
+stderr     : some error
+substring  : absent
+match mode : literal
+case       : insensitive
+--"
+
+  run --separate-stderr bash -c 'echo "some error" >&2'
+  run assert_stderr "other error"
+  assert_failure
+  assert_output_contains "-- Stderr does not equal string --
+expected : other error
+actual   : some error
+--"
+
+  run --separate-stderr bash -c 'echo "some error" >&2'
+  run assert_stderr_empty
+  assert_failure
+  assert_output_contains "-- Stderr is not empty --
+stderr : some error
+--"
+}
