@@ -26,17 +26,8 @@
 - [Features](#-features)
 - [Installation](#-installation)
 - [Usage](#-usage)
-  - [Load library](#load-library)
-  - [Assertions](#assertions) - Command run, Line, Exit statuses, Standard error, String, Match modes, File, Git
-  - [Data provider](#data-provider) - Parameterized tests, named cases, matrices
-  - [Mocking](#mocking) - Command mocking, Call log, Argument specifications, Strictness, Sandbox mode
-  - [Step runner](#step-runner) - Sequential test assertions
-  - [Cleanup](#cleanup) - Deferred per-test cleanup
-  - [Retry](#retry) - Conditions that become true shortly
-  - [Interactive scripts](#interactive-scripts) - Scripted answers, deadline, prompt order
-  - [Helpers](#helpers) - Utility functions, inline fixture trees
-  - [Environment variables](#environment-variables) - Full variable reference
-  - [Deprecations](#deprecations) - Renamed functions and variables
+- [Documentation](#-documentation)
+- [API reference](#-api-reference)
 - [Contributing](#-contributing)
 
 ## ✨ Features
@@ -74,8 +65,6 @@ This will also install `bats-core`.
 
 ## 🚀 Usage
 
-### Load library
-
 Create a `_loader.bash` file next to your BATS tests with content:
 
 ```bash
@@ -100,1621 +89,235 @@ load _loader.bash
 }
 ```
 
-### Assertions
-
-#### Command run assertions
-
-Use these after running a command with `run`.
-
-| Function Name                | Description                                            |
-|------------------------------|--------------------------------------------------------|
-| `assert_success`             | Asserts that a command succeeds                        |
-| `assert_failure`             | Asserts that a command fails                           |
-| `assert_output`              | Asserts that a command outputs an exact string         |
-| `assert_output_contains`     | Checks if output contains a specific string            |
-| `assert_output_not_contains` | Checks if output does not contain a specific string    |
-| `assert_output_matches`      | Checks if output matches a regular expression          |
-| `assert_output_not_matches`  | Checks if output does not match a regular expression   |
-| `assert_output_matches_format`     | Checks if output matches a format string         |
-| `assert_output_not_matches_format` | Checks if output does not match a format string  |
-
-The six `contains`, `matches` and `matches_format` assertions each have a `_case` twin that matches case-sensitively - `assert_output_contains_case`, `assert_output_not_matches_format_case` and so on. See [Match modes](#match-modes).
-
-#### Line assertions
-
-`run` also splits what it captured into `${lines[@]}`. These assert against a line rather than against the output as a whole, which is what a command-line tool's output is usually shaped like.
-
-Assert a line by index. A negative index counts back from the end, so `-1` is the last line:
-
-| Function Name                    | Description                                                        |
-|----------------------------------|--------------------------------------------------------------------|
-| `assert_line`                    | Asserts that the line at an index equals a string                  |
-| `assert_line_not`                | Asserts that the line at an index does not equal a string          |
-| `assert_line_contains`           | Checks if the line at an index contains a string                   |
-| `assert_line_not_contains`       | Checks if the line at an index does not contain a string           |
-| `assert_line_matches`            | Checks if the line at an index matches a regular expression        |
-| `assert_line_not_matches`        | Checks if the line at an index does not match a regular expression |
-| `assert_line_matches_format`     | Checks if the line at an index matches a format string             |
-| `assert_line_not_matches_format` | Checks if the line at an index does not match a format string      |
-
-Assert that some line matches, without pinning which one. The positive reads `any`, the negative reads `no`:
-
-| Function Name                       | Description                                            |
-|-------------------------------------|--------------------------------------------------------|
-| `assert_any_line`                   | Asserts that some line equals a string                 |
-| `assert_no_line`                    | Asserts that no line equals a string                   |
-| `assert_any_line_contains`          | Checks if some line contains a string                  |
-| `assert_no_line_contains`           | Checks if no line contains a string                    |
-| `assert_any_line_matches`           | Checks if some line matches a regular expression       |
-| `assert_no_line_matches`            | Checks if no line matches a regular expression         |
-| `assert_any_line_matches_format`    | Checks if some line matches a format string            |
-| `assert_no_line_matches_format`     | Checks if no line matches a format string              |
-
-Assert how many lines there are, or how many of them a needle matches:
-
-| Function Name                        | Description                                                |
-|--------------------------------------|------------------------------------------------------------|
-| `assert_line_count`                  | Asserts the number of lines                                |
-| `assert_line_count_not`              | Asserts that the number of lines differs                   |
-| `assert_line_count_contains`         | Asserts how many lines contain a string                    |
-| `assert_line_count_not_contains`     | Asserts how many lines do not contain a string             |
-| `assert_line_count_matches`          | Asserts how many lines match a regular expression          |
-| `assert_line_count_not_matches`      | Asserts how many lines do not match a regular expression   |
-| `assert_line_count_matches_format`   | Asserts how many lines match a format string               |
-| `assert_line_count_not_matches_format` | Asserts how many lines do not match a format string      |
-
-Every `contains`, `matches` and `matches_format` assertion above has a `_case` twin that matches case-sensitively - `assert_line_contains_case`, `assert_no_line_matches_case`, `assert_line_count_not_contains_case` and so on. `assert_line`, `assert_line_not`, `assert_any_line`, `assert_no_line` and the two `assert_line_count` assertions compare exactly and have no twin. See [Match modes](#match-modes).
-
-`not` negates whatever follows it. Where a verb follows, it negates the match, exactly as it does elsewhere in the library: `assert_line_count_not_contains 3 "error"` asserts that three lines do **not** contain `error`, not that the number of lines containing it is other than three. Where nothing follows it - `assert_line_not`, `assert_line_count_not` - there is no verb to negate, so it negates the assertion's own comparison:
-
-```bash
-run ./script.sh
-
-assert_line 0 "Usage: script.sh [options]"
-assert_line -1 "Done."
-assert_line_contains 2 "config"
-assert_any_line_matches 'Deleted [0-9]+ files'
-assert_no_line_contains "Warning"
-assert_line_count 4
-assert_line_count_contains 2 "error"
-```
-
-An index outside the captured lines is an error naming both the index and the number of lines, rather than a comparison against an empty string that would read as an ordinary mismatch:
-
-```text
-Line index 5 is out of range for output with 2 lines.
-```
-
-A failure shows the offending line in context rather than the whole stream. The mark overwrites the indent instead of being inserted, so the lines stay in the same column:
-
-```text
--- Line does not contain substring --
-line (1 line):
-2
-substring (1 line):
-error
-match mode (1 line):
-literal
-case (1 line):
-insensitive
-context (4 lines):
-  0: Usage: tool.sh
-  1: Reading config
-> 2: all good
-  3: Done.
---
-```
-
-##### Empty lines and indices
-
-`run` drops empty lines unless it is asked to keep them, so an empty line is not an element of `${lines[@]}` and every index after it shifts up. Pass `--keep-empty-lines` when the blank lines are part of what is being asserted, or when an index has to line up with the output as it was printed:
-
-```bash
-bats_require_minimum_version 1.13.0
-
-# 'lines' holds 'first' and 'third'; the empty line is not an element.
-run printf '%s\n' "first" "" "third"
-assert_line_count 2
-assert_line 1 "third"
-
-# 'lines' holds all three, and the indices match the printed output.
-run --keep-empty-lines printf '%s\n' "first" "" "third"
-assert_line_count 3
-assert_line 1 ""
-assert_line 2 "third"
-```
-
-As with `--separate-stderr`, that declaration has to be `1.5.0` or newer, or bats-core prints a `BW02` warning for every `run` that carries a flag.
-
-#### Exit statuses
-
-| Function Name                     | Description                                             |
-|-----------------------------------|---------------------------------------------------------|
-| `assert_status`                   | Asserts that a command exits with an exact status       |
-| `assert_failure_status`           | Asserts that a command fails with an exact status       |
-| `assert_status_general_error`     | Asserts that a command exits with status `1`            |
-| `assert_status_command_not_found` | Asserts that a command exits with status `127`          |
-
-`assert_success` and `assert_failure` divide the world into zero and non-zero, which is not enough for a tool that separates a usage error from a runtime failure by exiting `2` rather than `1`. Assert the status itself:
-
-```bash
-run ./script.sh --nonsense
-
-assert_status 2
-```
-
-`assert_failure_status` covers both the failure and the status it failed with in one call:
-
-```bash
-run ./script.sh --nonsense
-
-assert_failure_status 2
-assert_failure_status 2 "Usage: script.sh [--verbose] <path>"
-```
-
-`assert_failure` takes the same expectation through the deprecated `--status` option, recognised only as the first argument, with everything after it and its value read as the exact output, as before. An output that is itself the string `--status` is asserted with `assert_output` instead:
-
-```bash
-run ./script.sh --nonsense
-
-assert_failure --status 2
-assert_failure --status 2 "Usage: script.sh [--verbose] <path>"
-```
-
-##### Statuses that mean more than a failure
-
-Two statuses mean something other than the code under test deciding to fail, and both satisfy a bare `assert_failure` exactly as well as the intended error path does. Every report that prints a status names them:
-
-```text
--- Command exited with an unexpected status --
-expected : 2
-actual   : 127 (command not found)
---
-```
-
-```text
--- Command failed --
-status : 137 (killed by SIGKILL)
---
-```
-
-A status of `127` is what a shell returns for a command it could not find, so a test that passes because the binary under test is missing is caught rather than counted. A status above `128` is how a shell reports a process a signal killed, and the signal is named from the running platform's own table. A program is free to exit with such a status of its own accord, so the name says which signal the number stands for, not that a signal was necessarily involved.
-
-Where a missing command *is* the expected outcome, assert it as such:
-
-```bash
-# 'run -127' stops bats warning about the status it would otherwise read as a
-# mistake in the test.
-run -127 ./wrapper.sh
-
-assert_status_command_not_found
-```
-
-#### Standard error assertions
-
-| Function Name                | Description                                                 |
-|------------------------------|-------------------------------------------------------------|
-| `assert_stderr`              | Asserts that a command writes an exact string to STDERR     |
-| `assert_stderr_contains`     | Checks if STDERR contains a specific string                 |
-| `assert_stderr_not_contains` | Checks if STDERR does not contain a specific string         |
-| `assert_stderr_matches`      | Checks if STDERR matches a regular expression               |
-| `assert_stderr_not_matches`  | Checks if STDERR does not match a regular expression        |
-| `assert_stderr_matches_format`     | Checks if STDERR matches a format string              |
-| `assert_stderr_not_matches_format` | Checks if STDERR does not match a format string       |
-| `assert_stderr_empty`        | Asserts that a command wrote nothing to STDERR              |
-| `assert_stderr_captured`     | Asserts that STDERR was captured separately from the output |
-
-The six `contains`, `matches` and `matches_format` assertions each have a `_case` twin that matches case-sensitively. See [Match modes](#match-modes).
-
-`run` merges STDERR into `$output`, so on its own it cannot tell which stream a message went to. Pass `--separate-stderr` to capture the two apart: `$output` then holds STDOUT alone, and the assertions above read the captured STDERR.
-
-```bash
-bats_require_minimum_version 1.13.0
-
-@test "the script warns without polluting stdout" {
-  run --separate-stderr ./script.sh
-
-  assert_success
-  assert_output "the result"
-  assert_stderr_contains "Warning:"
-}
-```
-
-Without a `bats_require_minimum_version` declaration of `1.5.0` or newer, bats-core prints a `BW02` warning for every `run` that carries a flag.
-
-Each of these assertions fails when `--separate-stderr` is missing, instead of comparing against a value that was never captured:
-
-```text
-Stderr was not captured. Run the command with 'run --separate-stderr'.
-```
-
-The check matters most for `assert_stderr_empty`, which would otherwise pass for a command that did write to STDERR - the stream having simply never been captured. Use `assert_stderr_captured` to make the same check on its own.
-
-A captured STDERR that is not empty becomes a row of the reports the exit status assertions raise, so a command that failed shows why rather than only that it did:
-
-```text
--- Command failed --
-status : 3
-output : Reading /etc/app/config.yml
-stderr : Error: config file not found
---
-```
-
-A capture lives only until the next `run`: a plain one clears `$stderr`, so the assertions always read the most recent `run --separate-stderr`. Pass the option to the `run` whose STDERR is being asserted on, and assert directly after it.
-
-#### String assertions
-
-| Function Name                   | Description                                               |
-|---------------------------------|-----------------------------------------------------------|
-| `assert_empty`                  | Asserts that a string is empty                            |
-| `assert_not_empty`              | Asserts that a string is not empty                        |
-| `assert_equal`                  | Asserts that two strings are equal                        |
-| `assert_string_contains`        | Asserts that a string contains a given substring          |
-| `assert_string_not_contains`    | Asserts that a string does not contain a substring        |
-| `assert_string_starts_with`     | Asserts that a string starts with a substring             |
-| `assert_string_not_starts_with` | Asserts that a string does not start with a substring     |
-| `assert_string_ends_with`       | Asserts that a string ends with a substring               |
-| `assert_string_not_ends_with`   | Asserts that a string does not end with a substring       |
-| `assert_string_matches`         | Asserts that a string matches a regular expression        |
-| `assert_string_not_matches`     | Asserts that a string does not match a regular expression |
-| `assert_string_matches_format`     | Asserts that a string matches a format string          |
-| `assert_string_not_matches_format` | Asserts that a string does not match a format string   |
-
-Every assertion below `assert_equal` has a `_case` twin that matches case-sensitively - `assert_string_contains_case`, `assert_string_not_starts_with_case` and so on. `assert_empty`, `assert_not_empty` and `assert_equal` compare exactly and have no twin. See [Match modes](#match-modes).
-
-Every `contains` assertion takes the container first and the string to look for second:
-
-```bash
-assert_string_contains "some needle in a haystack" "needle"
-assert_file_contains "${file}" "needle"
-assert_dir_contains_string "${dir}" "needle"
-```
-
-#### Match modes
-
-How a needle is read, and whether case matters, is chosen by picking the assertion - there are no options to pass. Every combination has a name, so a call site says what it compares without being read against a flag elsewhere in the file.
-
-Three things vary. **How the needle is read** is the verb:
-
-| Verb             | The needle is                             |
-|------------------|-------------------------------------------|
-| `contains`       | A literal substring                       |
-| `starts_with`    | A literal prefix                          |
-| `ends_with`      | A literal suffix                          |
-| `matches`        | An extended regular expression            |
-| `matches_format` | A format string, see below                |
-
-**Whether it must be present** is the `not_` prefix, and **whether case matters** is the `_case` suffix. Absent the suffix, the match ignores case, which is what the library has always done:
-
-```bash
-assert_output_contains            "Deleted 12 files"    # ignores case
-assert_output_contains_case       "Deleted 12 files"    # case-sensitive
-assert_output_not_contains        "Removed"
-assert_output_not_contains_case   "removed"
-
-assert_output_matches             'Deleted [0-9]+ files'
-assert_output_matches_case        'Deleted [0-9]+ files'
-assert_output_matches_format      "Deleted %d files"
-
-assert_string_starts_with_case    "${line}" "WARNING"
-assert_file_not_matches_case      "${log}" 'FATAL'
-```
-
-The same twelve names exist for each of `string`, `output`, `stderr` and `file`, and the four prefix and suffix forms for `string`. A needle is only ever a needle, so one that looks like an option needs no escaping:
-
-```bash
-assert_output_contains "usage: --verbose enables logging"
-```
-
-**Prefer a literal assertion.** A literal needle cannot be broken by a character that happens to be a regular expression operator, and its failure report can be read straight against the value it did not match. Reach for `matches` only for the part of a value that genuinely varies between runs - a timestamp, a PID, a duration, a version - and leave the rest literal. Where the only variation is a number or a word, `matches_format` says so without a regular expression:
-
-| Placeholder | Matches                                   |
-|-------------|-------------------------------------------|
-| `%d`        | A run of digits                           |
-| `%f`        | A number with an optional fractional part |
-| `%s`        | A run of non-whitespace characters        |
-| `%%`        | A literal `%`                             |
-
-Everything outside a placeholder is matched literally, so a format string escapes nothing of its own:
-
-```bash
-assert_output_matches_format "Deleted %d files in %fs"
-assert_file_matches_format "${log}" "user %s logged in"
-```
-
-The prefix and suffix assertions, and the `^` and `$` anchors of a regular expression, all apply to the whole value rather than to each of its lines:
-
-```bash
-# The whole output is 'Done', not merely one of its lines.
-assert_output_matches '^Done$'
-```
-
-A needle that is not a usable regular expression is reported as an error rather than as a mismatch, so a `not_matches` assertion fails on it too:
-
-```text
-Invalid regular expression '['.
-```
-
-The failure report names the mode and the case sensitivity that were in force, and calls out the case sensitivity when the other choice would have decided the assertion the other way:
-
-```text
--- String does not contain substring --
-string     : some text
-substring  : SOME
-match mode : literal
-case       : sensitive
-note       : it matches without the '_case' suffix
---
-```
-
-Use `string_match` to make the same comparison without asserting on it, and `string_format_to_regex` to see what a format string expands to. Both take plain values rather than any of the names above:
-
-```bash
-# Haystack, needle, mode, case sensitivity, anchor.
-string_match "Deleted 12 files" "deleted" "literal" 0 "start"
-
-# Prints 'Deleted [0-9]+ files'.
-string_format_to_regex "Deleted %d files"
-```
-
-`string_match` returns `0` when the needle matches, `1` when it does not, and `2` when the needle is not a usable regular expression. It reports through the exit status alone and prints nothing.
-
-#### File assertions
-
-| Function Name                    | Description                                            |
-|----------------------------------|--------------------------------------------------------|
-| `assert_file_exists`             | Asserts that a file exists                             |
-| `assert_file_not_exists`         | Asserts that a file does not exist                     |
-| `assert_file_contains`           | Checks if a file contains a specific string            |
-| `assert_file_not_contains`       | Checks if a file does not contain a specific string    |
-| `assert_file_matches`            | Checks if a file matches a regular expression          |
-| `assert_file_not_matches`        | Checks if a file does not match a regular expression   |
-| `assert_file_matches_format`     | Checks if a file matches a format string               |
-| `assert_file_not_matches_format` | Checks if a file does not match a format string        |
-| `assert_files_equal`             | Asserts that two files are equal                       |
-| `assert_files_equal_ignore_spaces` | Asserts that two files are equal, ignoring blank lines and whitespace changes |
-| `assert_files_not_equal`         | Asserts that two files are not equal                   |
-| `assert_files_not_equal_ignore_spaces` | Asserts that two files are not equal, ignoring blank lines and whitespace changes |
-| `assert_file_mode`               | Checks the file permission mode                        |
-| `assert_binary_files_equal`      | Checks if two binary files are equal                   |
-| `assert_binary_files_not_equal`  | Checks if two binary files are not equal               |
-| `assert_dir_exists`              | Asserts that a directory exists                        |
-| `assert_dir_not_exists`          | Asserts that a directory does not exist                |
-| `assert_dir_empty`               | Asserts that a directory is empty                      |
-| `assert_dir_not_empty`           | Asserts that a directory is not empty                  |
-| `assert_dir_contains_string`     | Asserts that a directory contains a string in one of its files |
-| `assert_dir_not_contains_string` | Asserts that a directory does not contain a string in any of its files |
-| `assert_dir_matches`             | Asserts that a file of a directory matches a regular expression |
-| `assert_dir_not_matches`         | Asserts that no file of a directory matches a regular expression |
-| `assert_dirs_equal`              | Asserts that two directories are equal                 |
-| `assert_symlink_exists`          | Asserts that a symbolic link exists                    |
-| `assert_symlink_not_exists`      | Asserts that a symbolic link does not exist            |
-
-The six file `contains`, `matches` and `matches_format` assertions and the four directory `contains_string` and `matches` assertions each have a `_case` twin that matches case-sensitively - `assert_file_contains_case`, `assert_dir_matches_case` and so on. See [Match modes](#match-modes).
-
-`assert_file_exists` and `assert_file_not_exists` accept a glob. Only the first match decides the outcome, and the failure is reported once however many paths the glob expands to:
-
-```bash
-assert_file_exists "${dir}/*.txt"
-assert_file_not_exists "${dir}/*.rtf"
-```
-
-`assert_files_equal_ignore_spaces` and `assert_files_not_equal_ignore_spaces` compare two text files ignoring blank lines and whitespace changes:
-
-```bash
-assert_files_equal_ignore_spaces "${file1}" "${file2}"
-assert_files_not_equal_ignore_spaces "${file1}" "${file2}"
-```
-
-`assert_files_equal` and `assert_files_not_equal` take the same comparison through a deprecated `ignore_spaces` third argument, `1` to ignore whitespace and `0` by default.
-
-`assert_dir_contains_string` and `assert_dir_not_contains_string` read the string as a literal substring, and `assert_dir_matches` and `assert_dir_not_matches` read it as an extended regular expression; all four ignore case and have the usual `_case` twins - see [Match modes](#match-modes). The contents of each file are matched as one string, so a needle may span lines and `^` and `$` anchor to the whole file. The search is recursive over regular files, skips binary files, and always excludes `.git`, `.idea`, `vendor` and `node_modules`; a failed negated assertion lists the matching files in a `files` row of its report. Set `BATS_HELPERS_ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
-
-```bash
-declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=("build" "dist")
-assert_dir_contains_string "${dir}" "needle"
-assert_dir_matches "${dir}" 'TODO|FIXME'
-```
-
-#### Git assertions
-
-| Function Name                 | Description                                      |
-|-------------------------------|--------------------------------------------------|
-| `assert_git_repo`             | Asserts that a directory is a git repository     |
-| `assert_git_not_repo`         | Asserts that a directory is not a git repository |
-| `assert_git_clean`            | Asserts that a git repository is clean           |
-| `assert_git_not_clean`        | Asserts that a git repository is not clean       |
-| `assert_git_file_tracked`     | Checks if a file is tracked in git               |
-| `assert_git_file_not_tracked` | Checks if a file is not tracked in git           |
-
-`assert_git_file_tracked` and `assert_git_file_not_tracked` report through the exit status alone and print no message.
-
-### Data provider
-
-Run one function over many test cases (aka "data provider").
-
-| Function                 | Description                                      | Arguments                                    |
-|--------------------------|--------------------------------------------------|----------------------------------------------|
-| `dataprovider_run`       | Runs the cases held in the `TEST_CASES` array    | `func_name`, `[args_per_row]`, `[assertion]` |
-| `dataprovider_run_cases` | Runs the cases that a function declares          | `func_name`, `cases_func`, `[assertion]`     |
-| `dataprovider_case`      | Declares and runs one case                       | `label`, `[arg...]`, `expected`              |
-| `dataprovider_matrix`    | Expands value lists into their cartesian product | `case_func`, `list_name...`                  |
-
-There are three forms. Reach for the **flat array** when every case has the same shape and reads well as a table. Reach for **declared cases** when a case needs a name, when arity differs between cases, or when a value is empty or holds spaces, tabs or newlines. Reach for the **matrix** when the cases are every combination of two or more value lists.
-
-Every form runs the function under test with `run` and then applies an assertion to the case's expected value, so any single-argument assertion in this library is a valid choice: `assert_output`, `assert_output_matches`, `assert_status`, `assert_output_not_contains`, and so on. The default is `assert_output_contains`.
-
-#### Flat array
-
-`TEST_CASES` holds every case end to end, `args_per_row` says how wide a row is, and the last column of each row is the expected value:
-
-```bash
-# Function to test.
-add_numbers() {
-  echo "$(($1 + $2))"
-}
-
-@test "Test add_numbers" {
-  # Numbers: first two are inputs, last is expected output.
-  declare -a TEST_CASES=(
-    1 2 3
-    4 5 9
-  )
-  dataprovider_run "add_numbers" 3
-}
-```
-
-A failure names the rows that broke by their zero-based index:
-
-```text
-Failed sets (0-based): 1, 3
-Total failed test sets: 2
-```
-
-An expected value must not be empty here, because in a fixed-width table an empty last column is how a short row shows up. Use declared cases for a case whose expected value is genuinely empty.
-
-Pass an assertion as the third argument to check something other than containment:
-
-```bash
-declare -a TEST_CASES=(
-  1 2 3
-)
-dataprovider_run "add_numbers" 3 "assert_output"
-```
-
-#### Declared cases
-
-A function declares one case per `dataprovider_case` call. Each call states its own arity, and the values never leave the argument list, so empty values and values holding spaces, tabs or newlines need no quoting:
-
-```bash
-# Function to test.
-count_args() {
-  echo "count=$#"
-}
-
-provide_cases() {
-  dataprovider_case "no arguments" "count=0"
-  dataprovider_case "one argument" "a" "count=1"
-  dataprovider_case "an empty argument" "" "count=1"
-  # An empty label reports the case by its index instead.
-  dataprovider_case "" "a" "b" "count=2"
-}
-
-@test "Test count_args" {
-  dataprovider_run_cases "count_args" "provide_cases"
-}
-```
-
-The label is what a failure names, so nothing has to be counted to find the case that broke:
-
-```text
-Error: Failed for set 'an empty argument'
-
-Failed sets: 'an empty argument'
-Total failed test sets: 1
-```
-
-#### Matrix
-
-`dataprovider_matrix` expands value lists into their cartesian product and hands each combination to a function, which turns it into a case. That is where the label and the expected value are derived from the combination rather than repeated for it:
-
-```bash
-# Function to test.
-describe_match() {
-  echo "${1}:${2}"
-}
-
-emit_case() {
-  dataprovider_case "${1}, case ${2}" "${1}" "${2}" "${1}:${2}"
-}
-
-provide_cases() {
-  dataprovider_matrix "emit_case" modes flags
-}
-
-@test "Test describe_match" {
-  declare -a modes=("literal" "regex" "format")
-  declare -a flags=(0 1)
-
-  dataprovider_run_cases "describe_match" "provide_cases"
-}
-```
-
-That runs six cases in the order `literal 0`, `literal 1`, `regex 0`, `regex 1`, `format 0`, `format 1` - the last list varies fastest, so they arrive in the order a written-out table would list them.
-
-Lists are passed by name rather than by value, because separating them inside one argument list would need a separator and any separator is also a value a list is entitled to hold. A list that is empty is an error rather than an empty product, since a provider that expands to nothing runs nothing and would otherwise pass.
-
-### Mocking
-
-This Bats helper library provides command mocking functionality for BATS.
-
-It allows to mock commands and check how they were called.
-
-This is a very powerful feature that allows to test complex scenarios as unit tests.
-
-> [!NOTE]
-> To run multiple mock assertions in a more convenient way, check out the [Step runner](#step-runner) helper.
-
-#### Setup functions
-
-| Function                | Description                                                | Arguments                        | Returns   |
-|-------------------------|------------------------------------------------------------|----------------------------------|-----------|
-| `mock_setup`            | Setup mock support. Call from `setup()`                    | None                             | None      |
-| `mock_create`           | Creates a mock program that can be tracked                 | None                             | Mock path |
-| `mock_command`          | Mock provided command                                      | `command_name`                   | Mock path |
-| `mock_set_output`       | Sets the output of the mock                                | `mock`, `output`, `[call_index]` | None      |
-| `mock_set_status`       | Sets the exit status of the mock                           | `mock`, `status`, `[call_index]` | None      |
-| `mock_set_side_effect`  | Sets shell code to run when mock executes                  | `mock`, `code`, `[call_index]`   | None      |
-| `mock_set_strict`       | Rejects the calls the mock's expectations do not cover     | `mock`, `[enabled]`              | None      |
-| `mock_set_forward`      | Runs the real command for calls no specification accepts   | `mock`, `[enabled]`              | None      |
-| `mock_spec_add`         | Adds an argument specification to the mock                 | `mock`                           | Spec      |
-| `mock_spec_arg`         | Constrains one argument position of a specification        | `spec`, `position`, `matcher`, `[value]` | None |
-| `mock_spec_count`       | Pins the number of arguments a specification accepts       | `spec`, `count`                  | None      |
-| `mock_spec_set_output`  | Sets the output a specification responds with              | `spec`, `output`                 | None      |
-| `mock_spec_set_status`  | Sets the exit status a specification responds with         | `spec`, `status`                 | None      |
-| `mock_spec_set_side_effect` | Sets shell code a specification runs                   | `spec`, `code`                   | None      |
-| `mock_log_exclude`      | Excludes commands from sequence comparisons                | `command_name...`                | None      |
-
-#### Assertion functions
-
-| Function                 | Description                                                                    | Arguments                               | Returns          |
-|--------------------------|--------------------------------------------------------------------------------|-----------------------------------------|------------------|
-| `mock_get_call_args`     | Returns arguments the mock was called with                                     | `mock`, `[call_index]`                  | Arguments string |
-| `mock_get_call_num`      | Returns number of times mock was called                                        | `mock`                                  | Call count       |
-| `mock_get_call_user`     | Returns user the mock was called with                                          | `mock`, `[call_index]`                  | User name        |
-| `mock_get_call_env`      | Returns env variable value from mock call                                      | `mock`, `var_name`, `[call_index]`      | Variable value   |
-| `mock_assert_call_args`  | Checks the arguments the mock was called with, where `*` matches any arguments | `mock`, `expected_args`, `[call_index]` | `0` when matched |
-| `mock_assert_calls`      | Asserts the ordered sequence of every mocked call                              | `expected_call...`                      | None             |
-| `mock_assert_no_calls`   | Asserts that no mocked command outside the excluded ones was called            | None                                    | None             |
-| `mock_assert_called`     | Asserts that a command was called                                              | `command_name`                          | None             |
-| `mock_assert_not_called` | Asserts that a command was not called                                          | `command_name`                          | None             |
-| `mock_verify`            | Asserts that every expectation was met                                         | `[mock...]`                             | None             |
-| `mock_log_print`         | Returns every recorded call, in order                                          | None                                    | Call log         |
-
-#### Mock directory
-
-`mock_setup` writes the mocks to `${BATS_TEST_TMPDIR}/bats-helpers-mock` and puts that directory first on `PATH`, so BATS removes the mocks together with the rest of the test sandbox and concurrent runs cannot delete each other's mocks.
-
-Set `BATS_HELPERS_MOCK_TMPDIR` to store them elsewhere; the mocks are written to a `bats-helpers-mock` directory below it. The guarantees above come from staying within the test sandbox - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
-
-```bash
-export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/mocks"
-```
-
-`mock_setup` also exports `BATS_HELPERS_MOCK_TMPDIR` with the resolved path, so a test can read back where the mocks ended up.
-
-`mock_get_call_user` reports the user each call was made as. It defaults to `id -un`; set `BATS_HELPERS_MOCK_USER` to report a different one:
-
-```bash
-export BATS_HELPERS_MOCK_USER="deploy"
-```
-
-#### Call log
-
-Every mock appends each of its calls to one log shared by the whole test, so the order in which *different* commands ran is assertable. For a script whose correctness is its order of operations, that is usually the assertion that matters most:
-
-```bash
-mock_command "git" >/dev/null
-mock_command "curl" >/dev/null
-
-run ./deploy.sh
-
-mock_assert_calls \
-  "git 'clone' 'https://example.com/repo.git'" \
-  "curl '-s' 'https://example.com/hook'" \
-  "git 'checkout' 'main'"
-```
-
-A mismatch is reported as a unified diff, so the failure shows what ran instead of only that the two sequences differ.
-
-Each line is the command name followed by its arguments, every argument wrapped in single quotes. The quotes are not optional: they keep an empty argument visible as `''` and an argument holding whitespace a single field. Inside the quotes four characters are escaped, so no two distinct arguments serialise the same way:
-
-| Character    | Serialised as |
-|--------------|---------------|
-| `\`          | `\\`          |
-| `'`          | `\'`          |
-| Tab          | `\t`          |
-| Newline      | `\n`          |
-
-```bash
-mock_command "git" >/dev/null
-
-git commit -m "first line
-second line" ""
-
-mock_assert_calls "git 'commit' '-m' 'first line\nsecond line' ''"
-```
-
-`mock_assert_no_calls` asserts that nothing ran at all, and `mock_assert_called` and `mock_assert_not_called` ask about one command. The last two take a command name rather than a mock path and fail when no mock is registered under that name, so a typo cannot pass by describing a command that was never mocked:
-
-```bash
-mock_command "git" >/dev/null
-
-mock_assert_not_called "git"
-
-# Fails with "Command 'gti' is not mocked", rather than passing trivially.
-mock_assert_not_called "gti"
-```
-
-A command that runs constantly - a logger, an echo - would otherwise have to appear in every expected sequence in the suite. `mock_log_exclude` keeps such a command recorded and visible to `mock_log_print`, `mock_assert_called` and `mock_assert_not_called`, while `mock_assert_calls` and `mock_assert_no_calls` skip it:
-
-```bash
-mock_command "logger" >/dev/null
-mock_log_exclude "logger"
-```
-
-#### Argument specifications
-
-A response set with a call index answers the first call, the second call, and so on, which means the test has to know the order in which the script happens to invoke the command. An argument specification selects the response by what the call passes instead, so reordering the script without changing its behaviour leaves the test standing:
-
-```bash
-mock_git="$(mock_command "git")"
-
-status="$(mock_spec_add "${mock_git}")"
-mock_spec_arg "${status}" 1 equals "status"
-mock_spec_set_output "${status}" "nothing to commit"
-
-push="$(mock_spec_add "${mock_git}")"
-mock_spec_arg "${push}" 1 equals "push"
-mock_spec_arg "${push}" '*' equals "--force"
-mock_spec_set_status "${push}" 1
-mock_spec_set_output "${push}" "rejected"
-```
-
-Both forms coexist. A call is answered by the first specification that accepts it, in the order the specifications were added; a call that none of them accepts falls back to the response for that call index, and then to the response set without one.
-
-A response is written literally, whichever form sets it, so a value such as `-n`, or one holding a backslash, reaches the caller unchanged.
-
-The first argument of `mock_spec_arg` after the specification is the position: a one-based argument index, or `*` for "some argument". The second is the matcher:
-
-| Matcher       | Accepts when the argument                     |
-|---------------|-----------------------------------------------|
-| `equals`      | is exactly the value                          |
-| `starts_with` | starts with the value                         |
-| `ends_with`   | ends with the value                           |
-| `contains`    | holds the value anywhere                      |
-| `matches`     | matches the value as an extended regexp       |
-| `present`     | exists, whatever its value. Takes no value    |
-
-Every matcher takes a `not_` prefix. At a numeric position it negates that one argument; at `*` it requires that *no* argument matches, which is the negation of "some argument matches". `starts_with`, `ends_with`, `contains` and `matches` ignore case, and each takes a `_case` suffix to match case-sensitively, exactly as the [assertions](#match-modes) do; `equals` compares exactly, as `assert_equal` does, and `present` reads no needle, so neither takes the suffix:
-
-```bash
-# Argument 2 is not a tag.
-mock_spec_arg "${spec}" 2 not_matches '^v[0-9]+$'
-
-# No argument is '--force'.
-mock_spec_arg "${spec}" '*' not_equals "--force"
-
-# Argument 1 holds 'Accept' with exactly this case.
-mock_spec_arg "${spec}" 1 contains_case "Accept"
-```
-
-`mock_spec_count` pins how many arguments the call carries:
-
-```bash
-mock_spec_count "${spec}" 2
-```
-
-A numeric position may be constrained only once per specification. Constraining it twice is rejected when the specification is configured rather than silently resolved at call time, since the outcome would otherwise depend on which of the two constraints was consulted first. Repeating `*` is allowed, and each repetition is a separate requirement.
-
-`mock_set_forward` runs the real command for the calls no specification accepts, which is what makes partial mocking possible:
-
-```bash
-mock_curl="$(mock_command "curl")"
-mock_set_forward "${mock_curl}"
-
-# Only the health check is answered by the mock; every other call is real.
-spec="$(mock_spec_add "${mock_curl}")"
-mock_spec_arg "${spec}" '*' ends_with "/health"
-mock_spec_set_output "${spec}" "OK"
-```
-
-The real command is found by searching `PATH` without the mock directory. A forwarded call is recorded in the call log like any other, and forwarding takes precedence over the response set without a call index.
-
-#### Strictness
-
-> [!IMPORTANT]
-> Mocks are strict by default. Once a response carrying a call index or an argument specification has declared an expectation, a call that the expectations do not cover fails the test rather than being answered with the default status and output. Set `BATS_HELPERS_MOCK_STRICT=0` to make a whole suite permissive.
-
-A mock with no configured response records calls without constraining them. Configuring a response *with* a call index, or adding an argument specification, declares an expectation - a statement that the call arrives. From then on the mock rejects the calls its expectations do not cover, rather than answering them with the default status and output and letting the script take a path the test does not know about:
-
-```bash
-mock_git="$(mock_command "git")"
-mock_set_status "${mock_git}" 0 1
-
-git status
-
-# Fails the call, writing "Mock 'git' received a call that no expectation
-# covers: git 'log'" to STDERR and exiting non-zero.
-git log
-```
-
-When the mock carries argument specifications, the diagnostic lists what each of them required, so the mismatch reads beside the call that caused it:
-
-```text
-Mock 'git' received a call that no expectation covers: git 'log' '--oneline'
-  specification 1: argument 1 equals 'status'
-  specification 2: argument 1 equals 'push', some argument not_equals '--force'
-```
-
-A response set *without* a call index is a catch-all that answers everything, so it exempts the mock from strictness. That is the per-mock escape hatch, `mock_set_strict "${mock_git}" 0` is the explicit one, and `BATS_HELPERS_MOCK_STRICT` is the suite-wide one:
-
-```bash
-setup() {
-  mock_setup
-  export BATS_HELPERS_MOCK_STRICT=0
-}
-```
-
-The strictness of a mock is fixed when the mock is created, so a suite-wide default has to be set before the first `mock_command` call.
-
-The other half of a mock that verifies nothing is an expectation that is never satisfied: a test can declare a response for a call that never arrives and still pass. `mock_verify` reports both that and any call that arrived unexpectedly. Call it from `teardown()` to cover every test in a file:
-
-```bash
-teardown() {
-  mock_verify
-}
-```
-
-With no arguments it verifies every mock of the test; with arguments it verifies only the mocks named. The [step runner](#step-runner) calls it for its own mocks at the end of the assert phase.
-
-#### Sandbox mode
-
-Mocks are prepended to `PATH`, so a command the test forgot to mock resolves to the real one on the machine. A test that misses a network call, a package manager or a destructive command runs it for real, slowly and non-hermetically. Sandbox mode replaces `PATH` with the mock directory and a directory of the commands the test allowed, so a command that is neither mocked nor allowed does not run:
-
-```bash
-setup() {
-  mock_setup
-  mock_sandbox_enable
-}
-
-@test "Deploy" {
-  mock_command "curl" >/dev/null
-
-  run ./deploy.sh
-
-  # 'curl' is answered by its mock. An unmocked 'aws' fails the call with
-  # "Command 'aws' is not mocked and the mock sandbox is enabled" instead of
-  # reaching the real one.
-}
-```
-
-| Function                          | Description                                                     | Arguments        | Returns |
-|-----------------------------------|-----------------------------------------------------------------|------------------|---------|
-| `mock_sandbox_enable`             | Enables the mode. Arguments seed the allow-list                 | `[command...]`   | None    |
-| `mock_sandbox_allow`              | Allows commands to run for real                                 | `command...`     | None    |
-| `mock_sandbox_disable`            | Restores the `PATH` saved when the mode was enabled             | None             | None    |
-| `mock_sandbox_enabled`            | Reports whether the mode is enabled                             | None             | `0` when enabled |
-| `mock_sandbox_report`             | Prints the denied and the escaped commands                      | `[kind]`         | Report  |
-| `mock_path_check`                 | Warns when `PATH` changed after `mock_setup`                    | None             | None    |
-
-The mode is off until `mock_sandbox_enable` is called, so a suite that does not call it is unaffected. Calling it from `setup` turns it on for a whole file, and `mock_sandbox_disable` reopens the real `PATH` mid-test. BATS runs each test in its own process, so nothing has to be restored at the end of one.
-
-> [!WARNING]
-> This is not a security boundary. An absolute path reaches the real command whatever `PATH` holds, so `/usr/bin/curl` and `./script.sh` still run. The mode catches the command a test forgot to mock, not a command determined to run.
-
-#### Allowing a command to run for real
-
-Some commands have to run: a `date` the test cannot predict, a `tar` that has to produce a real archive. `mock_sandbox_allow` puts them back within reach, and every call reaching one is recorded so that it stays visible:
-
-```bash
-mock_sandbox_enable "date" "tar"
-
-# The same, after the fact.
-mock_sandbox_allow "git"
-```
-
-An allowed command has to have a file on `PATH` when it is allowed, so a typo is reported at that line rather than as a puzzling failure later. A shell builtin never needs allowing: the shell answers it without a `PATH` lookup, so the mode never denies it.
-
-The commands the library and the BATS harness run stay available, because the assertions, the file helpers, the generated mocks and `run` itself are built out of them: `bash`, `cat`, `chmod`, `cp`, `diff`, `dirname`, `find`, `grep`, `head`, `id`, `ln`, `ls`, `mkdir`, `mktemp`, `rm`, `sed`, `stat`, `touch` and `wc`. Mocking one of them shadows the sandbox entry, since the mock directory still comes first on `PATH`. `git` and `tar` are deliberately not in that set, so [git assertions](#git-assertions) and `fixture_export_codebase` need them allowed to run inside the mode.
-
-A [forwarding mock](#argument-specifications) reaches the real command the same way, so `mock_set_forward` inside the sandbox needs its command allowed as well.
-
-#### What escaped
-
-`mock_sandbox_report` names every command that left the mock boundary, each one once, in the order they were first seen:
-
-```text
-Command 'aws' is not mocked and the mock sandbox denied it
-Command 'date' ran for real, allowed by the mock sandbox
-```
-
-Pass `denied` or `allowed` to print one kind alone. `mock_verify` reads both: a denied command fails the verification, because it is a hole in the test, while an allowed one is printed to file descriptor 3, because it ran as the test asked and only has to stay visible.
-
-```bash
-teardown() {
-  mock_verify
-}
-```
-
-Without that call a script that swallows the failed command's exit status leaves the test passing, so wire `mock_verify` up whenever the mode is on.
-
-The message reaches a Bash script under test, not only the test shell, because the mode installs an exported `command_not_found_handle`. A lookup that never consults it - `exec`, a compiled program starting a child, or a shell that does not implement the hook - fails with a plain `command not found` and exit status `127`, and leaves no entry in the report.
-
-#### When PATH is rewritten
-
-Code under test that rewrites `PATH` disables the mocking silently, and the test then passes while exercising the real system - the same failure the sandbox exists to prevent, arriving through a different door. `mock_setup` records the `PATH` it produced and `mock_verify` compares it, so the rewrite is reported rather than left to be guessed at:
-
-```text
-Warning: 'PATH' changed after 'mock_setup' and no longer holds the mock directory '/.../bats-helpers-mock'. Mocked commands are not found and the real commands run instead.
-```
-
-A change that leaves the mock directory in place is reported too, in its own words, since the mocks still answer but everything else may resolve differently. Both go to file descriptor 3, alongside the deprecation notices, and neither fails the test on its own. `mock_path_check` performs the same check on demand.
-
-#### Example
-
-```bash
-setup() {
-  mock_setup
-}
-
-# Test notify.sh, which uses curl to notify an external system.
-@test "Notify" {
-  app_id="9876543210"
-
-  # Mock curl command.
-  mock_curl="$(mock_command "curl")"
-
-  # Setup mock responses for the curl calls made by notify.sh.
-  mock_set_output "${mock_curl}" "12345678910-1234567890-${app_id}-12345" 1
-  mock_set_output "${mock_curl}" "201" 2
-
-  run ./notify.sh
-  assert_success
-
-  # Single line mock assertion example.
-  assert_equal "-s -X GET https://api.example.com/v2/applications.json" \
-    "$(mock_get_call_args "${mock_curl}" 1)"
-
-  # Multi-line mock assertion example.
-  url="https://api.example.com/v2/applications/${app_id}/deployments.json"
-  assert_equal "-X POST ${url} -d {
-  \"deployment\": {
-    \"description\": \"example description\",
-  }
-}" "$(mock_get_call_args "${mock_curl}" 2)"
-}
-```
-
-### Step runner
-
-When working with mocks, you would have to setup a mock for each command call with the expected argument numbers, return value, possible output and an index of the call. Then, you would run the code to be tested and run assertions for each of the mocked commands. For large scripts maintaining both parts becomes a tedious task.
-
-The step runner allows to setup and process a sequence of string and mocked command assertions. It helps to make maintenance of complex tests easier.
-
-Consider this example:
-
-```bash
-# Declare STEPS as a global variable, as `steps_run` needs to be called
-# twice and it does not store the steps internally.
-declare -a STEPS=(
-  # Mock command with exit status only (status 1 = failure, no output).
-  "@drush -y status --field=drupal-version # 1"
-
-  # Mock command with exit status 0 (success) and output "success".
-  "@drush -y status --fields=bootstrap # 0 # success"
-
-  # Mock command with exit status 1 (failure) and output "failure".
-  "@drush -y status --fields=bootstrap # 1 # failure"
-
-  # Mock command with exit status, output, AND side effect.
-  # Side effect creates a file when the mock is called.
-  "@drush cache-rebuild # 0 # Rebuilt # touch ${BATS_TEST_TMPDIR}/done"
-
-  # Mock command with wildcard (*) - accepts any arguments.
-  "@git * # 0 # Git operation successful"
-
-  # Escaped hash: use \# for a literal # in arguments.
-  "@curl https://example.com/page\#anchor # 0 # Response body"
-
-  # Assert that the output contains the substring "Hello world".
-  "Hello world"
-
-  # Assert that the output does NOT contain the substring "Goodbye world".
-  # The leading "- " indicates negation.
-  "- Goodbye world"
-)
-
-# Setup phase: creates mocks and returns references to them.
-mocks="$(steps_run "setup")"
-
-# Run the code under test.
-run ./my-script.sh
-
-# Assert phase: verifies mocks were called correctly and output assertions pass.
-steps_run "assert" "${mocks}"
-```
-
-#### Step types
-
-A step can be one of the following types:
-
-- [Command](#command) - mock a command
-- [Substring presence](#substring-presence) - assert output contains string
-- [Substring absence](#substring-absence) - assert output does NOT contain string
-- [Expected call](#expected-call) - assert the ordered sequence of mocked calls
-
-##### Command
-
-`@<command> [<args>|*] # <mock_status> [ # <mock_output> [ # <mock_side_effect> ]]`
-
-Mock a command with the given status, optional output, and optional side effect.
-
-- `<command>` - the command to mock:
-  - Steps for the same command can be mocked multiple times
-  - Calls to the same command will use the same mock
-- `<args>` - arguments to match (optional):
-  - Match is exact
-  - Use `*` as wildcard to accept any arguments
-- `<mock_status>` - exit status to return (optional):
-  - If not specified, `0` exit code will be used
-  - Can be omitted if only `<mock_output>` is needed
-- `<mock_output>` - output to return (optional)
-- `<mock_side_effect>` - Bash code executed when mock is called (optional):
-  - Useful for creating files/directories, setting env vars, logging, simulating complex behaviors
-  - Executed in the context of the mock, not the test
-  - Runs after output is generated but before exit status is returned
-  - Chain multiple commands with `;` or `&&`
-  - Use `${BATS_TEST_TMPDIR}` for temporary files
-  - Each invocation of the same command can have different side effects
-
-A step may contain at most three `#` characters and no consecutive `##`. Escape a literal `#` in the arguments as `\#`.
-
-##### Substring presence
-
-`<substring>`
-
-Assert that the output contains the given substring.
-
-##### Substring absence
-
-`- <substring>`
-
-Assert that the output does not contain the specified substring. Starts with `- ` (minus followed by a space).
-
-##### Expected call
-
-`= <call>`
-
-Add a call to the expected sequence. Starts with `= ` (equals followed by a space), and the call is written in the serialisation the [call log](#call-log) documents. All such steps together are the complete ordered sequence of mocked calls, asserted once during the assert phase.
-
-A `@` step orders the calls of one command; these steps order the calls of every command against each other:
-
-```bash
-declare -a STEPS=(
-  "@git clone https://example.com/repo.git # 0"
-  "@curl -s https://example.com/hook # 0"
-  "@git checkout main # 0"
-
-  "= git 'clone' 'https://example.com/repo.git'"
-  "= curl '-s' 'https://example.com/hook'"
-  "= git 'checkout' 'main'"
-)
-
-mocks="$(steps_run "setup")"
-run ./deploy.sh
-steps_run "assert" "${mocks}"
-```
-
-The assert phase also verifies the expectations of every mock it created, so a command called more times than the steps declare fails the run, and a declared step that is never consumed fails it too.
-
-##### Debugging
-
-Set `BATS_HELPERS_STEPS_DEBUG` to `1` to print the parsing and matching decisions of every step to file descriptor 3:
-
-```bash
-export BATS_HELPERS_STEPS_DEBUG=1
-```
-
-### Cleanup
-
-Cleanup that belongs to one test can be registered next to the code that created the thing it removes, instead of being written into a shared `teardown` or repeated on every early-exit path:
-
-```bash
-@test "Build writes an artifact" {
-  build_dir="${BATS_TEST_TMPDIR}/build"
-  mkdir -p "${build_dir}"
-  cleanup_register rm -rf "${build_dir}"
-
-  run ./build.sh "${build_dir}"
-  assert_success
-  assert_file_exists "${build_dir}/artifact.tar"
-}
-```
-
-| Function                | Description                                                           | Arguments              | Returns       |
-|-------------------------|-----------------------------------------------------------------------|------------------------|---------------|
-| `cleanup_register`      | Registers a command to run once the current test has finished         | `command`, `[args...]` | None          |
-| `cleanup_run`           | Runs the registered commands in reverse order. Call from `teardown()` | None                   | None          |
-| `cleanup_registry_path` | Resolves the file the registry is stored in                           | None                   | Registry path |
-
-#### Composing with your teardown
-
-`teardown` belongs to your test file, so the library does not define it. Call `cleanup_run` from your own `teardown`, the way `mock_setup` is called from `setup`:
-
-```bash
-setup() {
-  mock_setup
-}
-
-teardown() {
-  cleanup_run
-}
-```
-
-Without that call nothing is ever run, so wire it up once per test file - or once in the helper every test file loads.
-
-#### Order and statuses
-
-Registrations run in reverse order, so a resource created inside another one is removed while the outer one still exists:
-
-```bash
-cleanup_register rm -rf "${repo_dir}"
-cleanup_register git -C "${repo_dir}" worktree remove "${worktree_dir}"
-```
-
-BATS runs `teardown` after a test whether it passed or failed, so the registered commands run either way. From there:
-
-- A cleanup that succeeds leaves the test's own result alone. A test that failed still reports its own failure, not the cleanup.
-- A cleanup that fails fails an otherwise-passing test, and reports the command and its exit status. A cleanup that silently fails is how leaked state accumulates.
-- A cleanup that fails does not stop the ones registered before it, and does not mask a failure that preceded it.
-
-#### Registering a command
-
-Arguments are quoted when they are registered, so reassigning a variable afterwards cannot redirect the command:
-
-```bash
-dir="${BATS_TEST_TMPDIR}/first"
-cleanup_register rm -rf "${dir}"
-
-# The registered command still removes "first".
-dir="${BATS_TEST_TMPDIR}/second"
-```
-
-Anything that needs a pipeline, a redirection or several statements is registered as a function:
-
-```bash
-archive_logs() {
-  tar -czf "${1}.tar.gz" "${1}"
-}
-
-cleanup_register archive_logs "${log_dir}"
-```
-
-#### Cleanup sandbox
-
-The registry is the file `${BATS_TEST_TMPDIR}/bats-helpers-cleanup`, so BATS removes it together with the rest of the test sandbox and concurrent runs cannot overwrite each other's registrations. Keeping it on disk rather than in a variable also means a registration made inside a subshell - under `run`, a command substitution or a pipeline - still reaches `cleanup_run`.
-
-Set `BATS_HELPERS_CLEANUP_DIR` to store the registry elsewhere. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
-
-```bash
-export BATS_HELPERS_CLEANUP_DIR="${BATS_TEST_TMPDIR}/cleanup"
-```
-
-Use `cleanup_registry_path` to resolve where the registry is stored:
-
-```bash
-assert_file_not_exists "$(cleanup_registry_path)"
-```
-
-`cleanup_run` drains the registry before running anything, so calling it a second time - from the test body and again from `teardown`, say - runs nothing.
-
-### Retry
-
-Anything asynchronous - a background process writing a file, a service coming up, a lock being released - is waited for by re-running the check rather than by sleeping for a fixed time:
-
-```bash
-@test "Server comes up" {
-  ./start-server.sh &
-
-  retry_run 20 0.25 curl -sf "http://localhost:8080/health"
-}
-```
-
-| Function    | Description                                                    | Arguments                                   | Returns |
-|-------------|----------------------------------------------------------------|---------------------------------------------|---------|
-| `retry_run` | Runs a command until it succeeds or until a bound is reached   | `attempts`, `delay`, `command`, `[args...]` | None    |
-
-The first attempt runs immediately and the last one is not followed by a wait, so a condition that is already true costs no delay at all and an exhausted retry does not end on a delay that changes nothing. A delay may carry a fractional part.
-
-Any command is retryable, including the library's own assertions, so nothing has to be reimplemented to be waited for:
-
-```bash
-retry_run 10 0.5 assert_file_exists "${build_dir}/artifact.tar"
-retry_run 10 0.5 assert_file_contains "${log}" "Ready"
-```
-
-Anything that needs a pipeline, a redirection or several statements is retried as a function, the same way it is registered for cleanup:
-
-```bash
-queue_is_drained() {
-  [ "$(wc -l <"${queue}")" -eq 0 ]
-}
-
-retry_run 30 1 queue_is_drained
-```
-
-#### Deadline
-
-`BATS_HELPERS_RETRY_TIMEOUT` bounds the whole retry in seconds, independently of the attempt count, so a generous attempt count can be capped by the time the suite can afford to spend:
-
-```bash
-export BATS_HELPERS_RETRY_TIMEOUT=10
-
-retry_run 200 0.05 assert_file_exists "${socket}"
-```
-
-Whichever bound is reached first ends the retry. The deadline is checked after each failed attempt: once it has passed, the helper stops rather than waiting again. It never interrupts an attempt that is already running, so a slow command can overshoot it.
-
-The deadline is in whole seconds, because `SECONDS` is the only clock available across the Bash versions the library supports.
-
-#### Reporting
-
-An immediate success is silent. A success that took more than one attempt writes a notice to file descriptor 3, so a test that has quietly degraded to a fourth attempt does not read like a healthy one:
-
-```text
-Retried: 'curl' succeeded on attempt 4 of 20 after 1 seconds.
-```
-
-Three variables describe the run that just finished:
-
-| Variable                      | Description                                                          |
-|-------------------------------|----------------------------------------------------------------------|
-| `BATS_HELPERS_RETRY_ATTEMPTS` | Attempts made, which on success is the attempt that succeeded        |
-| `BATS_HELPERS_RETRY_OUTPUT`   | STDOUT and STDERR of the last attempt                                |
-| `BATS_HELPERS_RETRY_ELAPSED`  | Whole seconds spent                                                  |
-
-```bash
-retry_run 10 0.5 curl -sf "http://localhost:8080/health"
-
-assert_string_contains "${BATS_HELPERS_RETRY_OUTPUT}" "\"status\":\"ok\""
-```
-
-When every bound is exhausted the failure names the elapsed time, the attempt count and the last observed state, so the run does not have to be reproduced by hand to find out what it was doing:
-
-```text
-Command 'curl' did not succeed within 5 attempt(s).
-attempts: 5
-elapsed: 4 second(s)
-last status: 7
-last output: 'curl: (7) Failed to connect to localhost port 8080'
-```
-
-#### What an attempt sees
-
-Each attempt runs in a subshell with its output captured, the way `run` does. Two consequences follow from that, and both match `run`:
-
-- `set -e` does not apply inside an attempt, so only the final exit status decides whether the attempt succeeded.
-- A variable an attempt sets does not reach the test. An attempt that has to publish a value writes a file.
-
-A command that does not resolve is rejected before the first attempt rather than retried, so a typo is reported immediately instead of after the whole delay budget has been spent. A command that is expected to appear later is probed for by a function:
-
-```bash
-binary_is_installed() {
-  command -v "${1}" >/dev/null 2>&1
-}
-
-retry_run 10 1 binary_is_installed "mytool"
-```
-
-### Interactive scripts
-
-A script that asks questions is driven by naming it in `SCRIPT_FILE` and handing `tui_run` one answer per prompt, in the order the script asks for them:
-
-```bash
-@test "Installer" {
-  export SCRIPT_FILE="./install.sh"
-
-  tui_run "My site" "" "yes"
-
-  assert_output_contains "Installation complete"
-}
-```
-
-| Function                  | Description                                                          | Arguments      | Returns |
-|---------------------------|----------------------------------------------------------------------|----------------|---------|
-| `tui_run`                 | Runs the script named by `SCRIPT_FILE`, feeding it answers on STDIN  | `[answers...]` | None    |
-| `tui_assert_prompts`      | Asserts the prompts appeared in order, ignoring case                 | `[prompts...]` | None    |
-| `tui_assert_prompts_case` | Asserts the prompts appeared in order, case-sensitively              | `[prompts...]` | None    |
-
-Each answer is submitted followed by a newline, and an empty answer submits a blank line, so a prompt is left at its default by passing `""`. Every other answer reaches the script byte for byte: an apostrophe, a `%` directive, a backslash escape or a space is not decoded on the way in. The one exception is the deprecated `nothing`, which is still read as a request for a blank line rather than as those seven characters.
-
-`tui_run` fills `output`, `status` and `lines` the way `run` does, so the script is asserted on with the usual command assertions.
-
-#### Deadline
-
-Every run is bounded. A script that keeps asking after its answers are spent is terminated and reported, rather than blocking until the whole suite is killed:
-
-```text
--- Script did not finish within the deadline --
-script (1 line):
-./install.sh
-deadline (1 line):
-60 second(s)
-elapsed (1 line):
-60 second(s)
-output (2 lines):
-Welcome to the installer
-Site name: 
---
-```
-
-The report carries everything the script printed before it was terminated, so the last prompt it reached names the answer that is missing.
-
-`BATS_HELPERS_TUI_TIMEOUT` sets the deadline, and defaults to `60`:
-
-```bash
-export BATS_HELPERS_TUI_TIMEOUT=5
-```
-
-It is in whole seconds, because `SECONDS` is the only clock available across the Bash versions the library supports. It cannot be turned off: a script that legitimately takes longer is given a larger number, which keeps every run bounded by something.
-
-#### Prompt order
-
-Answers are matched to prompts by position alone, so a test that answered every question one field early looks exactly like one that answered correctly. `tui_assert_prompts` asserts what the script asked, and in which order:
-
-```bash
-tui_run "My site" "" "yes"
-
-tui_assert_prompts "Site name" "Machine name" "Install profile"
-```
-
-Each prompt is searched for in what is left of the output after the prompt before it matched, so the same prompts in another order are reported rather than passed:
-
-```text
--- Prompt does not appear in the remaining output --
-prompt (1 line):
-Install profile
-matched (1 line):
-2 of 3
-remaining output (2 lines):
- [my_site]: 
-Installation complete
---
-```
-
-The remainder starts immediately after the prompt that matched, which is why it opens mid-line.
-
-The number of prompts must also match the number of answers the last run submitted, in either direction, which is what catches an answer sequence that has drifted:
-
-```text
--- Answer count does not match the prompt count --
-answers : 3
-prompts : 2
---
-```
-
-`BATS_HELPERS_TUI_ANSWERS` holds that count. Calling the assertion before any script has run is an error rather than a pass.
-
-A prompt is matched as a substring, ignoring case; `tui_assert_prompts_case` matches case-sensitively. A prompt that is not found is reported with the match mode and the case setting that were in force, and with a note when the opposite setting would have found it, exactly as the [match mode](#match-modes) assertions report. Only what the script prints itself can be asserted on: Bash writes a `read -p` prompt only when STDIN is a terminal, so a script asking that way leaves nothing in the output to match.
-
-Nothing in the output marks a prompt as one, either. A script that echoes its answers back can therefore satisfy a prompt with an answer holding the same text, so pick prompt text an answer cannot stand in for.
-
-### Helpers
-
-| Function Name             | Description                                                                   |
-|---------------------------|-------------------------------------------------------------------------------|
-| `file_mktouch`            | Creates a file and any missing parent directories                             |
-| `file_trim`               | Removes the last line of a file in place                                      |
-| `file_read_env`           | Evaluates an expression with the variables from the `./.env` file in scope    |
-| `file_backup_path`        | Resolves the backup location of a file                                        |
-| `file_add_var`            | Appends a variable assignment to a file, backing the file up first            |
-| `file_restore`            | Restores a file from the backup taken by `file_add_var`                       |
-| `fixture_prepare_dir`     | Creates an empty directory for a fixture, removing any existing content       |
-| `fixture_export_codebase` | Exports the codebase at the latest commit to a destination directory          |
-| `fixture_create_dir`      | Creates a file tree from an archive read from STDIN                           |
-| `fixture_dump_dir`        | Prints a directory as an archive                                              |
-| `fixture_assert_dir`      | Asserts that a directory holds the file tree of an archive read from STDIN    |
-| `string_random`           | Generates a random alphanumeric string, 8 characters long by default          |
-| `string_match`            | Reports whether a needle matches a haystack, without asserting on it          |
-| `string_format_to_regex`  | Translates a format string into an extended regular expression                |
-| `flunk`                   | Fails the test with a message, its stack trace and stable paths               |
-| `format_error`            | Formats a failure report as a titled block of aligned rows                    |
-
-`fixture_export_codebase` is a no-op unless `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` is set to `1`, so an expensive export can be enabled per suite rather than per call:
-
-```bash
-export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
-```
-
-The functions documented in this README are the public API. Functions whose names start with an underscore - `_mock_log_quote`, `_report_diff` - are internal, are not part of the public API, and are exempt from the deprecation policy: they may change or disappear in any release without notice.
-
-#### Failure reporting
-
-Helpers report a failure by writing a message to STDERR and returning a non-zero status. None of them call `exit`, so the caller stays in control and can compose them with `||`, branch on them with `if`, or capture the status with `run`:
-
-```bash
-# Recover from a failure and carry on.
-fixture_export_codebase "${build_dir}" \
-  || echo "Export failed - continuing without a codebase."
-
-# Capture the status and the message.
-run tui_run "${answers[@]}"
-assert_failure
-assert_output_contains "SCRIPT_FILE is not set."
-```
-
-A bare call still fails the test at that point, because BATS runs tests with `errexit` enabled.
-
-Every assertion reports through one path, so a failure always reads the same way: a banner marking where the failure starts and ends, a title naming what went wrong, then the values that decided it as aligned rows. A run prints the output of the code under test alongside the library's own, so the banner is what makes the failure findable in it. It closes below the stack trace rather than above it, so nothing belonging to the failure falls outside the two markers.
-
-```text
-##################################################
-#             BEGIN ERROR MESSAGE                #
-##################################################
--- String does not contain substring --
-string     : some text
-substring  : SOME
-match mode : literal
-case       : sensitive
-note       : it matches without the '_case' suffix
---
-
--- stack trace --
-${PWD}/tests/example.bats:12: assert_string_contains_case
---
-##################################################
-#              END ERROR MESSAGE                 #
-##################################################
-```
-
-The examples below show the block on its own, without the surrounding banner.
-
-When any value spans lines, every row switches to a labelled form carrying its line count. They switch together, so two values stay comparable rather than one collapsing onto a single line and the other not:
-
-```text
--- Line does not contain substring --
-line (1 line):
-1
-substring (1 line):
-absent
-match mode (1 line):
-literal
-case (1 line):
-insensitive
-context (4 lines):
-  0: Usage: tool.sh
-> 1: Reading config
-  2: Deleted 12 files
-  3: Done.
---
-```
-
-A mismatch between an expected and an actual value is rendered as a unified diff rather than as two blobs:
-
-```text
--- Strings are not equal --
---- expected
-+++ actual
-@@ -1,3 +1,3 @@
- first
--second
-+changed
- third
---
-```
-
-The diff is coloured when the platform's `diff` understands `--color`. Set `NO_COLOR` to any non-empty value to suppress it, or `BATS_HELPERS_REPORT_COLOR` to decide either way:
-
-```bash
-export BATS_HELPERS_REPORT_COLOR=0
-```
-
-The stack trace names the file, line and function of each of your own frames, leaving out the library's own and bats-core's, so a failure raised several calls deep inside a helper points at the helper and not only at the test. Paths that change between runs - the bats-core temporary directories, the working directory and the home directory - are rewritten to the names of the variables holding them, so the same failure is the same text on every machine and in every run.
-
-#### File backups
-
-`file_add_var` backs a file up before modifying it and `file_restore` puts that backup back. Backups are written below `${BATS_TEST_TMPDIR}/bats-helpers-backup`, mirroring the source path, so BATS removes them together with the rest of the test sandbox and concurrent runs cannot overwrite each other's backups.
-
-Set `BATS_HELPERS_FILE_BACKUP_DIR` to store them elsewhere. Only the default location carries the guarantees above - a directory outside `${BATS_TEST_TMPDIR}` is not removed by BATS and is shared with concurrent runs:
-
-```bash
-export BATS_HELPERS_FILE_BACKUP_DIR="${BATS_TEST_TMPDIR}/backups"
-```
-
-Use `file_backup_path` to resolve where a given file's backup is stored:
-
-```bash
-assert_file_exists "$(file_backup_path "${BATS_TEST_TMPDIR}/.env")"
-```
-
-#### Fixture trees
-
-`fixture_create_dir` builds a whole file tree from a plain-text archive read from STDIN, so the shape of the fixture is visible in the test rather than reconstructed from a run of `mkdir` and `echo` calls. Fed from a quoted here-document, the content passes through byte for byte: nothing is expanded, and nothing needs escaping apart from a line that would itself read as a marker:
-
-```bash
-fixture_create_dir "${dir}" <<'FIXTURE'
--- README.md --
-# Project
-
--- src/app.sh --
-#!/usr/bin/env bash
-echo "value is ${UNEXPANDED}"
-
--- config/.env --
-FOO=bar
-FIXTURE
-```
-
-A line is a marker when it opens with `--` followed by a space and closes with a space followed by `--`; the name between them is trimmed, so markers can be padded to line up. After the first marker, every line that is not itself a marker is content, which is what makes the format safe to hand-edit: there is nothing to get syntactically wrong. An entry holds every line from its marker to the next marker or to the end of the archive, and parent directories are created implicitly.
-
-Anything before the first marker is a comment and is discarded, so a fixture can carry a note about what it stands for:
-
-```bash
-fixture_create_dir "${dir}" <<'FIXTURE'
-The tree the installer expects to find before it runs.
-
--- config/.env --
-FOO=bar
-FIXTURE
-```
-
-The directory is created when it does not exist, and only the files the archive names are written. Pair the call with `fixture_prepare_dir` to start from an empty directory:
-
-```bash
-fixture_prepare_dir "${dir}"
-fixture_create_dir "${dir}" <<'FIXTURE'
--- README.md --
-# Project
-FIXTURE
-```
-
-A content line that would otherwise be read as a marker carries one leading backslash. Reading removes one backslash from a line that is marker-shaped without it, so `\-- README.md --` is the content `-- README.md --`, and `\\-- README.md --` is the content `\-- README.md --`. A backslash anywhere else is left alone.
-
-An archive path is a plain relative path naming a file. An absolute path, a `..`, `.` or empty component, a trailing slash, a marker naming nothing, and a path declared twice are each rejected with a message naming the path. `fixture_create_dir` also refuses to write through a symlink already sitting on the path, so a link an earlier fixture or the code under test left behind cannot carry the write outside the directory.
-
-`fixture_dump_dir` prints an existing directory in the same format, ordered by path. It is both a debugging aid - dump what the code under test actually produced and paste it back into the test - and the way to regenerate an expectation:
-
-```bash
-run fixture_dump_dir "${dir}"
-assert_success
-```
-
-`fixture_assert_dir` compares a directory against an inline expected tree:
-
-```bash
-fixture_assert_dir "${dir}" <<'FIXTURE'
--- README.md --
-# Project
--- src/app.sh --
-#!/usr/bin/env bash
-FIXTURE
-```
-
-A mismatch lists every file that is missing, unexpected or different, and appends a unified diff for each differing file:
-
-```text
--- Directory does not match the expected fixture --
-directory (1 line):
-${BATS_TEST_TMPDIR}/build
-summary (3 lines):
-differs: src/app.sh
-missing: src/missing.sh
-unexpected: src/extra.sh
-difference (5 lines):
---- expected src/app.sh
-+++ actual src/app.sh
-@@ -1 +1 @@
--#!/usr/bin/env bash
-+#!/bin/sh
---
-```
-
-The format covers text files and nothing else. Binary content, file modes and symlinks are deliberately out of scope - `assert_file_mode`, `file_mktouch` and `ln -s` remain the way to handle those - and `fixture_dump_dir` serialises regular files only, failing on a file that is not text. `fixture_assert_dir` compares regular files only for the same reason: a symlink standing where the archive names a file is reported as a difference, and one the archive says nothing about is left alone. Because the format is line-based, every file it names ends with a newline: `fixture_dump_dir` adds one to a file that lacks it, and `fixture_assert_dir` compares bytes, so a file with no trailing newline differs from the archive that names it.
-
-### Environment variables
-
-Every variable the library defines, in one place. Each is also covered by the section of the feature that uses it. Variables that belong to bats-core - `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME`, `BATS_VERBOSE_RUN` - are read but not owned here, and are documented by [bats-core](https://bats-core.readthedocs.io/). `NO_COLOR` is read the same way: any non-empty value suppresses the colour of a diff in a failure report, following [the convention](https://no-color.org/).
-
-`STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the test data a consumer declares right above the call that reads it, so they stay short and unprefixed. Everything the library reads from the wider environment carries the `BATS_HELPERS_` prefix.
-
-| Variable                                       | Read by                                                       | Description                                                                                 |
-|------------------------------------------------|---------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| `STEPS`                                        | `steps_run`                                                   | Array of steps to process                                                                   |
-| `TEST_CASES`                                   | `dataprovider_run`                                            | Array of test cases, each row ending with its expected value                                |
-| `SCRIPT_FILE`                                  | `tui_run`                                                     | Path to the script to run, relative to the current directory                                |
-| `BATS_HELPERS_TUI_TIMEOUT`                     | `tui_run`                                                     | Whole seconds the script is given to finish. Defaults to `60`                               |
-| `BATS_HELPERS_TUI_ANSWERS`                     | `tui_assert_prompts`, `tui_assert_prompts_case`               | Set by `tui_run` to the number of answers submitted                                         |
-| `BATS_HELPERS_STEPS_DEBUG`                     | `steps_run`                                                   | Set to `1` to print every parsing and matching decision to file descriptor 3                |
-| `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              | `assert_dir_contains_string`, `assert_dir_matches` and their variants | Array of directory names to exclude from the search, on top of the always-excluded four     |
-| `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `fixture_export_codebase`                                     | Set to `1` to enable the export; anything else makes the function a no-op                   |
-| `BATS_HELPERS_FILE_BACKUP_DIR`                 | `file_add_var`, `file_restore`, `file_backup_path`            | Backup root. Defaults to `${BATS_TEST_TMPDIR}/bats-helpers-backup`                          |
-| `BATS_HELPERS_CLEANUP_DIR`                     | `cleanup_register`, `cleanup_run`, `cleanup_registry_path`    | Directory holding the cleanup registry. Defaults to `${BATS_TEST_TMPDIR}`                   |
-| `BATS_HELPERS_RETRY_TIMEOUT`                   | `retry_run`                                                   | Overall deadline in whole seconds, on top of the attempt count. Unset means no deadline     |
-| `BATS_HELPERS_RETRY_ATTEMPTS`                  | `retry_run`                                                   | Set by `retry_run` to the attempts made, which on success is the attempt that succeeded     |
-| `BATS_HELPERS_RETRY_OUTPUT`                    | `retry_run`                                                   | Set by `retry_run` to the STDOUT and STDERR of the last attempt                             |
-| `BATS_HELPERS_RETRY_ELAPSED`                   | `retry_run`                                                   | Set by `retry_run` to the whole seconds the retry spent                                     |
-| `BATS_HELPERS_MOCK_TMPDIR`                     | `mock_setup`, `mock_create`                                   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`, and `mock_setup` exports the resolved path |
-| `BATS_HELPERS_MOCK_USER`                       | `mock_get_call_user`                                          | User a mock call is reported as. Defaults to `id -un`                                       |
-| `BATS_HELPERS_MOCK_STRICT`                     | `mock_create`                                                 | Set to `0` to answer the calls a mock's expectations do not cover. Defaults to `1`, and is read when the mock is created |
-| `BATS_HELPERS_MOCK_SANDBOX_REPORT`             | `_mock_sandbox_deny`                                          | Path to the sandbox report. Exported by `mock_sandbox_enable` so that a denial recorded in a child process reaches it |
-| `BATS_HELPERS_REPORT_COLOR`                    | `format_error`                                                | `0` to never colour a diff, `1` to colour it whenever `diff` supports the flag. Unset or empty defers to `NO_COLOR` |
-| `BATS_HELPERS_DEPRECATION_QUIET`               | every module                                                  | Set to any non-empty value to silence every deprecation notice                              |
-
-### Deprecations
-
-These names still work, but print a notice on every call and are removed in the next version:
-
-| Deprecated                       | Use instead                   |
-|----------------------------------|-------------------------------|
-| `assert_not_git_repo`            | `assert_git_not_repo`         |
-| `assert_git_file_is_tracked`     | `assert_git_file_tracked`     |
-| `assert_git_file_is_not_tracked` | `assert_git_file_not_tracked` |
-| `assert_contains`                | `assert_string_contains`      |
-| `assert_not_contains`            | `assert_string_not_contains`  |
-| `run_steps`                      | `steps_run`                   |
-| `setup_mock`                     | `mock_setup`                  |
-| `mktouch`                        | `file_mktouch`                |
-| `trim_file`                      | `file_trim`                   |
-| `read_env`                       | `file_read_env`               |
-| `add_var_to_file`                | `file_add_var`                |
-| `restore_file`                   | `file_restore`                |
-| `random_string`                  | `string_random`               |
-
-The variables follow the same pattern. The old name is read only when the new one is unset or empty, so setting both to real values leaves the new one in charge:
-
-| Deprecated                             | Use instead                                    |
-|----------------------------------------|------------------------------------------------|
-| `RUN_STEPS_DEBUG`                      | `BATS_HELPERS_STEPS_DEBUG`                     |
-| `ASSERT_DIR_EXCLUDE`                   | `BATS_HELPERS_ASSERT_DIR_EXCLUDE`              |
-| `BATS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` |
-| `BATS_MOCK_TMPDIR`                     | `BATS_HELPERS_MOCK_TMPDIR`                     |
-| `_USER`                                | `BATS_HELPERS_MOCK_USER`                       |
-| `BATS_HELPERS_BACKUP_DIR`              | `BATS_HELPERS_FILE_BACKUP_DIR`                 |
-
-`mock_setup` now exports `BATS_HELPERS_MOCK_TMPDIR` rather than `BATS_MOCK_TMPDIR`. The old name is still read as an input, but it is no longer written, so a test that reads the mock directory back after `mock_setup` has to read the new name. `_mock_resolve_tmp` also names the new variable when it cannot resolve a directory, so a test asserting on `Set BATS_MOCK_TMPDIR to a writable directory` has to be updated.
-
-Every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. Apart from the two below, each replacement keeps the arguments, the standard output and the return semantics, so a call is updated by swapping the name alone.
-
-`assert_contains` and `assert_not_contains` take the needle first, while their replacements take the haystack first, so a call has to swap its arguments as well as change its name:
-
-```bash
-assert_contains "needle" "some needle in a haystack"
-
-assert_string_contains "some needle in a haystack" "needle"
-```
-
-The `nothing` answer to `tui_run` is deprecated in the same way. An empty string is what sends a blank line now, and `nothing` still sends one while printing a notice, so the literal string becomes answerable once it is removed:
-
-```bash
-tui_run "My site" "nothing" "yes"
-
-tui_run "My site" "" "yes"
-```
-
-The notice is written to file descriptor 3, so it shows up in the BATS output without being captured by `run` or by command substitution:
-
-```text
-Deprecated: 'assert_not_git_repo' will be removed in the next version. Use 'assert_git_not_repo' instead.
-```
-
-Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence every notice:
-
-```bash
-export BATS_HELPERS_DEPRECATION_QUIET=1
-```
-
-See [`MIGRATION.md`](MIGRATION.md) for every deprecated function, variable and argument, together with its replacement, in one place.
+## 📖 Documentation
+
+Each page documents one module of the library, and names the variables that module reads beside the behaviour they change. Match modes are the one exception, describing what every assertion family shares. The [API reference](#-api-reference) below links every public function into the page that documents it.
+
+| Page                                              | Source                                                  | Covers                                                               |
+|---------------------------------------------------|---------------------------------------------------------|----------------------------------------------------------------------|
+| [Command assertions](docs/assertions-command.md)  | [`src/assert.command.bash`](src/assert.command.bash)    | Output, exit statuses and standard error of a command run with `run` |
+| [Line assertions](docs/assertions-line.md)        | [`src/assert.line.bash`](src/assert.line.bash)          | Individual lines of a captured stream, by index, by any line and by count |
+| [String assertions](docs/assertions-string.md)    | [`src/assert.string.bash`](src/assert.string.bash)      | Plain strings, and the string utilities behind the assertions        |
+| [File assertions](docs/assertions-file.md)        | [`src/assert.file.bash`](src/assert.file.bash)          | Files, directories and symbolic links                                |
+| [Git assertions](docs/assertions-git.md)          | [`src/assert.git.bash`](src/assert.git.bash)            | Git repositories and the files they track                            |
+| [Match modes](docs/match-modes.md)                | [`src/assert.string.bash`](src/assert.string.bash)      | How a needle is read, and whether case matters                       |
+| [Failure reporting](docs/failure-reporting.md)    | [`src/assert.base.bash`](src/assert.base.bash)          | The shape of every failure report, and how to raise one              |
+| [Mocking](docs/mocking.md)                        | [`src/mock.bash`](src/mock.bash)                        | Command mocking, the call log, argument specifications, strictness and sandbox mode |
+| [Step runner](docs/steps.md)                      | [`src/steps.bash`](src/steps.bash)                      | Sequences of mocked calls and output assertions                      |
+| [Data provider](docs/dataprovider.md)             | [`src/dataprovider.bash`](src/dataprovider.bash)        | Running one function over many test cases                            |
+| [Interactive scripts](docs/tui.md)                | [`src/tui.bash`](src/tui.bash)                          | Driving a script that asks questions                                 |
+| [Retry](docs/retry.md)                            | [`src/retry.bash`](src/retry.bash)                      | Conditions that become true shortly                                  |
+| [Cleanup](docs/cleanup.md)                        | [`src/cleanup.bash`](src/cleanup.bash)                  | Deferred per-test cleanup                                            |
+| [Fixtures](docs/fixtures.md)                      | [`src/fixture.bash`](src/fixture.bash)                  | Building, dumping and asserting file trees                           |
+| [File utilities](docs/files.md)                   | [`src/file.bash`](src/file.bash)                        | Creating, trimming, backing up and restoring files                   |
+
+## 🧩 API reference
+
+Every public function, the file that defines it, and the page that documents it. Functions whose names start with an underscore are internal, are not part of the public API, and may change or disappear in any release without notice.
+
+| Function | Source | Description | Documentation |
+|----------|--------|-------------|---------------|
+| `flunk` | [assert.base.bash](src/assert.base.bash) | Fails the test with a message, its stack trace and stable paths | [Failure reporting](docs/failure-reporting.md#failure-reporting) |
+| `format_error` | [assert.base.bash](src/assert.base.bash) | Formats a failure report as a titled block of aligned rows | [Failure reporting](docs/failure-reporting.md#failure-reporting) |
+| `assert_empty` | [assert.string.bash](src/assert.string.bash) | Asserts that a string is empty | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_not_empty` | [assert.string.bash](src/assert.string.bash) | Asserts that a string is not empty | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_equal` | [assert.string.bash](src/assert.string.bash) | Asserts that two strings are equal | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_contains` | [assert.string.bash](src/assert.string.bash) | Asserts that a string contains a substring | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_contains_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string contains a substring, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_contains` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not contain a substring | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_contains_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not contain a substring, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_starts_with` | [assert.string.bash](src/assert.string.bash) | Asserts that a string starts with a substring | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_starts_with_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string starts with a substring, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_starts_with` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not start with a substring | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_starts_with_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not start with a substring, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_ends_with` | [assert.string.bash](src/assert.string.bash) | Asserts that a string ends with a substring | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_ends_with_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string ends with a substring, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_ends_with` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not end with a substring | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_ends_with_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not end with a substring, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_matches` | [assert.string.bash](src/assert.string.bash) | Asserts that a string matches a regular expression | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_matches_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string matches a regular expression, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_matches` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not match a regular expression | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_matches_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not match a regular expression, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_matches_format` | [assert.string.bash](src/assert.string.bash) | Asserts that a string matches a format string | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_matches_format_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string matches a format string, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_matches_format` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not match a format string | [String assertions](docs/assertions-string.md#assertions) |
+| `assert_string_not_matches_format_case` | [assert.string.bash](src/assert.string.bash) | Asserts that a string does not match a format string, case-sensitively | [String assertions](docs/assertions-string.md#assertions) |
+| `string_match` | [assert.string.bash](src/assert.string.bash) | Reports whether a needle matches a haystack, without asserting on it | [String utilities](docs/assertions-string.md#string-utilities) |
+| `string_format_to_regex` | [assert.string.bash](src/assert.string.bash) | Translates a format string into an extended regular expression | [String utilities](docs/assertions-string.md#string-utilities) |
+| `string_random` | [assert.string.bash](src/assert.string.bash) | Generates a random alphanumeric string, 8 characters long by default | [String utilities](docs/assertions-string.md#string-utilities) |
+| `assert_success` | [assert.command.bash](src/assert.command.bash) | Asserts that a command succeeds | [Command assertions](docs/assertions-command.md#output) |
+| `assert_failure` | [assert.command.bash](src/assert.command.bash) | Asserts that a command fails | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output` | [assert.command.bash](src/assert.command.bash) | Asserts that a command outputs an exact string | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_contains` | [assert.command.bash](src/assert.command.bash) | Asserts that output contains a substring | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_contains_case` | [assert.command.bash](src/assert.command.bash) | Asserts that output contains a substring, case-sensitively | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_not_contains` | [assert.command.bash](src/assert.command.bash) | Asserts that output does not contain a substring | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_not_contains_case` | [assert.command.bash](src/assert.command.bash) | Asserts that output does not contain a substring, case-sensitively | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_matches` | [assert.command.bash](src/assert.command.bash) | Asserts that output matches a regular expression | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_matches_case` | [assert.command.bash](src/assert.command.bash) | Asserts that output matches a regular expression, case-sensitively | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_not_matches` | [assert.command.bash](src/assert.command.bash) | Asserts that output does not match a regular expression | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_not_matches_case` | [assert.command.bash](src/assert.command.bash) | Asserts that output does not match a regular expression, case-sensitively | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_matches_format` | [assert.command.bash](src/assert.command.bash) | Asserts that output matches a format string | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_matches_format_case` | [assert.command.bash](src/assert.command.bash) | Asserts that output matches a format string, case-sensitively | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_not_matches_format` | [assert.command.bash](src/assert.command.bash) | Asserts that output does not match a format string | [Command assertions](docs/assertions-command.md#output) |
+| `assert_output_not_matches_format_case` | [assert.command.bash](src/assert.command.bash) | Asserts that output does not match a format string, case-sensitively | [Command assertions](docs/assertions-command.md#output) |
+| `assert_status` | [assert.command.bash](src/assert.command.bash) | Asserts that a command exits with an exact status | [Exit statuses](docs/assertions-command.md#exit-statuses) |
+| `assert_failure_status` | [assert.command.bash](src/assert.command.bash) | Asserts that a command fails with an exact status | [Exit statuses](docs/assertions-command.md#exit-statuses) |
+| `assert_status_general_error` | [assert.command.bash](src/assert.command.bash) | Asserts that a command exits with status `1` | [Exit statuses](docs/assertions-command.md#exit-statuses) |
+| `assert_status_command_not_found` | [assert.command.bash](src/assert.command.bash) | Asserts that a command exits with status `127` | [Exit statuses](docs/assertions-command.md#exit-statuses) |
+| `assert_stderr` | [assert.command.bash](src/assert.command.bash) | Asserts that a command writes an exact string to STDERR | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_empty` | [assert.command.bash](src/assert.command.bash) | Asserts that a command wrote nothing to STDERR | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_captured` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR was captured separately from the output | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_contains` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR contains a substring | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_contains_case` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR contains a substring, case-sensitively | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_not_contains` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR does not contain a substring | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_not_contains_case` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR does not contain a substring, case-sensitively | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_matches` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR matches a regular expression | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_matches_case` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR matches a regular expression, case-sensitively | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_not_matches` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR does not match a regular expression | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_not_matches_case` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR does not match a regular expression, case-sensitively | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_matches_format` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR matches a format string | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_matches_format_case` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR matches a format string, case-sensitively | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_not_matches_format` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR does not match a format string | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_stderr_not_matches_format_case` | [assert.command.bash](src/assert.command.bash) | Asserts that STDERR does not match a format string, case-sensitively | [Standard error](docs/assertions-command.md#standard-error) |
+| `assert_line` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index equals a string | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_not` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index does not equal a string | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_contains` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index contains a string | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_contains_case` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index contains a string, case-sensitively | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_not_contains` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index does not contain a string | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_not_contains_case` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index does not contain a string, case-sensitively | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_matches` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index matches a regular expression | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_matches_case` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index matches a regular expression, case-sensitively | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_not_matches` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index does not match a regular expression | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_not_matches_case` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index does not match a regular expression, case-sensitively | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_matches_format` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index matches a format string | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_matches_format_case` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index matches a format string, case-sensitively | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_not_matches_format` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index does not match a format string | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_line_not_matches_format_case` | [assert.line.bash](src/assert.line.bash) | Asserts that the line at an index does not match a format string, case-sensitively | [Line assertions](docs/assertions-line.md#by-index) |
+| `assert_any_line` | [assert.line.bash](src/assert.line.bash) | Asserts that some line equals a string | [Any line](docs/assertions-line.md#any-line) |
+| `assert_no_line` | [assert.line.bash](src/assert.line.bash) | Asserts that no line equals a string | [Any line](docs/assertions-line.md#any-line) |
+| `assert_any_line_contains` | [assert.line.bash](src/assert.line.bash) | Asserts that some line contains a string | [Any line](docs/assertions-line.md#any-line) |
+| `assert_any_line_contains_case` | [assert.line.bash](src/assert.line.bash) | Asserts that some line contains a string, case-sensitively | [Any line](docs/assertions-line.md#any-line) |
+| `assert_no_line_contains` | [assert.line.bash](src/assert.line.bash) | Asserts that no line contains a string | [Any line](docs/assertions-line.md#any-line) |
+| `assert_no_line_contains_case` | [assert.line.bash](src/assert.line.bash) | Asserts that no line contains a string, case-sensitively | [Any line](docs/assertions-line.md#any-line) |
+| `assert_any_line_matches` | [assert.line.bash](src/assert.line.bash) | Asserts that some line matches a regular expression | [Any line](docs/assertions-line.md#any-line) |
+| `assert_any_line_matches_case` | [assert.line.bash](src/assert.line.bash) | Asserts that some line matches a regular expression, case-sensitively | [Any line](docs/assertions-line.md#any-line) |
+| `assert_no_line_matches` | [assert.line.bash](src/assert.line.bash) | Asserts that no line matches a regular expression | [Any line](docs/assertions-line.md#any-line) |
+| `assert_no_line_matches_case` | [assert.line.bash](src/assert.line.bash) | Asserts that no line matches a regular expression, case-sensitively | [Any line](docs/assertions-line.md#any-line) |
+| `assert_any_line_matches_format` | [assert.line.bash](src/assert.line.bash) | Asserts that some line matches a format string | [Any line](docs/assertions-line.md#any-line) |
+| `assert_any_line_matches_format_case` | [assert.line.bash](src/assert.line.bash) | Asserts that some line matches a format string, case-sensitively | [Any line](docs/assertions-line.md#any-line) |
+| `assert_no_line_matches_format` | [assert.line.bash](src/assert.line.bash) | Asserts that no line matches a format string | [Any line](docs/assertions-line.md#any-line) |
+| `assert_no_line_matches_format_case` | [assert.line.bash](src/assert.line.bash) | Asserts that no line matches a format string, case-sensitively | [Any line](docs/assertions-line.md#any-line) |
+| `assert_line_count` | [assert.line.bash](src/assert.line.bash) | Asserts the number of lines | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_not` | [assert.line.bash](src/assert.line.bash) | Asserts that the number of lines differs | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_contains` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines contain a string | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_contains_case` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines contain a string, case-sensitively | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_not_contains` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines do not contain a string | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_not_contains_case` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines do not contain a string, case-sensitively | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_matches` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines match a regular expression | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_matches_case` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines match a regular expression, case-sensitively | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_not_matches` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines do not match a regular expression | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_not_matches_case` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines do not match a regular expression, case-sensitively | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_matches_format` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines match a format string | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_matches_format_case` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines match a format string, case-sensitively | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_not_matches_format` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines do not match a format string | [Counts](docs/assertions-line.md#counts) |
+| `assert_line_count_not_matches_format_case` | [assert.line.bash](src/assert.line.bash) | Asserts how many lines do not match a format string, case-sensitively | [Counts](docs/assertions-line.md#counts) |
+| `assert_file_exists` | [assert.file.bash](src/assert.file.bash) | Asserts that a file exists | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_not_exists` | [assert.file.bash](src/assert.file.bash) | Asserts that a file does not exist | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_contains` | [assert.file.bash](src/assert.file.bash) | Asserts that a file contains a string | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_contains_case` | [assert.file.bash](src/assert.file.bash) | Asserts that a file contains a string, case-sensitively | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_not_contains` | [assert.file.bash](src/assert.file.bash) | Asserts that a file does not contain a string | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_not_contains_case` | [assert.file.bash](src/assert.file.bash) | Asserts that a file does not contain a string, case-sensitively | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_matches` | [assert.file.bash](src/assert.file.bash) | Asserts that a file matches a regular expression | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_matches_case` | [assert.file.bash](src/assert.file.bash) | Asserts that a file matches a regular expression, case-sensitively | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_not_matches` | [assert.file.bash](src/assert.file.bash) | Asserts that a file does not match a regular expression | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_not_matches_case` | [assert.file.bash](src/assert.file.bash) | Asserts that a file does not match a regular expression, case-sensitively | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_matches_format` | [assert.file.bash](src/assert.file.bash) | Asserts that a file matches a format string | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_matches_format_case` | [assert.file.bash](src/assert.file.bash) | Asserts that a file matches a format string, case-sensitively | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_not_matches_format` | [assert.file.bash](src/assert.file.bash) | Asserts that a file does not match a format string | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_not_matches_format_case` | [assert.file.bash](src/assert.file.bash) | Asserts that a file does not match a format string, case-sensitively | [File assertions](docs/assertions-file.md#files) |
+| `assert_files_equal` | [assert.file.bash](src/assert.file.bash) | Asserts that two files are equal | [File assertions](docs/assertions-file.md#comparing-files) |
+| `assert_files_equal_ignore_spaces` | [assert.file.bash](src/assert.file.bash) | Asserts that two files are equal, ignoring blank lines and whitespace changes | [File assertions](docs/assertions-file.md#comparing-files) |
+| `assert_files_not_equal` | [assert.file.bash](src/assert.file.bash) | Asserts that two files are not equal | [File assertions](docs/assertions-file.md#comparing-files) |
+| `assert_files_not_equal_ignore_spaces` | [assert.file.bash](src/assert.file.bash) | Asserts that two files are not equal, ignoring blank lines and whitespace changes | [File assertions](docs/assertions-file.md#comparing-files) |
+| `assert_binary_files_equal` | [assert.file.bash](src/assert.file.bash) | Asserts that two binary files are equal | [File assertions](docs/assertions-file.md#files) |
+| `assert_binary_files_not_equal` | [assert.file.bash](src/assert.file.bash) | Asserts that two binary files are not equal | [File assertions](docs/assertions-file.md#files) |
+| `assert_file_mode` | [assert.file.bash](src/assert.file.bash) | Asserts the file permission mode | [File assertions](docs/assertions-file.md#files) |
+| `assert_dir_exists` | [assert.file.bash](src/assert.file.bash) | Asserts that a directory exists | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
+| `assert_dir_not_exists` | [assert.file.bash](src/assert.file.bash) | Asserts that a directory does not exist | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
+| `assert_dir_empty` | [assert.file.bash](src/assert.file.bash) | Asserts that a directory is empty | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
+| `assert_dir_not_empty` | [assert.file.bash](src/assert.file.bash) | Asserts that a directory is not empty | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
+| `assert_dir_contains_string` | [assert.file.bash](src/assert.file.bash) | Asserts that a directory contains a string in one of its files | [Searching a directory](docs/assertions-file.md#searching-a-directory) |
+| `assert_dir_contains_string_case` | [assert.file.bash](src/assert.file.bash) | Asserts that a directory contains a string in one of its files, case-sensitively | [Searching a directory](docs/assertions-file.md#searching-a-directory) |
+| `assert_dir_not_contains_string` | [assert.file.bash](src/assert.file.bash) | Asserts that a directory does not contain a string in any of its files | [Searching a directory](docs/assertions-file.md#searching-a-directory) |
+| `assert_dir_not_contains_string_case` | [assert.file.bash](src/assert.file.bash) | Asserts that a directory does not contain a string in any of its files, case-sensitively | [Searching a directory](docs/assertions-file.md#searching-a-directory) |
+| `assert_dir_matches` | [assert.file.bash](src/assert.file.bash) | Asserts that a file of a directory matches a regular expression | [Searching a directory](docs/assertions-file.md#searching-a-directory) |
+| `assert_dir_matches_case` | [assert.file.bash](src/assert.file.bash) | Asserts that a file of a directory matches a regular expression, case-sensitively | [Searching a directory](docs/assertions-file.md#searching-a-directory) |
+| `assert_dir_not_matches` | [assert.file.bash](src/assert.file.bash) | Asserts that no file of a directory matches a regular expression | [Searching a directory](docs/assertions-file.md#searching-a-directory) |
+| `assert_dir_not_matches_case` | [assert.file.bash](src/assert.file.bash) | Asserts that no file of a directory matches a regular expression, case-sensitively | [Searching a directory](docs/assertions-file.md#searching-a-directory) |
+| `assert_dirs_equal` | [assert.file.bash](src/assert.file.bash) | Asserts that two directories are equal | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
+| `assert_symlink_exists` | [assert.file.bash](src/assert.file.bash) | Asserts that a symbolic link exists | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
+| `assert_symlink_not_exists` | [assert.file.bash](src/assert.file.bash) | Asserts that a symbolic link does not exist | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
+| `assert_git_repo` | [assert.git.bash](src/assert.git.bash) | Asserts that a directory is a git repository | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_not_repo` | [assert.git.bash](src/assert.git.bash) | Asserts that a directory is not a git repository | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_clean` | [assert.git.bash](src/assert.git.bash) | Asserts that a git repository is clean | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_not_clean` | [assert.git.bash](src/assert.git.bash) | Asserts that a git repository is not clean | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_file_tracked` | [assert.git.bash](src/assert.git.bash) | Asserts that a file is tracked in git | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_file_not_tracked` | [assert.git.bash](src/assert.git.bash) | Asserts that a file is not tracked in git | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `cleanup_register` | [cleanup.bash](src/cleanup.bash) | Registers a command to run once the current test has finished | [Cleanup](docs/cleanup.md#cleanup) |
+| `cleanup_run` | [cleanup.bash](src/cleanup.bash) | Runs the registered commands in reverse order. Call from `teardown()` | [Cleanup](docs/cleanup.md#composing-with-your-teardown) |
+| `cleanup_registry_path` | [cleanup.bash](src/cleanup.bash) | Resolves the file the registry is stored in | [Cleanup sandbox](docs/cleanup.md#cleanup-sandbox) |
+| `retry_run` | [retry.bash](src/retry.bash) | Runs a command until it succeeds or until a bound is reached | [Retry](docs/retry.md#retry) |
+| `file_mktouch` | [file.bash](src/file.bash) | Creates a file and any missing parent directories | [File utilities](docs/files.md#file-utilities) |
+| `file_trim` | [file.bash](src/file.bash) | Removes the last line of a file in place | [File utilities](docs/files.md#file-utilities) |
+| `file_read_env` | [file.bash](src/file.bash) | Evaluates an expression with the variables from the `./.env` file in scope | [File utilities](docs/files.md#file-utilities) |
+| `file_backup_path` | [file.bash](src/file.bash) | Resolves the backup location of a file | [File backups](docs/files.md#file-backups) |
+| `file_add_var` | [file.bash](src/file.bash) | Appends a variable assignment to a file, backing the file up first | [File backups](docs/files.md#file-backups) |
+| `file_restore` | [file.bash](src/file.bash) | Restores a file from the backup taken by `file_add_var` | [File backups](docs/files.md#file-backups) |
+| `fixture_prepare_dir` | [fixture.bash](src/fixture.bash) | Creates an empty directory for a fixture, removing any existing content | [Fixtures](docs/fixtures.md#fixtures) |
+| `fixture_export_codebase` | [fixture.bash](src/fixture.bash) | Exports the codebase at the latest commit to a destination directory | [Fixtures](docs/fixtures.md#fixtures) |
+| `fixture_create_dir` | [fixture.bash](src/fixture.bash) | Creates a file tree from an archive read from STDIN | [Fixture trees](docs/fixtures.md#fixture-trees) |
+| `fixture_dump_dir` | [fixture.bash](src/fixture.bash) | Prints a directory as an archive | [Fixture trees](docs/fixtures.md#fixture-trees) |
+| `fixture_assert_dir` | [fixture.bash](src/fixture.bash) | Asserts that a directory holds the file tree of an archive read from STDIN | [Fixture trees](docs/fixtures.md#fixture-trees) |
+| `dataprovider_run` | [dataprovider.bash](src/dataprovider.bash) | Runs the cases held in the `TEST_CASES` array | [Flat array](docs/dataprovider.md#flat-array) |
+| `dataprovider_run_cases` | [dataprovider.bash](src/dataprovider.bash) | Runs the cases that a function declares | [Declared cases](docs/dataprovider.md#declared-cases) |
+| `dataprovider_case` | [dataprovider.bash](src/dataprovider.bash) | Declares and runs one case | [Declared cases](docs/dataprovider.md#declared-cases) |
+| `dataprovider_matrix` | [dataprovider.bash](src/dataprovider.bash) | Expands value lists into their cartesian product | [Matrix](docs/dataprovider.md#matrix) |
+| `mock_setup` | [mock.bash](src/mock.bash) | Sets mocking up. Call from `setup()` | [Setup functions](docs/mocking.md#setup-functions) |
+| `mock_create` | [mock.bash](src/mock.bash) | Creates a mock program that can be tracked | [Setup functions](docs/mocking.md#setup-functions) |
+| `mock_command` | [mock.bash](src/mock.bash) | Mocks the provided command | [Setup functions](docs/mocking.md#setup-functions) |
+| `mock_set_output` | [mock.bash](src/mock.bash) | Sets the output of the mock | [Setup functions](docs/mocking.md#setup-functions) |
+| `mock_set_status` | [mock.bash](src/mock.bash) | Sets the exit status of the mock | [Setup functions](docs/mocking.md#setup-functions) |
+| `mock_set_side_effect` | [mock.bash](src/mock.bash) | Sets shell code to run when the mock executes | [Setup functions](docs/mocking.md#setup-functions) |
+| `mock_set_strict` | [mock.bash](src/mock.bash) | Rejects the calls the mock's expectations do not cover | [Strictness](docs/mocking.md#strictness) |
+| `mock_set_forward` | [mock.bash](src/mock.bash) | Runs the real command for calls no specification accepts | [Argument specifications](docs/mocking.md#argument-specifications) |
+| `mock_spec_add` | [mock.bash](src/mock.bash) | Adds an argument specification to the mock | [Argument specifications](docs/mocking.md#argument-specifications) |
+| `mock_spec_arg` | [mock.bash](src/mock.bash) | Constrains one argument position of a specification | [Argument specifications](docs/mocking.md#argument-specifications) |
+| `mock_spec_count` | [mock.bash](src/mock.bash) | Pins the number of arguments a specification accepts | [Argument specifications](docs/mocking.md#argument-specifications) |
+| `mock_spec_set_output` | [mock.bash](src/mock.bash) | Sets the output a specification responds with | [Argument specifications](docs/mocking.md#argument-specifications) |
+| `mock_spec_set_status` | [mock.bash](src/mock.bash) | Sets the exit status a specification responds with | [Argument specifications](docs/mocking.md#argument-specifications) |
+| `mock_spec_set_side_effect` | [mock.bash](src/mock.bash) | Sets shell code a specification runs | [Argument specifications](docs/mocking.md#argument-specifications) |
+| `mock_log_exclude` | [mock.bash](src/mock.bash) | Excludes commands from sequence comparisons | [Call log](docs/mocking.md#call-log) |
+| `mock_log_print` | [mock.bash](src/mock.bash) | Returns every recorded call, in order | [Call log](docs/mocking.md#call-log) |
+| `mock_get_call_num` | [mock.bash](src/mock.bash) | Returns the number of times the mock was called | [Assertion functions](docs/mocking.md#assertion-functions) |
+| `mock_get_call_args` | [mock.bash](src/mock.bash) | Returns the arguments the mock was called with | [Assertion functions](docs/mocking.md#assertion-functions) |
+| `mock_get_call_user` | [mock.bash](src/mock.bash) | Returns the user the mock was called with | [Assertion functions](docs/mocking.md#assertion-functions) |
+| `mock_get_call_env` | [mock.bash](src/mock.bash) | Returns an environment variable value from a mock call | [Assertion functions](docs/mocking.md#assertion-functions) |
+| `mock_assert_call_args` | [mock.bash](src/mock.bash) | Asserts the arguments the mock was called with | [Assertion functions](docs/mocking.md#assertion-functions) |
+| `mock_assert_calls` | [mock.bash](src/mock.bash) | Asserts the ordered sequence of every mocked call | [Call log](docs/mocking.md#call-log) |
+| `mock_assert_no_calls` | [mock.bash](src/mock.bash) | Asserts that no mocked command outside the excluded ones was called | [Call log](docs/mocking.md#call-log) |
+| `mock_assert_called` | [mock.bash](src/mock.bash) | Asserts that a command was called | [Call log](docs/mocking.md#call-log) |
+| `mock_assert_not_called` | [mock.bash](src/mock.bash) | Asserts that a command was not called | [Call log](docs/mocking.md#call-log) |
+| `mock_verify` | [mock.bash](src/mock.bash) | Asserts that every expectation was met | [Strictness](docs/mocking.md#strictness) |
+| `mock_sandbox_enable` | [mock.bash](src/mock.bash) | Enables sandbox mode. Arguments seed the allow-list | [Sandbox mode](docs/mocking.md#sandbox-mode) |
+| `mock_sandbox_allow` | [mock.bash](src/mock.bash) | Allows commands to run for real | [Sandbox mode](docs/mocking.md#allowing-a-command-to-run-for-real) |
+| `mock_sandbox_disable` | [mock.bash](src/mock.bash) | Restores the `PATH` saved when the mode was enabled | [Sandbox mode](docs/mocking.md#sandbox-mode) |
+| `mock_sandbox_enabled` | [mock.bash](src/mock.bash) | Reports whether sandbox mode is enabled | [Sandbox mode](docs/mocking.md#sandbox-mode) |
+| `mock_sandbox_report` | [mock.bash](src/mock.bash) | Prints the denied and the escaped commands | [What escaped](docs/mocking.md#what-escaped) |
+| `mock_path_check` | [mock.bash](src/mock.bash) | Warns when `PATH` changed after `mock_setup` | [When PATH is rewritten](docs/mocking.md#when-path-is-rewritten) |
+| `steps_run` | [steps.bash](src/steps.bash) | Runs the `setup` or the `assert` phase of the `STEPS` array | [Step runner](docs/steps.md#step-runner) |
+| `tui_run` | [tui.bash](src/tui.bash) | Runs the script named by `SCRIPT_FILE`, feeding it answers on STDIN | [Interactive scripts](docs/tui.md#interactive-scripts) |
+| `tui_assert_prompts` | [tui.bash](src/tui.bash) | Asserts the prompts appeared in order, ignoring case | [Prompt order](docs/tui.md#prompt-order) |
+| `tui_assert_prompts_case` | [tui.bash](src/tui.bash) | Asserts the prompts appeared in order, case-sensitively | [Prompt order](docs/tui.md#prompt-order) |
 
 ## 🤝 Contributing
 
