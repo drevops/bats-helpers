@@ -1596,17 +1596,20 @@ FIXTURE
 A mismatch lists every file that is missing, unexpected or different, and appends a unified diff for each differing file:
 
 ```text
-Directory '${BATS_TEST_TMPDIR}/build' does not match the expected fixture
-
+-- Directory does not match the expected fixture --
+directory (1 line):
+${BATS_TEST_TMPDIR}/build
+summary (3 lines):
 differs: src/app.sh
 missing: src/missing.sh
 unexpected: src/extra.sh
-
+difference (5 lines):
 --- expected src/app.sh
 +++ actual src/app.sh
 @@ -1 +1 @@
 -#!/usr/bin/env bash
 +#!/bin/sh
+--
 ```
 
 The format covers text files and nothing else. Binary content, file modes and symlinks are deliberately out of scope - `assert_file_mode`, `file_mktouch` and `ln -s` remain the way to handle those - and `fixture_dump_dir` serialises regular files only, failing on a file that is not text. `fixture_assert_dir` compares regular files only for the same reason: a symlink standing where the archive names a file is reported as a difference, and one the archive says nothing about is left alone. Because the format is line-based, every file it names ends with a newline: `fixture_dump_dir` adds one to a file that lacks it, and `fixture_assert_dir` compares bytes, so a file with no trailing newline differs from the archive that names it.

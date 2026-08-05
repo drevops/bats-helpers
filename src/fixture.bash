@@ -274,13 +274,13 @@ fixture_assert_dir() {
 
   [ "${differences}" -eq 0 ] && return 0
 
-  local message="Directory '${dir}' does not match the expected fixture"$'\n\n'"${summary%$'\n'}"
+  local -a rows=("directory" "${dir}" "summary" "${summary%$'\n'}")
 
   if [ -n "${report}" ]; then
-    message="${message}"$'\n\n'"${report%$'\n'}"
+    rows+=("difference" "${report%$'\n'}")
   fi
 
-  format_error "${message}" | flunk
+  format_error "Directory does not match the expected fixture" "${rows[@]}" | flunk
 }
 
 ##

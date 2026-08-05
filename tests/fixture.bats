@@ -495,10 +495,18 @@ FIXTURE
 echo "two"
 FIXTURE
   assert_failure
-  assert_output_contains "does not match the expected fixture"
-  assert_output_contains "differs: src/app.sh"
-  assert_output_contains '-echo "two"'
-  assert_output_contains '+echo "one"'
+  assert_output_contains '-- Directory does not match the expected fixture --
+directory (1 line):
+${BATS_TEST_TMPDIR}/tree
+summary (1 line):
+differs: src/app.sh
+difference (5 lines):
+--- expected src/app.sh
++++ actual src/app.sh
+@@ -1 +1 @@
+-echo "two"
++echo "one"
+--'
 }
 
 @test "fixture_assert_dir with a missing file" {
@@ -516,7 +524,10 @@ FIXTURE
 echo "one"
 FIXTURE
   assert_failure
-  assert_output_contains "missing: src/app.sh"
+  assert_output_contains '-- Directory does not match the expected fixture --
+directory : ${BATS_TEST_TMPDIR}/tree
+summary   : missing: src/app.sh
+--'
 }
 
 @test "fixture_assert_dir with an unexpected file" {
@@ -534,7 +545,10 @@ FIXTURE
 # Project
 FIXTURE
   assert_failure
-  assert_output_contains "unexpected: src/app.sh"
+  assert_output_contains '-- Directory does not match the expected fixture --
+directory : ${BATS_TEST_TMPDIR}/tree
+summary   : unexpected: src/app.sh
+--'
 }
 
 @test "fixture_assert_dir with a file that has no trailing newline" {
@@ -565,7 +579,10 @@ FIXTURE
 # Project
 FIXTURE
   assert_failure
-  assert_output_contains "not a regular file: README.md"
+  assert_output_contains '-- Directory does not match the expected fixture --
+directory : ${BATS_TEST_TMPDIR}/tree
+summary   : not a regular file: README.md
+--'
 }
 
 @test "fixture_assert_dir with an empty archive" {
