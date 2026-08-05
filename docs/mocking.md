@@ -148,7 +148,13 @@ mock_spec_set_output "${push}" "rejected"
 
 Both forms coexist. A call is answered by the first specification that accepts it, in the order the specifications were added; a call that none of them accepts falls back to the response for that call index, and then to the response set without one.
 
-A response is written literally, whichever form sets it, so a value such as `-n`, or one holding a backslash, reaches the caller unchanged.
+A response is written literally, whichever form sets it, so a value such as `-n`, or one holding a backslash, reaches the caller unchanged. A multi-line response is written with ANSI-C quoting:
+
+```bash
+mock_set_output "${mock_curl}" $'AccessDenied\n403'
+```
+
+The [step runner](steps.md#command) expands the escapes in its output field instead, since a step is a single line and cannot carry a newline.
 
 The first argument of `mock_spec_arg` after the specification is the position: a one-based argument index, or `*` for "some argument". The second is the matcher:
 

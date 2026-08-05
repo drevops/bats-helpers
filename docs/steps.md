@@ -82,7 +82,8 @@ Mock a command with the given status, optional output, and optional side effect.
 - `<mock_status>` - exit status to return (optional):
   - If not specified, `0` exit code will be used
   - Can be omitted and the output given in its place, unless that output is all digits, which parses as a status
-- `<mock_output>` - output to return (optional)
+- `<mock_output>` - output to return (optional):
+  - Backslash escapes are expanded, so `\n` gives a multi-line response, `\t` a tab and `\\` a literal backslash
 - `<mock_side_effect>` - Bash code executed when mock is called (optional):
   - Useful for creating files/directories, setting env vars, logging, simulating complex behaviors
   - Executed in the context of the mock, not the test
@@ -92,6 +93,16 @@ Mock a command with the given status, optional output, and optional side effect.
   - Each invocation of the same command can have different side effects
 
 A step may contain at most three `#` characters and no consecutive `##`. Escape a literal `#` in the arguments as `\#`.
+
+A step is a single line. The parser splits it at the first newline, so a step carrying one is rejected rather than losing everything after it; continue a long step with a trailing `\` instead. The output is the one field that expands backslash escapes, which is what gives a mock a multi-line response:
+
+```bash
+declare -a STEPS=(
+  "@curl * # 0 # AccessDenied\n403"
+)
+```
+
+The arguments and the side effect are used as written, so a backslash in either reaches the mock unchanged. Setting a response through [`mock_set_output`](mocking.md) directly expands nothing either - there, ANSI-C quoting writes the newline.
 
 ### Substring presence
 
