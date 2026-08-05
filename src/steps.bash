@@ -22,8 +22,9 @@
 #     Mocks <command>. The status may be omitted and the output given in its
 #     place, unless that output is all digits, which parses as a status. The
 #     side effect is Bash code run when the mock is called. A command may be
-#     mocked by several steps; every call goes through the same mock. Literal
-#     '#' characters in <args> are escaped as '\#'.
+#     mocked by several steps; every call goes through the same mock. The step
+#     is one line: literal '#' characters in <args> are escaped as '\#', and
+#     <output> expands backslash escapes, so '\n' gives a multi-line response.
 #
 #   <substring>
 #     Asserts that the output contains <substring>.
@@ -108,6 +109,13 @@ steps_run() {
 
       _steps_debug_sub "PARSE: STARTED"
 
+      # A step is split with 'read', which stops at the first newline, so a step
+      # holding one would lose its status, output and side effect in silence.
+      if [[ ${item} == *$'\n'* ]]; then
+        flunk "A command step must be a single line. Continue a long step with '\\' and write a newline in the output as '\\n'."
+        return 1
+      fi
+
       local ESCAPED_HASH_PLACEHOLDER="__ESCAPED_HASH__"
       local item_with_placeholders="${item//\\#/${ESCAPED_HASH_PLACEHOLDER}}"
 
@@ -141,6 +149,10 @@ steps_run() {
         mock_output="${mock_status}"
         mock_status=0
       fi
+
+      # A step is one line, so an escape is the only way to write a newline in
+      # the output. The arguments and the side effect stay as written.
+      printf -v mock_output '%b' "${mock_output}"
 
       _steps_debug_sub "PARSE: FINISHED"
       _steps_debug_sub "       command     : '${command_binary}'"
