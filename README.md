@@ -1400,7 +1400,7 @@ prompts : 2
 
 `BATS_HELPERS_TUI_ANSWERS` holds that count. Calling the assertion before any script has run is an error rather than a pass.
 
-A prompt is matched as a substring, ignoring case; `tui_assert_prompts_case` matches case-sensitively. Only what the script prints itself can be asserted on: Bash writes a `read -p` prompt only when STDIN is a terminal, so a script asking that way leaves nothing in the output to match.
+A prompt is matched as a substring, ignoring case; `tui_assert_prompts_case` matches case-sensitively. A prompt that is not found is reported with the match mode and the case setting that were in force, and with a note when the opposite setting would have found it, exactly as the [match mode](#match-modes) assertions report. Only what the script prints itself can be asserted on: Bash writes a `read -p` prompt only when STDIN is a terminal, so a script asking that way leaves nothing in the output to match.
 
 Nothing in the output marks a prompt as one, either. A script that echoes its answers back can therefore satisfy a prompt with an answer holding the same text, so pick prompt text an answer cannot stand in for.
 

@@ -270,6 +270,11 @@ process_is_gone() {
   assert_output_contains "Prompt does not appear in the remaining output"
   assert_output_contains "Answer3"
   assert_output_contains "1 of 2"
+  assert_output_contains 'match mode (1 line):
+literal'
+  assert_output_contains 'case (1 line):
+insensitive'
+  assert_output_not_contains "note"
 
   tui_run "one" "two"
   run tui_assert_prompts "Answer2" "Answer1"
@@ -290,6 +295,9 @@ process_is_gone() {
   assert_output_contains "Prompt does not appear in the remaining output"
   assert_output_contains "ANSWER1"
   assert_output_contains "0 of 2"
+  assert_output_contains 'case (1 line):
+sensitive'
+  assert_output_contains "it matches without the '_case' suffix"
 }
 
 @test "tui_assert_prompts with a mismatched answer count" {

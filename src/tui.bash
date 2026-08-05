@@ -238,6 +238,11 @@ tui_assert_prompts_case() {
 # answers back can satisfy a prompt with an answer holding the same text. Prompt
 # text an answer cannot contain is what keeps the assertion honest.
 #
+# A sensitive match is a subset of an insensitive one and there is no negated
+# form, so the failure note naming the case setting as decisive can only fire
+# for a case-sensitive search: a prompt an insensitive search misses is absent
+# under either setting.
+#
 # Arguments:
 #   1. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
 #   2+. prompts: Expected prompts, in the order the script printed them.
@@ -296,9 +301,19 @@ tui_prompts_assert_match() {
     prefix="${haystack%%"${needle}"*}"
 
     if [ "${#prefix}" -eq "${#haystack}" ]; then
+      # The setting that was in force is only worth naming when the other one
+      # would have found the prompt.
+      local opposite_case=$((1 - case_sensitive))
+      local case_decided=0
+      string_match "${remaining}" "${prompt}" "literal" "${opposite_case}" "anywhere" && case_decided=1
+
+      local -a footer=()
+      mapfile -t footer < <(string_match_rows "literal" "${case_sensitive}" "${case_decided}")
+
       format_error "Prompt does not appear in the remaining output" \
         "prompt" "${prompt}" \
         "matched" "${matched} of ${count}" \
+        "${footer[@]}" \
         "remaining output" "${remaining}" | flunk
       return 1
     fi
