@@ -10,6 +10,11 @@ Source: [`src/steps.bash`](../src/steps.bash)
 |-------------|------------------------------------------------------|----------------------|------------|
 | `steps_run` | Runs the `setup` or the `assert` phase of the `STEPS` array | `phase`, `[mocks]` | Mock references |
 
+| Variable                   | Description                                                                  |
+|----------------------------|------------------------------------------------------------------------------|
+| `STEPS`                    | Array of steps to process. Declared with `declare -a` above the call         |
+| `BATS_HELPERS_STEPS_DEBUG` | Set to `1` to print every parsing and matching decision to file descriptor 3 |
+
 Consider this example:
 
 ```bash

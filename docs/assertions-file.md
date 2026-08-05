@@ -42,6 +42,10 @@ Source: [`src/assert.file.bash`](../src/assert.file.bash)
 
 The six file `contains`, `matches` and `matches_format` assertions and the four directory `contains_string` and `matches` assertions each have a `_case` twin that matches case-sensitively - `assert_file_contains_case`, `assert_dir_matches_case` and so on. See [Match modes](match-modes.md).
 
+| Variable                          | Read by                                                               | Description                                                                             |
+|-----------------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| `BATS_HELPERS_ASSERT_DIR_EXCLUDE` | `assert_dir_contains_string`, `assert_dir_matches` and their variants | Array of directory names to exclude from the search, on top of the always-excluded four |
+
 ## Globs
 
 `assert_file_exists` and `assert_file_not_exists` accept a glob. Only the first match decides the outcome, and the failure is reported once however many paths the glob expands to:
@@ -59,8 +63,6 @@ assert_file_not_exists "${dir}/*.rtf"
 assert_files_equal_ignore_spaces "${file1}" "${file2}"
 assert_files_not_equal_ignore_spaces "${file1}" "${file2}"
 ```
-
-`assert_files_equal` and `assert_files_not_equal` take the same comparison through a deprecated `ignore_spaces` third argument, `1` to ignore whitespace and `0` by default.
 
 ## Searching a directory
 

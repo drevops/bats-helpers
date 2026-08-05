@@ -11,6 +11,10 @@ Source: [`src/dataprovider.bash`](../src/dataprovider.bash)
 | `dataprovider_case`      | Declares and runs one case                       | `label`, `[arg...]`, `expected`              |
 | `dataprovider_matrix`    | Expands value lists into their cartesian product | `case_func`, `list_name...`                  |
 
+| Variable     | Read by            | Description                                                                                        |
+|--------------|--------------------|----------------------------------------------------------------------------------------------------|
+| `TEST_CASES` | `dataprovider_run` | Array of test cases, each row ending with its expected value. Declared with `declare -a` above the call |
+
 There are three forms. Reach for the **flat array** when every case has the same shape and reads well as a table. Reach for **declared cases** when a case needs a name, when arity differs between cases, or when a value is empty or holds spaces, tabs or newlines. Reach for the **matrix** when the cases are every combination of two or more value lists.
 
 Every form runs the function under test with `run` and then applies an assertion to the case's expected value, so any single-argument assertion in this library is a valid choice: `assert_output`, `assert_output_matches`, `assert_status`, `assert_output_not_contains`, and so on. The default is `assert_output_contains`.

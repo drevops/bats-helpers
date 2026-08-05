@@ -22,6 +22,10 @@ Source: [`src/cleanup.bash`](../src/cleanup.bash)
 | `cleanup_run`           | Runs the registered commands in reverse order. Call from `teardown()` | None                   | None          |
 | `cleanup_registry_path` | Resolves the file the registry is stored in                           | None                   | Registry path |
 
+| Variable                   | Description                                                               |
+|----------------------------|---------------------------------------------------------------------------|
+| `BATS_HELPERS_CLEANUP_DIR` | Directory holding the cleanup registry. Defaults to `${BATS_TEST_TMPDIR}` |
+
 ## Composing with your teardown
 
 `teardown` belongs to your test file, so the library does not define it. Call `cleanup_run` from your own `teardown`, the way `mock_setup` is called from `setup`:

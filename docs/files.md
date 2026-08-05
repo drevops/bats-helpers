@@ -13,6 +13,10 @@ Source: [`src/file.bash`](../src/file.bash)
 | `file_add_var`     | Appends a variable assignment to a file, backing the file up first         |
 | `file_restore`     | Restores a file from the backup taken by `file_add_var`                    |
 
+| Variable                       | Read by                                            | Description                                                        |
+|--------------------------------|----------------------------------------------------|--------------------------------------------------------------------|
+| `BATS_HELPERS_FILE_BACKUP_DIR` | `file_add_var`, `file_restore`, `file_backup_path` | Backup root. Defaults to `${BATS_TEST_TMPDIR}/bats-helpers-backup` |
+
 ## File backups
 
 `file_add_var` backs a file up before modifying it and `file_restore` puts that backup back. Backups are written below `${BATS_TEST_TMPDIR}/bats-helpers-backup`, mirroring the source path, so BATS removes them together with the rest of the test sandbox and concurrent runs cannot overwrite each other's backups.

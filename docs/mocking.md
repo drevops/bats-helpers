@@ -47,6 +47,15 @@ Source: [`src/mock.bash`](../src/mock.bash)
 | `mock_verify`            | Asserts that every expectation was met                                         | `[mock...]`                             | None             |
 | `mock_log_print`         | Returns every recorded call, in order                                          | None                                    | Call log         |
 
+## Variables
+
+| Variable                           | Read by                       | Description                                                                                                          |
+|------------------------------------|-------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `BATS_HELPERS_MOCK_TMPDIR`         | `mock_setup`, `mock_create`   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`, and `mock_setup` exports the resolved path  |
+| `BATS_HELPERS_MOCK_USER`           | `mock_get_call_user`          | User a mock call is reported as. Defaults to `id -un`                                                                |
+| `BATS_HELPERS_MOCK_STRICT`         | `mock_create`                 | Set to `0` to answer the calls a mock's expectations do not cover. Defaults to `1`, and is read when the mock is created |
+| `BATS_HELPERS_MOCK_SANDBOX_REPORT` | The sandbox denial handler    | Path to the sandbox report. Exported by `mock_sandbox_enable` so that a denial recorded in a child process reaches it |
+
 ## Mock directory
 
 `mock_setup` writes the mocks to `${BATS_TEST_TMPDIR}/bats-helpers-mock` and puts that directory first on `PATH`, so BATS removes the mocks together with the rest of the test sandbox and concurrent runs cannot delete each other's mocks.
@@ -315,7 +324,7 @@ Code under test that rewrites `PATH` disables the mocking silently, and the test
 Warning: 'PATH' changed after 'mock_setup' and no longer holds the mock directory '/.../bats-helpers-mock'. Mocked commands are not found and the real commands run instead.
 ```
 
-A change that leaves the mock directory in place is reported too, in its own words, since the mocks still answer but everything else may resolve differently. Both go to file descriptor 3, alongside the deprecation notices, and neither fails the test on its own. `mock_path_check` performs the same check on demand.
+A change that leaves the mock directory in place is reported too, in its own words, since the mocks still answer but everything else may resolve differently. Both go to file descriptor 3, and neither fails the test on its own. `mock_path_check` performs the same check on demand.
 
 ## Example
 

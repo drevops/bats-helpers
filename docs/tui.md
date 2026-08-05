@@ -20,7 +20,13 @@ Source: [`src/tui.bash`](../src/tui.bash)
 | `tui_assert_prompts`      | Asserts the prompts appeared in order, ignoring case                 | `[prompts...]` | None    |
 | `tui_assert_prompts_case` | Asserts the prompts appeared in order, case-sensitively              | `[prompts...]` | None    |
 
-Each answer is submitted followed by a newline, and an empty answer submits a blank line, so a prompt is left at its default by passing `""`. Every other answer reaches the script byte for byte: an apostrophe, a `%` directive, a backslash escape or a space is not decoded on the way in. The one exception is the deprecated `nothing`, which is still read as a request for a blank line rather than as those seven characters.
+| Variable                   | Read by                                         | Description                                                   |
+|----------------------------|-------------------------------------------------|---------------------------------------------------------------|
+| `SCRIPT_FILE`              | `tui_run`                                       | Path to the script to run, relative to the current directory  |
+| `BATS_HELPERS_TUI_TIMEOUT` | `tui_run`                                       | Whole seconds the script is given to finish. Defaults to `60`  |
+| `BATS_HELPERS_TUI_ANSWERS` | `tui_assert_prompts`, `tui_assert_prompts_case` | Set by `tui_run` to the number of answers submitted           |
+
+Each answer is submitted followed by a newline, and an empty answer submits a blank line, so a prompt is left at its default by passing `""`. Every other answer reaches the script byte for byte: an apostrophe, a `%` directive, a backslash escape or a space is not decoded on the way in.
 
 `tui_run` fills `output`, `status` and `lines` the way `run` does, so the script is asserted on with the usual command assertions.
 

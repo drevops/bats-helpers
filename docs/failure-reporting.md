@@ -9,6 +9,10 @@ Source: [`src/assert.base.bash`](../src/assert.base.bash)
 | `flunk`        | Fails the test with a message, its stack trace and stable paths |
 | `format_error` | Formats a failure report as a titled block of aligned rows      |
 
+| Variable                    | Read by        | Description                                                                                                        |
+|-----------------------------|----------------|--------------------------------------------------------------------------------------------------------------------|
+| `BATS_HELPERS_REPORT_COLOR` | `format_error` | `0` to never colour a diff, `1` to colour it whenever `diff` supports the flag. Unset or empty defers to `NO_COLOR` |
+
 Helpers report a failure by writing a message to STDERR and returning a non-zero status. None of them call `exit`, so the caller stays in control and can compose them with `||`, branch on them with `if`, or capture the status with `run`:
 
 ```bash

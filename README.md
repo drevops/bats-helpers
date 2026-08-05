@@ -91,7 +91,7 @@ load _loader.bash
 
 ## 📖 Documentation
 
-Most pages document one module of the library. The last three cut across modules: match modes are shared by every assertion family, and the variable and deprecation references cover the library as a whole. The [API reference](#-api-reference) below links every function into the page that documents it.
+Each page documents one module of the library, and names the variables that module reads beside the behaviour they change. Match modes are the one exception, describing what every assertion family shares. The [API reference](#-api-reference) below links every function into the page that documents it.
 
 | Page                                              | Source                                                  | Covers                                                               |
 |---------------------------------------------------|---------------------------------------------------------|----------------------------------------------------------------------|
@@ -110,8 +110,6 @@ Most pages document one module of the library. The last three cut across modules
 | [Cleanup](docs/cleanup.md)                        | [`src/cleanup.bash`](src/cleanup.bash)                  | Deferred per-test cleanup                                            |
 | [Fixtures](docs/fixtures.md)                      | [`src/fixture.bash`](src/fixture.bash)                  | Building, dumping and asserting file trees                           |
 | [File utilities](docs/files.md)                   | [`src/file.bash`](src/file.bash)                        | Creating, trimming, backing up and restoring files                   |
-| [Environment variables](docs/environment-variables.md) | Every module                                       | Every variable the library reads or writes                           |
-| [Deprecations](docs/deprecations.md)              | Every module                                            | Renamed functions, variables and arguments                           |
 
 ## 🧩 API reference
 
@@ -320,8 +318,6 @@ Every public function, the file that defines it, and the page that documents it.
 | `tui_run` | [tui.bash](src/tui.bash) | Runs the script named by `SCRIPT_FILE`, feeding it answers on STDIN | [Interactive scripts](docs/tui.md#interactive-scripts) |
 | `tui_assert_prompts` | [tui.bash](src/tui.bash) | Asserts the prompts appeared in order, ignoring case | [Prompt order](docs/tui.md#prompt-order) |
 | `tui_assert_prompts_case` | [tui.bash](src/tui.bash) | Asserts the prompts appeared in order, case-sensitively | [Prompt order](docs/tui.md#prompt-order) |
-
-Deprecated names are listed in [Deprecations](docs/deprecations.md) and in [`MIGRATION.md`](MIGRATION.md).
 
 ## 🤝 Contributing
 

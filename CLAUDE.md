@@ -174,7 +174,11 @@ File headers and function docblocks follow one house style so the library reads 
 
 Prose documentation lives in `docs/`, one page per module of `src/`, so the question "where is this documented" has the same answer as "which file defines it". `docs/README.md` indexes the pages. A module page opens with a one-line summary and a `Source:` line linking the module it documents.
 
-Three pages are cross-cutting rather than per-module, and take no `Source:` line because no one module owns them: `match-modes.md` describes what every assertion family shares, and `environment-variables.md` and `deprecations.md` cover the library as a whole. Where such a page does have an implementation worth pointing at, it names it in prose instead.
+`match-modes.md` is the one page that is not per-module, and takes no `Source:` line because no one module owns it: it describes what every assertion family shares. It names the matching engine in prose instead.
+
+**A variable is documented on the page of the feature that reads it**, in a table beside that feature's function table, so it is read next to the behaviour it changes rather than in a reference list that has to be cross-referenced to be useful. There is no environment-variable page. A variable belonging to no single feature goes in `docs/README.md`, which also carries the prefix convention and the note on the variables the library reads but does not own.
+
+**Deprecations are documented in `MIGRATION.md` alone**, and appear nowhere in `docs/` and nowhere in `README.md` - not as a page, not as a row in the API reference table, not as a pointer. The documentation describes the surface a new test should be written against; a name that is on its way out is a migration concern, and mixing the two puts a deprecated name in front of a reader who has no reason to see it. A deprecated function never gets an API reference row, a deprecated variable never gets a row in a feature's variable table, and a deprecated argument or value is not mentioned in the prose of the function that still accepts it. `BATS_HELPERS_DEPRECATION_QUIET` follows the same rule: it exists only to quieten deprecation notices, so it is documented in `MIGRATION.md` and not in `docs/`.
 
 `README.md` holds only what a reader needs before choosing a page: the feature list, installation, the loader snippet, the index of documentation pages, the API reference table, and the contributing pointer. Prose that explains how a helper behaves belongs on the helper's page, never in the README.
 
@@ -185,8 +189,8 @@ The API reference table in `README.md` is the index of the entire public surface
 - A function added, removed or renamed has its row added, removed or renamed in the README API reference table, and its entry added, removed or renamed in the table on its module's page.
 - A change in behaviour is described on the module's page. The README description is one line and states what the function does, not how it behaves.
 - A new module gets a new page under `docs/`, a row in the README documentation index, and a row in `docs/README.md`.
-- A variable added, removed or renamed is reflected in `docs/environment-variables.md` as well as on the page of the feature that reads it.
-- A deprecation is added to `docs/deprecations.md` and to `MIGRATION.md`.
+- A variable added, removed or renamed is reflected in the variable table on the page of the feature that reads it, or in `docs/README.md` when it belongs to no single feature.
+- A deprecation is added to `MIGRATION.md`, and to nothing else. Removing a name from the public surface means removing its API reference row and its documentation, and adding it to `MIGRATION.md` in the same commit.
 
 The Documentation column links to a heading rather than to a page whenever the page has sections, so renaming a heading breaks every link pointing at it. Rename one only together with the links that target it, and remember that GitHub derives an anchor by lowercasing the heading, dropping punctuation and backticks, and replacing spaces with hyphens.
 

@@ -48,15 +48,6 @@ assert_failure_status 2
 assert_failure_status 2 "Usage: script.sh [--verbose] <path>"
 ```
 
-`assert_failure` takes the same expectation through the deprecated `--status` option, recognised only as the first argument, with everything after it and its value read as the exact output, as before. An output that is itself the string `--status` is asserted with `assert_output` instead:
-
-```bash
-run ./script.sh --nonsense
-
-assert_failure --status 2
-assert_failure --status 2 "Usage: script.sh [--verbose] <path>"
-```
-
 ### Statuses that mean more than a failure
 
 Two statuses mean something other than the code under test deciding to fail, and both satisfy a bare `assert_failure` exactly as well as the intended error path does. Every report that prints a status names them:

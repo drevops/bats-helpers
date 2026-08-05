@@ -12,6 +12,10 @@ Source: [`src/fixture.bash`](../src/fixture.bash)
 | `fixture_dump_dir`        | Prints a directory as an archive                                           |
 | `fixture_assert_dir`      | Asserts that a directory holds the file tree of an archive read from STDIN |
 
+| Variable                                       | Read by                   | Description                                                               |
+|------------------------------------------------|---------------------------|---------------------------------------------------------------------------|
+| `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` | `fixture_export_codebase` | Set to `1` to enable the export; anything else makes the function a no-op |
+
 `fixture_export_codebase` is a no-op unless `BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED` is set to `1`, so an expensive export can be enabled per suite rather than per call:
 
 ```bash

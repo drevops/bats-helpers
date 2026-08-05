@@ -16,6 +16,13 @@ Source: [`src/retry.bash`](../src/retry.bash)
 |-------------|----------------------------------------------------------------|---------------------------------------------|---------|
 | `retry_run` | Runs a command until it succeeds or until a bound is reached   | `attempts`, `delay`, `command`, `[args...]` | None    |
 
+| Variable                      | Description                                                                             |
+|-------------------------------|-----------------------------------------------------------------------------------------|
+| `BATS_HELPERS_RETRY_TIMEOUT`  | Overall deadline in whole seconds, on top of the attempt count. Unset means no deadline  |
+| `BATS_HELPERS_RETRY_ATTEMPTS` | Set by `retry_run` to the attempts made, which on success is the attempt that succeeded  |
+| `BATS_HELPERS_RETRY_OUTPUT`   | Set by `retry_run` to the STDOUT and STDERR of the last attempt                          |
+| `BATS_HELPERS_RETRY_ELAPSED`  | Set by `retry_run` to the whole seconds the retry spent                                  |
+
 The first attempt runs immediately and the last one is not followed by a wait, so a condition that is already true costs no delay at all and an exhausted retry does not end on a delay that changes nothing. A delay may carry a fractional part.
 
 Any command is retryable, including the library's own assertions, so nothing has to be reimplemented to be waited for:
