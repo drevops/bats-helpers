@@ -27,6 +27,8 @@
 #   BATS_TEST_TMPDIR: Per-test sandbox holding the script's input and output.
 #   output: Set by 'run' to what the script printed.
 #   status: Set by 'run' to the exit status of the script.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 tui_run() {
   ##
@@ -71,7 +73,7 @@ tui_run() {
   ## Runner.
   ##
 
-  local answers=("$@")
+  local -a answers=("$@")
   local input=""
   local answer
 
@@ -100,7 +102,7 @@ tui_run() {
   printf '%s' "${input}" >"${input_file}"
   rm -f "${expiry_file}"
 
-  run tui_exec "${script_path}" "${input_file}" "${output_file}" "${expiry_file}" "${timeout}"
+  run _tui_exec "${script_path}" "${input_file}" "${output_file}" "${expiry_file}" "${timeout}"
 
   ##
   ## Failure report.
@@ -139,6 +141,10 @@ tui_run() {
 #      passes, and left absent when it does not.
 #   5. timeout: Seconds the script is given to finish.
 #
+# Globals:
+#   SECONDS: Bash's elapsed-time counter, read as the clock the deadline is
+#     measured against.
+#
 # Outputs:
 #   STDOUT: Everything the script printed, including what it printed before it
 #     was terminated.
@@ -146,7 +152,7 @@ tui_run() {
 # Returns:
 #   The exit status of the script.
 ##
-tui_exec() {
+_tui_exec() {
   local script_path="${1}"
   local input_file="${2}"
   local output_file="${3}"
@@ -180,15 +186,15 @@ tui_exec() {
   ) >/dev/null 2>&1 3>&- &
   local watchdog_pid="$!"
 
-  local status=0
-  wait "${script_pid}" || status="$?"
+  local script_status=0
+  wait "${script_pid}" || script_status="$?"
 
   kill -TERM "${watchdog_pid}" 2>/dev/null || true
   wait "${watchdog_pid}" 2>/dev/null || true
 
   cat "${output_file}"
 
-  return "${status}"
+  return "${script_status}"
 }
 
 ##
@@ -204,7 +210,7 @@ tui_exec() {
 #      submitted.
 ##
 tui_assert_prompts() {
-  tui_prompts_assert_match 0 "$@"
+  _tui_prompts_assert_match 0 "$@"
 }
 
 ##
@@ -216,7 +222,7 @@ tui_assert_prompts() {
 #      submitted.
 ##
 tui_assert_prompts_case() {
-  tui_prompts_assert_match 1 "$@"
+  _tui_prompts_assert_match 1 "$@"
 }
 
 ##
@@ -232,6 +238,11 @@ tui_assert_prompts_case() {
 # answers back can satisfy a prompt with an answer holding the same text. Prompt
 # text an answer cannot contain is what keeps the assertion honest.
 #
+# A sensitive match is a subset of an insensitive one and there is no negated
+# form, so the failure note naming the case setting as decisive can only fire
+# for a case-sensitive search: a prompt an insensitive search misses is absent
+# under either setting.
+#
 # Arguments:
 #   1. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
 #   2+. prompts: Expected prompts, in the order the script printed them.
@@ -240,7 +251,7 @@ tui_assert_prompts_case() {
 #   BATS_HELPERS_TUI_ANSWERS: Number of answers the last 'tui_run' submitted.
 #   output: Output captured by the last 'tui_run'.
 ##
-tui_prompts_assert_match() {
+_tui_prompts_assert_match() {
   if [ "$#" -lt 1 ]; then
     flunk "A case sensitivity flag is required."
     return 1
@@ -257,9 +268,7 @@ tui_prompts_assert_match() {
   local count="$#"
 
   if [ "${count}" -ne "${BATS_HELPERS_TUI_ANSWERS}" ]; then
-    format_error "Answer count does not match the prompt count" \
-      "answers" "${BATS_HELPERS_TUI_ANSWERS}" \
-      "prompts" "${count}" | flunk
+    format_error "Answer count does not match the prompt count" "answers" "${BATS_HELPERS_TUI_ANSWERS}" "prompts" "${count}" | flunk
     return 1
   fi
 
@@ -292,9 +301,19 @@ tui_prompts_assert_match() {
     prefix="${haystack%%"${needle}"*}"
 
     if [ "${#prefix}" -eq "${#haystack}" ]; then
+      # The setting that was in force is only worth naming when the other one
+      # would have found the prompt.
+      local opposite_case=$((1 - case_sensitive))
+      local case_decided=0
+      string_match "${remaining}" "${prompt}" "literal" "${opposite_case}" "anywhere" && case_decided=1
+
+      local -a footer=()
+      mapfile -t footer < <(_string_match_rows "literal" "${case_sensitive}" "${case_decided}")
+
       format_error "Prompt does not appear in the remaining output" \
         "prompt" "${prompt}" \
         "matched" "${matched} of ${count}" \
+        "${footer[@]}" \
         "remaining output" "${remaining}" | flunk
       return 1
     fi

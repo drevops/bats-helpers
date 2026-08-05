@@ -71,12 +71,12 @@ context (3 lines):
   capture
   run assert_line 4 "Done."
   assert_failure
-  assert_output_contains "Line index 4 is out of range for output with 4 lines."
+  assert_output_contains "Line index '4' is out of range for output with 4 lines."
 
   capture
   run assert_line -5 "Usage: tool.sh"
   assert_failure
-  assert_output_contains "Line index -5 is out of range for output with 4 lines."
+  assert_output_contains "Line index '-5' is out of range for output with 4 lines."
 }
 
 @test "assert_line_not" {
@@ -127,7 +127,7 @@ context (4 lines):
   capture
   run assert_line_contains 9 "config"
   assert_failure
-  assert_output_contains "Line index 9 is out of range for output with 4 lines."
+  assert_output_contains "Line index '9' is out of range for output with 4 lines."
 }
 
 @test "assert_line_contains_case" {
@@ -546,10 +546,10 @@ line count : 4
   assert_failure
   assert_output_contains "-- Output does not have the expected number of lines containing substring --
 substring  : error
-expected   : 3
-actual     : 2
 match mode : literal
 case       : insensitive
+expected   : 3
+actual     : 2
 --"
 }
 
@@ -602,10 +602,10 @@ actual     : 4"
   assert_failure
   assert_output_contains "-- Output does not have the expected number of lines matching regular expression --
 regular expression : ^error
-expected           : 1
-actual             : 2
 match mode         : regex
 case               : insensitive
+expected           : 1
+actual             : 2
 --"
 }
 
@@ -657,10 +657,10 @@ actual             : 4"
   assert_failure
   assert_output_contains "-- Output does not have the expected number of lines matching format --
 format     : Deleted %d files
-expected   : 1
-actual     : 2
 match mode : format
 case       : insensitive
+expected   : 1
+actual     : 2
 --"
 }
 
@@ -704,58 +704,58 @@ actual     : 2"
 ## Matching.
 ##
 
-@test "line_resolve_index" {
+@test "_line_resolve_index" {
   capture
-  run line_resolve_index 0
+  run _line_resolve_index 0
   assert_success
   assert_output "0"
 
   capture
-  run line_resolve_index 3
+  run _line_resolve_index 3
   assert_success
   assert_output "3"
 
   capture
-  run line_resolve_index -1
+  run _line_resolve_index -1
   assert_success
   assert_output "3"
 
   capture
-  run line_resolve_index -4
+  run _line_resolve_index -4
   assert_success
   assert_output "0"
 
   # Base 10, so a zero-padded index is not read as octal.
   capture
-  run line_resolve_index 010
+  run _line_resolve_index 010
   assert_failure
-  assert_output_contains "Line index 010 is out of range for output with 4 lines."
+  assert_output_contains "Line index '010' is out of range for output with 4 lines."
 
   capture
-  run line_resolve_index 4
+  run _line_resolve_index 4
   assert_failure
-  assert_output_contains "Line index 4 is out of range for output with 4 lines."
+  assert_output_contains "Line index '4' is out of range for output with 4 lines."
 
   capture
-  run line_resolve_index -5
+  run _line_resolve_index -5
   assert_failure
-  assert_output_contains "Line index -5 is out of range for output with 4 lines."
+  assert_output_contains "Line index '-5' is out of range for output with 4 lines."
 
   capture
-  run line_resolve_index "two"
+  run _line_resolve_index "two"
   assert_failure
   assert_output_contains "Line index 'two' is not an integer."
 
   run printf '%s\n' "only one"
-  run line_resolve_index 1
+  run _line_resolve_index 1
   assert_failure
   assert_output_contains "out of range for output with 1 line."
 }
 
-@test "line_context" {
+@test "_line_context" {
   # Clamped at the start.
   capture
-  run line_context 0
+  run _line_context 0
   assert_success
   assert_output "> 0: Usage: tool.sh
   1: Reading config
@@ -763,7 +763,7 @@ actual     : 2"
 
   # Clamped at the end.
   capture
-  run line_context 3
+  run _line_context 3
   assert_success
   assert_output "  1: Reading config
   2: Deleted 12 files
@@ -772,7 +772,7 @@ actual     : 2"
   # A full window either side, with the index padded to the widest one shown so
   # that the mark overwrites the indent instead of shifting the line.
   run printf '%s\n' a b c d e f g h i j k l
-  run line_context 10
+  run _line_context 10
   assert_success
   assert_output "   8: i
    9: j
@@ -780,60 +780,60 @@ actual     : 2"
   11: l"
 }
 
-@test "line_participle" {
-  run line_participle "literal" 0
+@test "_line_participle" {
+  run _line_participle "literal" 0
   assert_success
   assert_output "containing"
 
-  run line_participle "regex" 0
+  run _line_participle "regex" 0
   assert_success
   assert_output "matching"
 
-  run line_participle "format" 0
+  run _line_participle "format" 0
   assert_success
   assert_output "matching"
 
-  run line_participle "literal" 1
+  run _line_participle "literal" 1
   assert_success
   assert_output "not containing"
 }
 
-@test "line_match_indices" {
+@test "_line_match_indices" {
   capture_counted
-  run line_match_indices 0 "literal" 0 "error"
+  run _line_match_indices 0 "literal" 0 "error"
   assert_success
   assert_output "0 2"
 
   capture_counted
-  run line_match_indices 1 "literal" 0 "error"
+  run _line_match_indices 1 "literal" 0 "error"
   assert_success
   assert_output "1 3"
 
   capture_counted
-  run line_match_indices 0 "literal" 0 "absent"
+  run _line_match_indices 0 "literal" 0 "absent"
   assert_success
   assert_output ""
 
   # Checked even when there is no line to try it against.
   run printf ''
-  run line_match_indices 0 "regex" 0 "["
+  run _line_match_indices 0 "regex" 0 "["
   assert_failure
   assert_output_contains "Invalid regular expression '['."
 }
 
-@test "line_equal_indices" {
+@test "_line_equal_indices" {
   capture_counted
-  run line_equal_indices "ok"
+  run _line_equal_indices "ok"
   assert_success
   assert_output "1 3"
 
   capture_counted
-  run line_equal_indices "absent"
+  run _line_equal_indices "absent"
   assert_success
   assert_output ""
 }
 
-@test "line_assert_index_match" {
+@test "_line_assert_index_match" {
   capture
   run assert_line_contains 1
   assert_failure
@@ -845,30 +845,30 @@ actual     : 2"
   assert_output_contains "Invalid regular expression '['."
 }
 
-@test "line_assert_index_equal" {
+@test "_line_assert_index_equal" {
   capture
-  run line_assert_index_equal 1
+  run _line_assert_index_equal 1
   assert_failure
   assert_output_contains "A line index and a string are required."
 }
 
-@test "line_assert_any_match" {
+@test "_line_assert_any_match" {
   capture
-  run line_assert_any_match 1 "literal" 0
+  run _line_assert_any_match 1 "literal" 0
   assert_failure
   assert_output_contains "A needle is required."
 }
 
-@test "line_assert_any_equal" {
+@test "_line_assert_any_equal" {
   capture
-  run line_assert_any_equal 1
+  run _line_assert_any_equal 1
   assert_failure
   assert_output_contains "A string is required."
 }
 
-@test "line_assert_count_match" {
+@test "_line_assert_count_match" {
   capture_counted
-  run line_assert_count_match 0 "literal" 0 2
+  run _line_assert_count_match 0 "literal" 0 2
   assert_failure
   assert_output_contains "A line count and a needle are required."
 

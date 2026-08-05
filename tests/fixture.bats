@@ -6,14 +6,14 @@
 
 load _test_helper
 
-@test "Codebase export not enabled" {
+@test "fixture_export_codebase when disabled" {
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
   fixture_prepare_dir "${build_dir}"
   fixture_export_codebase "${build_dir}"
   assert_file_not_exists "${build_dir}/README.md"
 }
 
-@test "Codebase export enabled" {
+@test "fixture_export_codebase when enabled" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
@@ -22,7 +22,7 @@ load _test_helper
   assert_file_exists "${build_dir}/README.md"
 }
 
-@test "Codebase export - missing destination directory" {
+@test "fixture_export_codebase with a missing destination directory" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/non-existing"
@@ -35,7 +35,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
 --'
 }
 
-@test "Codebase export - missing destination directory - caller recovers" {
+@test "fixture_export_codebase with a missing destination directory and the caller recovers" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/non-existing"
@@ -46,7 +46,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
   assert_equal 1 "${recovered}"
 }
 
-@test "Codebase export - export fails" {
+@test "fixture_export_codebase when the export fails" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
@@ -59,10 +59,10 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
 
   run fixture_export_codebase "${build_dir}" "${src_dir}"
   assert_failure
-  assert_output_contains "Failed to export codebase"
+  assert_output_contains "Unable to export codebase"
 }
 
-@test "Codebase export - export fails - caller recovers" {
+@test "fixture_export_codebase when the export fails and the caller recovers" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
@@ -78,7 +78,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
   assert_equal 1 "${recovered}"
 }
 
-@test "Codebase export - source is not a git repository" {
+@test "fixture_export_codebase when the source is not a git repository" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
@@ -95,7 +95,7 @@ directory : ${BATS_TEST_TMPDIR}/src-not-a-repo
 --'
 }
 
-@test "Codebase export - source is not a git repository - caller recovers" {
+@test "fixture_export_codebase when the source is not a git repository and the caller recovers" {
   export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 
   build_dir="${BATS_TEST_TMPDIR//\/\//\/}/build-$(date +%s)"
@@ -455,12 +455,6 @@ EXPECTED
   assert_output_contains "Fixture file 'binary.bin' is not a text file"
 }
 
-@test "fixture_list_files with a directory it cannot walk" {
-  run fixture_list_files "${BATS_TEST_TMPDIR}/missing"
-  assert_failure
-  assert_output_contains "Unable to list the files"
-}
-
 @test "fixture_dump_dir with a newline in a file name" {
   dir="${BATS_TEST_TMPDIR}/tree"
   mkdir -p "${dir}"
@@ -469,6 +463,12 @@ EXPECTED
   run fixture_dump_dir "${dir}"
   assert_failure
   assert_output_contains "contains a newline"
+}
+
+@test "_fixture_list_files with a directory it cannot walk" {
+  run _fixture_list_files "${BATS_TEST_TMPDIR}/missing"
+  assert_failure
+  assert_output_contains "Unable to list the files"
 }
 
 @test "fixture_assert_dir" {
@@ -495,10 +495,18 @@ FIXTURE
 echo "two"
 FIXTURE
   assert_failure
-  assert_output_contains "does not match the expected fixture"
-  assert_output_contains "differs: src/app.sh"
-  assert_output_contains '-echo "two"'
-  assert_output_contains '+echo "one"'
+  assert_output_contains '-- Directory does not match the expected fixture --
+directory (1 line):
+${BATS_TEST_TMPDIR}/tree
+summary (1 line):
+differs: src/app.sh
+difference (5 lines):
+--- expected src/app.sh
++++ actual src/app.sh
+@@ -1 +1 @@
+-echo "two"
++echo "one"
+--'
 }
 
 @test "fixture_assert_dir with a missing file" {
@@ -516,7 +524,10 @@ FIXTURE
 echo "one"
 FIXTURE
   assert_failure
-  assert_output_contains "missing: src/app.sh"
+  assert_output_contains '-- Directory does not match the expected fixture --
+directory : ${BATS_TEST_TMPDIR}/tree
+summary   : missing: src/app.sh
+--'
 }
 
 @test "fixture_assert_dir with an unexpected file" {
@@ -534,7 +545,10 @@ FIXTURE
 # Project
 FIXTURE
   assert_failure
-  assert_output_contains "unexpected: src/app.sh"
+  assert_output_contains '-- Directory does not match the expected fixture --
+directory : ${BATS_TEST_TMPDIR}/tree
+summary   : unexpected: src/app.sh
+--'
 }
 
 @test "fixture_assert_dir with a file that has no trailing newline" {
@@ -565,7 +579,10 @@ FIXTURE
 # Project
 FIXTURE
   assert_failure
-  assert_output_contains "not a regular file: README.md"
+  assert_output_contains '-- Directory does not match the expected fixture --
+directory : ${BATS_TEST_TMPDIR}/tree
+summary   : not a regular file: README.md
+--'
 }
 
 @test "fixture_assert_dir with an empty archive" {

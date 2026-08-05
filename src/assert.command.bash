@@ -12,13 +12,15 @@
 #
 # Globals:
 #   status: Exit status of the last 'run' call.
+#   output: Output captured by the last 'run' call.
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
 ##
 assert_success() {
   # shellcheck disable=SC2154
   if [ "${status-}" -ne 0 ]; then
-    local -a rows=("status" "$(command_describe_status "${status}")")
-    [ "${output-}" = "" ] || rows+=("output" "${output}")
-    [ "${stderr-}" = "" ] || rows+=("stderr" "${stderr}")
+    local -a rows=("status" "$(_command_describe_status "${status}")")
+    [ -z "${output-}" ] || rows+=("output" "${output}")
+    [ -z "${stderr-}" ] || rows+=("stderr" "${stderr}")
 
     format_error "Command failed" "${rows[@]}" | flunk
   elif [ "$#" -gt 0 ]; then
@@ -31,22 +33,29 @@ assert_success() {
 #
 # Arguments:
 #   1. --status expected: Exact exit status to assert on, as two arguments.
-#      Optional, recognised only in first position.
+#      Optional, recognised only in first position. Deprecated, use
+#      'assert_failure_status' instead.
 #   2. output: Exact output to additionally assert on. Optional.
 #
 # Globals:
 #   status: Exit status of the last 'run' call.
+#   output: Output captured by the last 'run' call.
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 assert_failure() {
   local expected=""
 
   if [ "${1-}" = "--status" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_failure --status' will be removed in the next version. Use 'assert_failure_status' instead." >&3
+
     if [ "$#" -lt 2 ]; then
       flunk "Option '--status' requires an exit status."
       return 1
     fi
 
-    command_validate_status "${2}" || return 1
+    _command_validate_status "${2}" || return 1
 
     if [ "${2}" -eq 0 ]; then
       flunk "A failure cannot have exit status 0. Use 'assert_success' instead."
@@ -60,20 +69,47 @@ assert_failure() {
   # shellcheck disable=SC2154
   if [ "${status-}" -eq 0 ]; then
     local -a rows=()
-    [ "${output-}" = "" ] || rows+=("output" "${output}")
-    [ "${stderr-}" = "" ] || rows+=("stderr" "${stderr}")
+    [ -z "${output-}" ] || rows+=("output" "${output}")
+    [ -z "${stderr-}" ] || rows+=("stderr" "${stderr}")
 
     format_error "Command succeeded, but should have failed" "${rows[@]}" | flunk
     return 1
   fi
 
-  if [ "${expected}" != "" ]; then
+  if [ -n "${expected}" ]; then
     assert_status "${expected}" || return 1
   fi
 
   if [ "$#" -gt 0 ]; then
     assert_output "${1}"
   fi
+}
+
+##
+# Asserts that the last command failed with an exact exit status.
+#
+# Arguments:
+#   1. expected: Exit status to assert on.
+#   2. output: Exact output to additionally assert on. Optional.
+#
+# Globals:
+#   status: Exit status of the last 'run' call.
+#   output: Output captured by the last 'run' call.
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
+##
+assert_failure_status() {
+  _command_validate_status "${1-}" || return 1
+
+  if [ "${1}" -eq 0 ]; then
+    flunk "A failure cannot have exit status 0. Use 'assert_success' instead."
+    return 1
+  fi
+
+  local expected="${1}"
+  shift
+
+  assert_failure "$@" || return 1
+  assert_status "${expected}"
 }
 
 ##
@@ -88,6 +124,8 @@ assert_failure() {
 #
 # Globals:
 #   status: Exit status of the last 'run' call.
+#   output: Output captured by the last 'run' call.
+#   stderr: Standard error captured by the last 'run --separate-stderr' call.
 ##
 assert_status() {
   if [ "$#" -eq 0 ]; then
@@ -95,14 +133,14 @@ assert_status() {
     return 1
   fi
 
-  command_validate_status "${1}" || return 1
+  _command_validate_status "${1}" || return 1
 
   # shellcheck disable=SC2154
   if [ "${status-}" -eq "${1}" ]; then
     return 0
   fi
 
-  local -a rows=("expected" "${1}" "actual" "$(command_describe_status "${status}")")
+  local -a rows=("expected" "${1}" "actual" "$(_command_describe_status "${status}")")
   [ "${output-}" = "" ] || rows+=("output" "${output}")
   [ "${stderr-}" = "" ] || rows+=("stderr" "${stderr}")
 
@@ -135,7 +173,7 @@ assert_status_command_not_found() {
 # Arguments:
 #   1. expected: Value to validate.
 ##
-command_validate_status() {
+_command_validate_status() {
   if ! [[ ${1-} =~ ^[0-9]+$ ]] || [ "${1}" -gt 255 ]; then
     flunk "Exit status '${1-}' is not an integer between 0 and 255."
     return 1
@@ -156,7 +194,7 @@ command_validate_status() {
 # Outputs:
 #   STDOUT: The status, followed by what it means when it means something.
 ##
-command_describe_status() {
+_command_describe_status() {
   local code="${1}"
 
   if [ "${code}" -eq 127 ]; then
@@ -170,7 +208,7 @@ command_describe_status() {
     local name
     # A number the platform does not name is not one of its signals, so the
     # status is left to stand for itself rather than named as one.
-    if name="$(kill -l "${signal}" 2>/dev/null)" && [ "${name}" != "" ]; then
+    if name="$(kill -l "${signal}" 2>/dev/null)" && [ -n "${name}" ]; then
       printf '%s (killed by SIG%s)\n' "${code}" "${name}"
       return 0
     fi
@@ -189,40 +227,63 @@ command_describe_status() {
 #   output: Output captured by the last 'run' call.
 ##
 assert_output() {
-  local expected
-  if [ "$#" -eq 0 ]; then
-    expected="$(cat -)"
-  else
-    expected="${1}"
-  fi
   # shellcheck disable=SC2154
-  assert_equal "${expected}" "${output}"
+  _command_assert_equal "output" "${output-}" "$@"
 }
 
 ##
 # Asserts that a needle matches a captured stream.
 #
 # Arguments:
-#   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
-#   2. negate: '1' to assert that the needle does not match.
-#   3. mode: How the needle is read - 'literal', 'regex' or 'format'.
-#   4. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
-#   5. haystack: Captured stream to search.
-#   6. needle: String to search for. Optional, read from STDIN when omitted.
+#   1. subject: Which stream the haystack is - 'output' or 'stderr'. Opens the
+#      title and keys the row the stream is reported under.
+#   2. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
+#   3. negate: '1' to assert that the needle does not match.
+#   4. mode: How the needle is read - 'literal', 'regex' or 'format'.
+#   5. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   6. haystack: Captured stream to search.
+#   7. needle: String to search for. Optional, read from STDIN when omitted.
 ##
-command_assert_match() {
+_command_assert_match() {
   local needle
 
-  if [ "$#" -eq 5 ]; then
+  if [ "$#" -eq 6 ]; then
     needle="$(cat -)"
-  elif [ "$#" -eq 6 ]; then
-    needle="${6}"
+  elif [ "$#" -eq 7 ]; then
+    needle="${7}"
   else
     flunk "A needle is required."
     return 1
   fi
 
-  string_assert_match "${1}" "${2}" "${3}" "${4}" "${5}" "${needle}"
+  _string_assert_match "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${needle}"
+}
+
+##
+# Asserts that a captured stream equals a string.
+#
+# Arguments:
+#   1. subject: Which stream the value is - 'output' or 'stderr'. Opens the
+#      title of the report.
+#   2. actual: Captured stream to compare.
+#   3. expected: Expected value. Optional, read from STDIN when omitted.
+##
+_command_assert_equal() {
+  local subject="${1}"
+  local actual="${2}"
+
+  local expected
+  if [ "$#" -eq 2 ]; then
+    expected="$(cat -)"
+  else
+    expected="${3}"
+  fi
+
+  if [ "${expected}" = "${actual}" ]; then
+    return 0
+  fi
+
+  format_error "$(_string_subject_noun "${subject}") does not equal string" "expected" "${expected}" "actual" "${actual}" | flunk
 }
 
 ##
@@ -230,62 +291,63 @@ command_assert_match() {
 ##
 
 ##
-# Asserts that the output of the last command contains a string, ignoring case.
+# Asserts that the output of the last command contains a substring,
+# ignoring case.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
 ##
 assert_output_contains() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "literal" 0 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 0 "literal" 0 "${output-}" "$@"
 }
 
 ##
-# Asserts that the output of the last command contains a string,
+# Asserts that the output of the last command contains a substring,
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
 ##
 assert_output_contains_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "literal" 1 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 0 "literal" 1 "${output-}" "$@"
 }
 
 ##
-# Asserts that the output of the last command does not contain a string,
+# Asserts that the output of the last command does not contain a substring,
 # ignoring case.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
 ##
 assert_output_not_contains() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "literal" 0 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 1 "literal" 0 "${output-}" "$@"
 }
 
 ##
-# Asserts that the output of the last command does not contain a string,
+# Asserts that the output of the last command does not contain a substring,
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   output: Output captured by the last 'run' call.
 ##
 assert_output_not_contains_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "literal" 1 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 1 "literal" 1 "${output-}" "$@"
 }
 
 ##
@@ -297,7 +359,7 @@ assert_output_not_contains_case() {
 # ignoring case.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -305,7 +367,7 @@ assert_output_not_contains_case() {
 ##
 assert_output_matches() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "regex" 0 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 0 "regex" 0 "${output-}" "$@"
 }
 
 ##
@@ -313,7 +375,7 @@ assert_output_matches() {
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -321,7 +383,7 @@ assert_output_matches() {
 ##
 assert_output_matches_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "regex" 1 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 0 "regex" 1 "${output-}" "$@"
 }
 
 ##
@@ -329,7 +391,7 @@ assert_output_matches_case() {
 # expression, ignoring case.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -337,7 +399,7 @@ assert_output_matches_case() {
 ##
 assert_output_not_matches() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "regex" 0 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 1 "regex" 0 "${output-}" "$@"
 }
 
 ##
@@ -345,7 +407,7 @@ assert_output_not_matches() {
 # expression, case-sensitively.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -353,7 +415,7 @@ assert_output_not_matches() {
 ##
 assert_output_not_matches_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "regex" 1 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 1 "regex" 1 "${output-}" "$@"
 }
 
 ##
@@ -365,7 +427,7 @@ assert_output_not_matches_case() {
 # case.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -373,7 +435,7 @@ assert_output_not_matches_case() {
 ##
 assert_output_matches_format() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "format" 0 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 0 "format" 0 "${output-}" "$@"
 }
 
 ##
@@ -381,7 +443,7 @@ assert_output_matches_format() {
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -389,7 +451,7 @@ assert_output_matches_format() {
 ##
 assert_output_matches_format_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 0 "format" 1 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 0 "format" 1 "${output-}" "$@"
 }
 
 ##
@@ -397,7 +459,7 @@ assert_output_matches_format_case() {
 # ignoring case.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -405,7 +467,7 @@ assert_output_matches_format_case() {
 ##
 assert_output_not_matches_format() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "format" 0 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 1 "format" 0 "${output-}" "$@"
 }
 
 ##
@@ -413,7 +475,7 @@ assert_output_not_matches_format() {
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -421,7 +483,7 @@ assert_output_not_matches_format() {
 ##
 assert_output_not_matches_format_case() {
   # shellcheck disable=SC2154
-  command_assert_match "anywhere" 1 "format" 1 "${output-}" "$@"
+  _command_assert_match "output" "anywhere" 1 "format" 1 "${output-}" "$@"
 }
 
 ##
@@ -459,14 +521,7 @@ assert_stderr_captured() {
 assert_stderr() {
   assert_stderr_captured || return 1
 
-  local expected
-  if [ "$#" -eq 0 ]; then
-    expected="$(cat -)"
-  else
-    expected="${1}"
-  fi
-
-  assert_equal "${expected}" "${stderr}"
+  _command_assert_equal "stderr" "${stderr}" "$@"
 }
 
 ##
@@ -478,7 +533,11 @@ assert_stderr() {
 assert_stderr_empty() {
   assert_stderr_captured || return 1
 
-  assert_empty "${stderr}"
+  if [ -z "${stderr}" ]; then
+    return 0
+  else
+    format_error "Stderr is not empty" "stderr" "${stderr}" | flunk
+  fi
 }
 
 ##
@@ -486,11 +545,11 @@ assert_stderr_empty() {
 ##
 
 ##
-# Asserts that the standard error of the last command contains a string,
+# Asserts that the standard error of the last command contains a substring,
 # ignoring case.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -498,15 +557,15 @@ assert_stderr_empty() {
 assert_stderr_contains() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "literal" 0 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 0 "literal" 0 "${stderr}" "$@"
 }
 
 ##
-# Asserts that the standard error of the last command contains a string,
+# Asserts that the standard error of the last command contains a substring,
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -514,15 +573,15 @@ assert_stderr_contains() {
 assert_stderr_contains_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "literal" 1 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 0 "literal" 1 "${stderr}" "$@"
 }
 
 ##
-# Asserts that the standard error of the last command does not contain a string,
-# ignoring case.
+# Asserts that the standard error of the last command does not contain
+# a substring, ignoring case.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -530,15 +589,15 @@ assert_stderr_contains_case() {
 assert_stderr_not_contains() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "literal" 0 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 1 "literal" 0 "${stderr}" "$@"
 }
 
 ##
-# Asserts that the standard error of the last command does not contain a string,
-# case-sensitively.
+# Asserts that the standard error of the last command does not contain
+# a substring, case-sensitively.
 #
 # Arguments:
-#   1. expected: String to search for. Optional, read from STDIN when omitted.
+#   1. needle: Substring to search for. Optional, read from STDIN when omitted.
 #
 # Globals:
 #   stderr: Standard error captured by the last 'run --separate-stderr' call.
@@ -546,7 +605,7 @@ assert_stderr_not_contains() {
 assert_stderr_not_contains_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "literal" 1 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 1 "literal" 1 "${stderr}" "$@"
 }
 
 ##
@@ -558,7 +617,7 @@ assert_stderr_not_contains_case() {
 # expression, ignoring case.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -567,7 +626,7 @@ assert_stderr_not_contains_case() {
 assert_stderr_matches() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "regex" 0 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 0 "regex" 0 "${stderr}" "$@"
 }
 
 ##
@@ -575,7 +634,7 @@ assert_stderr_matches() {
 # expression, case-sensitively.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -584,7 +643,7 @@ assert_stderr_matches() {
 assert_stderr_matches_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "regex" 1 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 0 "regex" 1 "${stderr}" "$@"
 }
 
 ##
@@ -592,7 +651,7 @@ assert_stderr_matches_case() {
 # expression, ignoring case.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -601,7 +660,7 @@ assert_stderr_matches_case() {
 assert_stderr_not_matches() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "regex" 0 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 1 "regex" 0 "${stderr}" "$@"
 }
 
 ##
@@ -609,7 +668,7 @@ assert_stderr_not_matches() {
 # expression, case-sensitively.
 #
 # Arguments:
-#   1. expected: Extended regular expression to match. Optional, read from STDIN
+#   1. needle: Extended regular expression to match. Optional, read from STDIN
 #      when omitted.
 #
 # Globals:
@@ -618,7 +677,7 @@ assert_stderr_not_matches() {
 assert_stderr_not_matches_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "regex" 1 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 1 "regex" 1 "${stderr}" "$@"
 }
 
 ##
@@ -630,7 +689,7 @@ assert_stderr_not_matches_case() {
 # ignoring case.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -639,7 +698,7 @@ assert_stderr_not_matches_case() {
 assert_stderr_matches_format() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "format" 0 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 0 "format" 0 "${stderr}" "$@"
 }
 
 ##
@@ -647,7 +706,7 @@ assert_stderr_matches_format() {
 # case-sensitively.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -656,7 +715,7 @@ assert_stderr_matches_format() {
 assert_stderr_matches_format_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 0 "format" 1 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 0 "format" 1 "${stderr}" "$@"
 }
 
 ##
@@ -664,7 +723,7 @@ assert_stderr_matches_format_case() {
 # string, ignoring case.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -673,7 +732,7 @@ assert_stderr_matches_format_case() {
 assert_stderr_not_matches_format() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "format" 0 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 1 "format" 0 "${stderr}" "$@"
 }
 
 ##
@@ -681,7 +740,7 @@ assert_stderr_not_matches_format() {
 # string, case-sensitively.
 #
 # Arguments:
-#   1. expected: Format string, see 'string_format_to_regex'. Optional, read
+#   1. needle: Format string, see 'string_format_to_regex'. Optional, read
 #      from STDIN when omitted.
 #
 # Globals:
@@ -690,5 +749,5 @@ assert_stderr_not_matches_format() {
 assert_stderr_not_matches_format_case() {
   assert_stderr_captured || return 1
 
-  command_assert_match "anywhere" 1 "format" 1 "${stderr}" "$@"
+  _command_assert_match "stderr" "anywhere" 1 "format" 1 "${stderr}" "$@"
 }

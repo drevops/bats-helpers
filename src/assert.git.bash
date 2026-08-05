@@ -17,9 +17,9 @@ assert_git_repo() {
 
   if [ -d "${dir}/.git" ]; then
     local message
-    message=$(git --work-tree="${dir}" --git-dir="${dir}/.git" status 2>&1)
+    message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status 2>&1)"
 
-    if echo "${message}" | $(type -p grep | head -1) -i -F -- "not a git repository" >/dev/null; then
+    if string_match "${message}" "not a git repository" "literal" 0 "anywhere"; then
       format_error "Directory is not a git repository" "directory" "${dir}" | flunk
       return 1
     fi
@@ -113,7 +113,14 @@ assert_git_clean() {
   assert_git_repo "${dir}" || return 1
 
   message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status)"
-  assert_string_contains "${message}" "nothing to commit"
+
+  if string_match "${message}" "nothing to commit" "literal" 0 "anywhere"; then
+    return 0
+  fi
+
+  format_error "Repository has uncommitted changes" "directory" "${dir}" "status" "${message}" | flunk
+
+  return 1
 }
 
 ##
@@ -129,7 +136,14 @@ assert_git_not_clean() {
   assert_git_repo "${dir}" || return 1
 
   message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status)"
-  assert_string_not_contains "${message}" "nothing to commit"
+
+  if ! string_match "${message}" "nothing to commit" "literal" 0 "anywhere"; then
+    return 0
+  fi
+
+  format_error "Repository has no uncommitted changes, but should have" "directory" "${dir}" "status" "${message}" | flunk
+
+  return 1
 }
 
 ##

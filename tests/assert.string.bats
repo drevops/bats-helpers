@@ -334,7 +334,7 @@ load _test_helper
   assert_output_contains "Unknown format placeholder '%'."
 }
 
-@test "string_assert_match" {
+@test "_string_assert_match" {
   # A needle spelled like an option is just a needle.
   assert_string_contains "the --regex option" "--regex"
   assert_string_contains "some -- text" "--"

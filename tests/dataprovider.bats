@@ -6,19 +6,19 @@
 
 load _test_helper
 
-fixture_add() {
+add_numbers() {
   local num1="${1}"
   local num2="${2}"
   echo $((num1 + num2))
 }
 
-fixture_concat() {
+concat_values() {
   local num1="${1}"
   local num2="${2}"
   echo "${num1}${num2}"
 }
 
-fixture_args() {
+describe_args() {
   echo "count=$#"
   local arg
   for arg in "$@"; do
@@ -108,41 +108,48 @@ provide_matrix_triples() {
   dataprovider_matrix "matrix_emit_triple" matrix_first matrix_second matrix_third
 }
 
-@test "Test dataprovider runner, direct - success" {
+@test "dataprovider_run called directly" {
   # Numbers.
   declare -a TEST_CASES=(
     1 2 3
     4 5 9
   )
-  dataprovider_run "fixture_add" 3
+  dataprovider_run "add_numbers" 3
 
   # String.
   declare -a TEST_CASES=(
     "start" "finish" "startfinish"
   )
-  dataprovider_run "fixture_concat" 3
+  dataprovider_run "concat_values" 3
 
   # More arguments than needed is allowed.
   declare -a TEST_CASES=(
     "start" "middle" "finish" "startmiddle"
   )
-  dataprovider_run "fixture_concat" 4
+  dataprovider_run "concat_values" 4
+
+  # An omitted assertion and an empty one both mean "not given", so both take
+  # the default.
+  declare -a TEST_CASES=(
+    1 2 3
+  )
+  dataprovider_run "add_numbers" 3 ""
 }
 
-@test "Test dataprovider runner - success" {
+@test "dataprovider_run" {
   declare -a TEST_CASES=(
     1 2 3
     1 2 3
   )
 
-  run dataprovider_run "fixture_add" 3
+  run dataprovider_run "add_numbers" 3
   assert_success
 
   assert_output_not_contains "Failed sets (0-based)"
   assert_output_not_contains "Total failed test sets"
 }
 
-@test "Test dataprovider runner - failure" {
+@test "dataprovider_run with failing cases" {
   declare -a TEST_CASES=(
     1 2 3
     1 2 4
@@ -150,13 +157,13 @@ provide_matrix_triples() {
     1 2 4
   )
 
-  run dataprovider_run "fixture_add" 3
+  run dataprovider_run "add_numbers" 3
   assert_failure
   assert_output_contains "Failed sets (0-based): 1, 3"
   assert_output_contains "Total failed test sets: 2"
 }
 
-@test "Test dataprovider runner, validation - failure" {
+@test "dataprovider_run with invalid input" {
   run dataprovider_run "" 3
   assert_failure
   assert_output_contains "Function name must not be empty."
@@ -165,35 +172,31 @@ provide_matrix_triples() {
   assert_failure
   assert_output_contains "Function 'non_existing_func' is not a valid function."
 
-  run dataprovider_run "fixture_add" 3 ""
-  assert_failure
-  assert_output_contains "Assertion name must not be empty."
-
-  run dataprovider_run "fixture_add" 3 "non_existing_func"
+  run dataprovider_run "add_numbers" 3 "non_existing_func"
   assert_failure
   assert_output_contains "Assertion 'non_existing_func' is not a valid function."
 
-  run dataprovider_run "fixture_add" "three"
+  run dataprovider_run "add_numbers" "three"
   assert_failure
   assert_output_contains "Number of arguments per test case 'three' is not an integer."
 
-  run dataprovider_run "fixture_add" 0
+  run dataprovider_run "add_numbers" 0
   assert_failure
   assert_output_contains "Number of arguments per test case must be greater than zero."
 
-  run dataprovider_run "fixture_add" 2
+  run dataprovider_run "add_numbers" 2
   assert_failure
   assert_output_contains "TEST_CASES array is empty."
 
   declare -a TEST_CASES=()
-  run dataprovider_run "fixture_add" 2
+  run dataprovider_run "add_numbers" 2
   assert_failure
   assert_output_contains "TEST_CASES array is empty."
 
   declare -a TEST_CASES=(
     1 2
   )
-  run dataprovider_run "fixture_add" 3
+  run dataprovider_run "add_numbers" 3
   assert_failure
   assert_output_contains "Number of arguments per test case is greater than the total elements in TEST_CASES."
 
@@ -201,58 +204,58 @@ provide_matrix_triples() {
     1 2 3
     1 2
   )
-  run dataprovider_run "fixture_add" 3
+  run dataprovider_run "add_numbers" 3
   assert_failure
-  assert_output_contains "Total elements in TEST_CASES must be a multiple of 3."
+  assert_output_contains "Total elements in TEST_CASES must be a multiple of '3'."
 
   declare -a TEST_CASES=(
     1 2 3
     1 2 ""
     1 2 4
   )
-  run dataprovider_run "fixture_add" 3
+  run dataprovider_run "add_numbers" 3
   assert_failure
-  assert_output_contains "Expected value (last element) in the data set 1 is empty."
+  assert_output_contains "Expected value (last element) in the data set '1' is empty."
 }
 
-@test "Test dataprovider runner, custom assertion - success" {
+@test "dataprovider_run with a custom assertion" {
   declare -a TEST_CASES=(
     1 2 3
     4 5 9
   )
 
-  dataprovider_run "fixture_add" 3 "assert_output"
+  dataprovider_run "add_numbers" 3 "assert_output"
 }
 
-@test "Test dataprovider runner, custom assertion - failure" {
+@test "dataprovider_run with a custom assertion that fails" {
   declare -a TEST_CASES=(
     1 23 23
   )
 
   # The same data passes containment and fails an exact comparison, so only the
   # assertion tells the two runs apart.
-  dataprovider_run "fixture_concat" 3
+  dataprovider_run "concat_values" 3
 
-  run dataprovider_run "fixture_concat" 3 "assert_output"
+  run dataprovider_run "concat_values" 3 "assert_output"
   assert_failure
   assert_output_contains "Failed sets (0-based): 0"
   assert_output_contains "Total failed test sets: 1"
 }
 
-@test "Test dataprovider runner, declared cases, direct - success" {
-  dataprovider_run_cases "fixture_add" "provide_cases"
+@test "dataprovider_run_cases called directly" {
+  dataprovider_run_cases "add_numbers" "provide_cases"
 }
 
-@test "Test dataprovider runner, declared cases - success" {
-  run dataprovider_run_cases "fixture_add" "provide_cases"
+@test "dataprovider_run_cases" {
+  run dataprovider_run_cases "add_numbers" "provide_cases"
   assert_success
 
   assert_output_not_contains "Failed sets"
   assert_output_not_contains "Total failed test sets"
 }
 
-@test "Test dataprovider runner, declared cases - failure" {
-  run dataprovider_run_cases "fixture_add" "provide_failing_cases"
+@test "dataprovider_run_cases with failing cases" {
+  run dataprovider_run_cases "add_numbers" "provide_failing_cases"
   assert_failure
   assert_output_contains "Error: Failed for set 'adds a negative'"
   assert_output_contains "Error: Failed for set 'adds zero'"
@@ -261,16 +264,16 @@ provide_matrix_triples() {
   assert_output_not_contains "0-based"
 }
 
-@test "Test dataprovider runner, declared cases without a label - failure" {
-  run dataprovider_run_cases "fixture_add" "provide_unlabelled_cases"
+@test "dataprovider_run_cases without a label" {
+  run dataprovider_run_cases "add_numbers" "provide_unlabelled_cases"
   assert_failure
   assert_output_contains "Error: Failed for set 0"
   assert_output_contains "Failed sets (0-based): 0"
   assert_output_contains "Total failed test sets: 1"
 }
 
-@test "Test dataprovider runner, declared cases with mixed labels - failure" {
-  run dataprovider_run_cases "fixture_add" "provide_mixed_labels"
+@test "dataprovider_run_cases with mixed labels" {
+  run dataprovider_run_cases "add_numbers" "provide_mixed_labels"
   assert_failure
   assert_output_contains "Error: Failed for set 0"
   assert_output_contains "Error: Failed for set 'named'"
@@ -278,37 +281,37 @@ provide_matrix_triples() {
   assert_output_contains "Total failed test sets: 2"
 }
 
-@test "Test dataprovider runner, declared cases with varying arity - success" {
-  dataprovider_run_cases "fixture_args" "provide_varying_arity"
+@test "dataprovider_run_cases with varying arity" {
+  dataprovider_run_cases "describe_args" "provide_varying_arity"
 }
 
-@test "Test dataprovider runner, declared cases with empty values - success" {
-  dataprovider_run_cases "fixture_args" "provide_empty_values" "assert_output"
+@test "dataprovider_run_cases with empty values" {
+  dataprovider_run_cases "describe_args" "provide_empty_values" "assert_output"
 }
 
-@test "Test dataprovider runner, declared cases with spaces - success" {
-  dataprovider_run_cases "fixture_args" "provide_space_values" "assert_output"
+@test "dataprovider_run_cases with spaces" {
+  dataprovider_run_cases "describe_args" "provide_space_values" "assert_output"
 }
 
-@test "Test dataprovider runner, declared cases with tabs - success" {
-  dataprovider_run_cases "fixture_args" "provide_tab_values" "assert_output"
+@test "dataprovider_run_cases with tabs" {
+  dataprovider_run_cases "describe_args" "provide_tab_values" "assert_output"
 }
 
-@test "Test dataprovider runner, declared cases with newlines - success" {
-  dataprovider_run_cases "fixture_args" "provide_newline_values" "assert_output"
+@test "dataprovider_run_cases with newlines" {
+  dataprovider_run_cases "describe_args" "provide_newline_values" "assert_output"
 }
 
-@test "Test dataprovider runner, declared cases with a custom assertion - success" {
-  dataprovider_run_cases "fixture_add" "provide_regex_cases" "assert_output_matches"
+@test "dataprovider_run_cases with a custom assertion" {
+  dataprovider_run_cases "add_numbers" "provide_regex_cases" "assert_output_matches"
 }
 
-@test "Test dataprovider runner, declared cases with a custom assertion - failure" {
-  run dataprovider_run_cases "fixture_add" "provide_regex_cases" "assert_output_not_matches"
+@test "dataprovider_run_cases with a custom assertion that fails" {
+  run dataprovider_run_cases "add_numbers" "provide_regex_cases" "assert_output_not_matches"
   assert_failure
   assert_output_contains "Failed sets: 'sums to a number'"
 }
 
-@test "Test dataprovider runner, declared cases validation - failure" {
+@test "dataprovider_run_cases with invalid input" {
   run dataprovider_run_cases "" "provide_cases"
   assert_failure
   assert_output_contains "Function name must not be empty."
@@ -317,94 +320,94 @@ provide_matrix_triples() {
   assert_failure
   assert_output_contains "Function 'non_existing_func' is not a valid function."
 
-  run dataprovider_run_cases "fixture_add" ""
+  run dataprovider_run_cases "add_numbers" ""
   assert_failure
   assert_output_contains "Cases function name must not be empty."
 
-  run dataprovider_run_cases "fixture_add" "non_existing_func"
+  run dataprovider_run_cases "add_numbers" "non_existing_func"
   assert_failure
   assert_output_contains "Cases function 'non_existing_func' is not a valid function."
 
-  run dataprovider_run_cases "fixture_add" "provide_cases" ""
-  assert_failure
-  assert_output_contains "Assertion name must not be empty."
+  # An omitted assertion and an empty one both mean "not given", so both take
+  # the default.
+  dataprovider_run_cases "add_numbers" "provide_cases" ""
 
-  run dataprovider_run_cases "fixture_add" "provide_cases" "non_existing_func"
+  run dataprovider_run_cases "add_numbers" "provide_cases" "non_existing_func"
   assert_failure
   assert_output_contains "Assertion 'non_existing_func' is not a valid function."
 
-  run dataprovider_run_cases "fixture_add" "provide_no_cases"
+  run dataprovider_run_cases "add_numbers" "provide_no_cases"
   assert_failure
   assert_output_contains "Cases function 'provide_no_cases' declared no test cases."
 
-  run dataprovider_run_cases "fixture_add" "provide_case_without_expected"
+  run dataprovider_run_cases "add_numbers" "provide_case_without_expected"
   assert_failure
   assert_output_contains "A test case requires a label and an expected value."
   assert_output_contains "Cases function 'provide_case_without_expected' exited with a non-zero status."
 }
 
-@test "Test dataprovider case, outside a runner - failure" {
+@test "dataprovider_case outside a runner" {
   run dataprovider_case "label" "expected"
   assert_failure
   assert_output_contains "Function 'dataprovider_case' must be called from the function passed to 'dataprovider_run_cases'."
 }
 
-@test "Test dataprovider matrix - success" {
+@test "dataprovider_matrix" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1" "2" "3")
   declare -a matrix_seen=()
 
-  dataprovider_run_cases "fixture_concat" "provide_matrix_pairs"
+  dataprovider_run_cases "concat_values" "provide_matrix_pairs"
 
   assert_equal "6" "${#matrix_seen[@]}"
   assert_equal "a|1 a|2 a|3 b|1 b|2 b|3" "${matrix_seen[*]}"
 }
 
-@test "Test dataprovider matrix, single list - success" {
+@test "dataprovider_matrix with a single list" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_seen=()
 
-  dataprovider_run_cases "fixture_concat" "provide_matrix_singles"
+  dataprovider_run_cases "concat_values" "provide_matrix_singles"
 
   assert_equal "2" "${#matrix_seen[@]}"
   assert_equal "a b" "${matrix_seen[*]}"
 }
 
-@test "Test dataprovider matrix, list holding one value - success" {
+@test "dataprovider_matrix with a list holding one value" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1")
   declare -a matrix_seen=()
 
-  dataprovider_run_cases "fixture_concat" "provide_matrix_pairs"
+  dataprovider_run_cases "concat_values" "provide_matrix_pairs"
 
   assert_equal "2" "${#matrix_seen[@]}"
   assert_equal "a|1 b|1" "${matrix_seen[*]}"
 }
 
-@test "Test dataprovider matrix, three lists - success" {
+@test "dataprovider_matrix with three lists" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1" "2")
   declare -a matrix_third=("x" "y")
   declare -a matrix_seen=()
 
-  dataprovider_run_cases "fixture_args" "provide_matrix_triples"
+  dataprovider_run_cases "describe_args" "provide_matrix_triples"
 
   assert_equal "8" "${#matrix_seen[@]}"
   assert_equal "a1x a1y a2x a2y b1x b1y b2x b2y" "${matrix_seen[*]}"
 }
 
-@test "Test dataprovider matrix - failure" {
+@test "dataprovider_matrix with failing cases" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1" "2")
   declare -a matrix_seen=()
 
-  run dataprovider_run_cases "fixture_concat" "provide_matrix_pairs" "assert_output_not_contains"
+  run dataprovider_run_cases "concat_values" "provide_matrix_pairs" "assert_output_not_contains"
   assert_failure
   assert_output_contains "Failed sets: 'a-1', 'a-2', 'b-1', 'b-2'"
   assert_output_contains "Total failed test sets: 4"
 }
 
-@test "Test dataprovider matrix, validation - failure" {
+@test "dataprovider_matrix with invalid input" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_empty=()
   declare matrix_scalar="a"

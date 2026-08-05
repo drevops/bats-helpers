@@ -78,24 +78,54 @@ bats_require_minimum_version 1.13.0
   unset stderr
   status=2
   run assert_failure --status 3
-  assert_failure
+  [ "${status}" -eq 1 ]
   assert_output_contains "expected : 3"
   assert_output_contains "actual   : 2"
 
   status=2
   run assert_failure --status
-  assert_failure
+  [ "${status}" -eq 1 ]
   assert_output_contains "Option '--status' requires an exit status."
 
   status=2
   run assert_failure --status 0
-  assert_failure
+  [ "${status}" -eq 1 ]
   assert_output_contains "A failure cannot have exit status 0. Use 'assert_success' instead."
 
   # The command succeeded, so only validating the option first surfaces the
   # malformed value rather than the failure that did not happen.
   status=0
   run assert_failure --status two
+  [ "${status}" -eq 1 ]
+  assert_output_contains "Exit status 'two' is not an integer between 0 and 255."
+}
+
+@test "assert_failure_status" {
+  status=2
+  output=""
+  assert_failure_status 2
+
+  status=0
+  output=""
+  run assert_failure_status 2
+  assert_failure
+  assert_output_contains "-- Command succeeded, but should have failed --"
+
+  status=3
+  output=""
+  run assert_failure_status 2
+  assert_failure
+  assert_output_contains "-- Command exited with an unexpected status --"
+
+  status=2
+  output=""
+  run assert_failure_status 0
+  assert_failure
+  assert_output_contains "A failure cannot have exit status 0. Use 'assert_success' instead."
+
+  status=2
+  output=""
+  run assert_failure_status two
   assert_failure
   assert_output_contains "Exit status 'two' is not an integer between 0 and 255."
 }
@@ -181,35 +211,35 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "actual   : 1"
 }
 
-@test "command_describe_status" {
-  run command_describe_status 0
+@test "_command_describe_status" {
+  run _command_describe_status 0
   assert_success
   assert_output "0"
 
-  run command_describe_status 3
+  run _command_describe_status 3
   assert_success
   assert_output "3"
 
-  run command_describe_status 127
+  run _command_describe_status 127
   assert_success
   assert_output "127 (command not found)"
 
   # Only the two signals every supported platform numbers the same way.
-  run command_describe_status 137
+  run _command_describe_status 137
   assert_success
   assert_output "137 (killed by SIGKILL)"
 
-  run command_describe_status 143
+  run _command_describe_status 143
   assert_success
   assert_output "143 (killed by SIGTERM)"
 
   # The offset leaves signal zero, which is not a signal.
-  run command_describe_status 128
+  run _command_describe_status 128
   assert_success
   assert_output "128"
 
   # No supported platform numbers a signal this high.
-  run command_describe_status 255
+  run _command_describe_status 255
   assert_success
   assert_output "255"
 }
@@ -601,11 +631,61 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "run --separate-stderr"
 }
 
-@test "command_assert_match" {
+@test "_command_assert_match" {
   # The first 'run' supplies the output the assertion reads, before the second
   # replaces it with the failure report.
   run echo "some existing text"
   run assert_output_contains "some" "extra"
   assert_failure
   assert_output_contains "A needle is required."
+}
+
+@test "Failure report names the captured stream" {
+  run echo "some text"
+  run assert_output_contains "absent"
+  assert_failure
+  assert_output_contains "-- Output does not contain substring --
+output     : some text
+substring  : absent
+match mode : literal
+case       : insensitive
+--"
+
+  run echo "some text"
+  run assert_output_not_contains "some"
+  assert_failure
+  assert_output_contains "-- Output contains substring, but should not --"
+
+  output="some text"
+  run assert_output "other text"
+  assert_failure
+  assert_output_contains "-- Output does not equal string --
+expected : other text
+actual   : some text
+--"
+
+  run --separate-stderr bash -c 'echo "some error" >&2'
+  run assert_stderr_contains "absent"
+  assert_failure
+  assert_output_contains "-- Stderr does not contain substring --
+stderr     : some error
+substring  : absent
+match mode : literal
+case       : insensitive
+--"
+
+  run --separate-stderr bash -c 'echo "some error" >&2'
+  run assert_stderr "other error"
+  assert_failure
+  assert_output_contains "-- Stderr does not equal string --
+expected : other error
+actual   : some error
+--"
+
+  run --separate-stderr bash -c 'echo "some error" >&2'
+  run assert_stderr_empty
+  assert_failure
+  assert_output_contains "-- Stderr is not empty --
+stderr : some error
+--"
 }

@@ -30,6 +30,8 @@
 #     success is the attempt that succeeded.
 #   BATS_HELPERS_RETRY_OUTPUT: Set to the STDOUT and STDERR of the last attempt.
 #   BATS_HELPERS_RETRY_ELAPSED: Set to the whole seconds spent.
+#   SECONDS: Bash's elapsed-time counter, read as the clock the deadline and
+#     the elapsed time are measured against.
 #
 # Outputs:
 #   File descriptor 3: A notice naming the attempt the command succeeded on.
@@ -83,7 +85,7 @@ retry_run() {
   local timeout="${BATS_HELPERS_RETRY_TIMEOUT-}"
 
   if [ -n "${timeout}" ] && ! [[ ${timeout} =~ ^[0-9]+$ ]]; then
-    flunk "Deadline '${timeout}' is not a whole number of seconds."
+    flunk "Timeout '${timeout}' is not a whole number of seconds."
     return 1
   fi
 

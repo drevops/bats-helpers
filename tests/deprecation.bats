@@ -9,12 +9,6 @@
 
 load _test_helper
 
-fixture_add() {
-  local num1="${1}"
-  local num2="${2}"
-  echo $((num1 + num2))
-}
-
 @test "assert_not_git_repo" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
@@ -106,6 +100,39 @@ fixture_add() {
   assert_file_contains "${notice}" "Deprecated: 'mktouch' will be removed in the next version. Use 'file_mktouch' instead."
 }
 
+@test "file_add_var with the deprecated backup directory variable" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  export BATS_HELPERS_BACKUP_DIR="${BATS_TEST_TMPDIR}/backups"
+  echo "line1" >>"${BATS_TEST_TMPDIR}/.env"
+
+  file_add_var "${BATS_TEST_TMPDIR}/.env" "VAR" "value" 3>"${notice}"
+
+  assert_file_exists "${BATS_TEST_TMPDIR}/backups/${BATS_TEST_TMPDIR#/}/.env"
+  assert_file_contains "${notice}" "Deprecated: 'BATS_HELPERS_BACKUP_DIR' will be removed in the next version. Use 'BATS_HELPERS_FILE_BACKUP_DIR' instead."
+}
+
+@test "assert_failure with the deprecated status option" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+
+  run bash -c 'exit 2'
+  assert_failure --status 2 3>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: 'assert_failure --status' will be removed in the next version. Use 'assert_failure_status' instead."
+}
+
+@test "assert_files_equal and assert_files_not_equal with the deprecated ignore_spaces argument" {
+  notice="${BATS_TEST_TMPDIR}/notice.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt" 1 3>"${notice}"
+  assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt" 1 3>>"${notice}"
+
+  assert_file_contains "${notice}" "Deprecated: the 'ignore_spaces' argument of 'assert_files_equal' will be removed in the next version. Use 'assert_files_equal_ignore_spaces' instead."
+  assert_file_contains "${notice}" "Deprecated: the 'ignore_spaces' argument of 'assert_files_not_equal' will be removed in the next version. Use 'assert_files_not_equal_ignore_spaces' instead."
+}
+
 @test "trim_file" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   echo "line1" >>"${BATS_TEST_TMPDIR}/file.txt"
@@ -147,7 +174,7 @@ fixture_add() {
   assert_file_contains "${notice}" "Deprecated: 'restore_file' will be removed in the next version. Use 'file_restore' instead."
 }
 
-@test "nothing answer" {
+@test "tui_run with the deprecated nothing answer" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export SCRIPT_FILE="tests/fixtures/tui_script.sh"
 
@@ -157,7 +184,7 @@ fixture_add() {
   assert_file_contains "${notice}" "Deprecated: the 'nothing' answer will be removed in the next version. Use an empty string instead."
 }
 
-@test "RUN_STEPS_DEBUG" {
+@test "steps_run with the deprecated debug variable" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export RUN_STEPS_DEBUG=1
 
@@ -171,7 +198,7 @@ fixture_add() {
   assert_file_contains "${notice}" "  > Total steps : 1"
 }
 
-@test "ASSERT_DIR_EXCLUDE" {
+@test "assert_dir_not_contains_string with the deprecated exclude list" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/1.txt"
@@ -182,19 +209,19 @@ fixture_add() {
   assert_file_contains "${notice}" "Deprecated: 'ASSERT_DIR_EXCLUDE' will be removed in the next version. Use 'BATS_HELPERS_ASSERT_DIR_EXCLUDE' instead."
 }
 
-@test "BATS_MOCK_TMPDIR" {
+@test "_mock_prepare_tmp with the deprecated temporary directory variable" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   BATS_HELPERS_MOCK_TMPDIR=""
   export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom"
 
-  run mock_prepare_tmp 3>"${notice}"
+  run _mock_prepare_tmp 3>"${notice}"
 
   assert_success
   assert_output "${BATS_TEST_TMPDIR}/custom/bats-helpers-mock"
   assert_file_contains "${notice}" "Deprecated: 'BATS_MOCK_TMPDIR' will be removed in the next version. Use 'BATS_HELPERS_MOCK_TMPDIR' instead."
 }
 
-@test "_USER" {
+@test "mock_get_call_user with the deprecated user variable" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export _USER="someoneelse"
 
@@ -205,7 +232,7 @@ fixture_add() {
   assert_file_contains "${notice}" "Deprecated: '_USER' will be removed in the next version. Use 'BATS_HELPERS_MOCK_USER' instead."
 }
 
-@test "BATS_FIXTURE_EXPORT_CODEBASE_ENABLED" {
+@test "fixture_export_codebase with the deprecated enable variable" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export BATS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/build"
@@ -271,7 +298,7 @@ fixture_add() {
   assert_empty "$(cat "${notice}")"
 }
 
-@test "Notices are silenced" {
+@test "Notices are silenced by the quiet variable" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   export BATS_HELPERS_DEPRECATION_QUIET=1
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/not_git_repo"

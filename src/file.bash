@@ -22,7 +22,7 @@ file_mktouch() {
 #   1. file: File to trim.
 ##
 file_trim() {
-  local sed_opts
+  local -a sed_opts
 
   if [ "$(uname)" = "Darwin" ]; then
     sed_opts=(-i '')
@@ -44,13 +44,19 @@ file_trim() {
 # Arguments:
 #   1. expression: Expression to evaluate.
 #
+# Globals:
+#   BATS_TEST_TMPDIR: Per-test sandbox the snapshot of exported variables is
+#     written to.
+#
 # Outputs:
 #   STDOUT: The evaluated expression.
 ##
 file_read_env() {
   local t
+  # The snapshot lives in the per-test sandbox so that bats removes it even when
+  # the restore below never runs.
   # shellcheck disable=SC1090,SC1091
-  [ -f "./.env" ] && t=$(mktemp) && export -p >"${t}" && set -a && . "./.env" && set +a && . "${t}" && rm "${t}" && unset t
+  [ -f "./.env" ] && t="$(mktemp "${BATS_TEST_TMPDIR}/bats-helpers-env.XXXXXX")" && export -p >"${t}" && set -a && . "./.env" && set +a && . "${t}" && rm "${t}" && unset t
 
   # shellcheck disable=SC2294
   eval echo "$@"
@@ -68,9 +74,13 @@ file_read_env() {
 #   1. file: File whose backup path to resolve.
 #
 # Globals:
-#   BATS_HELPERS_BACKUP_DIR: Backup root. Defaults to a directory within the
-#     per-test temporary directory, so that BATS removes the backups with the
-#     rest of the test sandbox.
+#   BATS_HELPERS_FILE_BACKUP_DIR: Backup root. Defaults to a directory within
+#     the per-test temporary directory, so that BATS removes the backups with
+#     the rest of the test sandbox.
+#   BATS_HELPERS_BACKUP_DIR: Deprecated name of the above.
+#   BATS_TEST_TMPDIR: Per-test sandbox, used when no directory is set.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 #
 # Outputs:
 #   STDOUT: The backup path.
@@ -85,14 +95,22 @@ file_backup_path() {
       ;;
   esac
 
-  local root="${BATS_HELPERS_BACKUP_DIR:-${BATS_TEST_TMPDIR:+${BATS_TEST_TMPDIR}/bats-helpers-backup}}"
+  local root
+  if [ -n "${BATS_HELPERS_FILE_BACKUP_DIR-}" ]; then
+    root="${BATS_HELPERS_FILE_BACKUP_DIR}"
+  elif [ -n "${BATS_HELPERS_BACKUP_DIR-}" ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'BATS_HELPERS_BACKUP_DIR' will be removed in the next version. Use 'BATS_HELPERS_FILE_BACKUP_DIR' instead." >&3
+    root="${BATS_HELPERS_BACKUP_DIR}"
+  else
+    root="${BATS_TEST_TMPDIR:+${BATS_TEST_TMPDIR}/bats-helpers-backup}"
+  fi
 
   if [ -z "${root}" ]; then
-    flunk "Unable to resolve the backup directory: BATS_TEST_TMPDIR is not set. Set BATS_HELPERS_BACKUP_DIR to a writable directory."
+    flunk "Unable to resolve the backup directory: 'BATS_TEST_TMPDIR' is not set. Set BATS_HELPERS_FILE_BACKUP_DIR to a writable directory."
     return 1
   fi
 
-  echo "${root%/}/${file#/}"
+  printf '%s\n' "${root%/}/${file#/}"
 }
 
 ##
@@ -119,7 +137,7 @@ file_add_var() {
   mkdir -p "$(dirname "${backup}")" || return 1
   cp -f "${file}" "${backup}" || return 1
 
-  echo "${name}=${value}" >>"${file}"
+  printf '%s\n' "${name}=${value}" >>"${file}"
 }
 
 ##

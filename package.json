@@ -18,7 +18,8 @@
     },
     "files": [
         "src",
-        "load.bash"
+        "load.bash",
+        "MIGRATION.md"
     ],
     "scripts": {
         "test": "./node_modules/.bin/bats tests/",

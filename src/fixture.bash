@@ -14,6 +14,9 @@
 # Globals:
 #   BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED: Set to '1' to enable the
 #     export. Anything else makes this function a no-op.
+#   BATS_FIXTURE_EXPORT_CODEBASE_ENABLED: Deprecated name of the above.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 fixture_export_codebase() {
   local enabled
@@ -28,7 +31,12 @@ fixture_export_codebase() {
     return
   fi
 
-  local dst="${1?Destination directory is required.}"
+  if [ "$#" -lt 1 ]; then
+    flunk "Destination directory is required."
+    return 1
+  fi
+
+  local dst="${1}"
   local src="${2:-"$(pwd)"}"
 
   assert_dir_exists "${dst}" || return 1
@@ -44,7 +52,7 @@ fixture_export_codebase() {
   ) || export_status=$?
 
   if [ "${export_status}" -ne 0 ]; then
-    flunk "Failed to export codebase from '${src}' to '${dst}'."
+    flunk "Unable to export codebase from '${src}' to '${dst}'."
     return 1
   fi
 }
@@ -57,7 +65,7 @@ fixture_export_codebase() {
 ##
 fixture_prepare_dir() {
   local dir="${1:-"$(pwd)"}"
-  rm -Rf "${dir}" >/dev/null
+  rm -rf "${dir}"
   mkdir -p "${dir}"
   assert_dir_exists "${dir}"
 }
@@ -83,11 +91,16 @@ fixture_prepare_dir() {
 #   1. dir: Directory to create the tree in.
 ##
 fixture_create_dir() {
-  local dir="${1?Directory is required.}"
+  if [ "$#" -lt 1 ]; then
+    flunk "Directory is required."
+    return 1
+  fi
+
+  local dir="${1}"
 
   local -a paths=()
   local -a contents=()
-  fixture_read_archive || return 1
+  _fixture_read_archive || return 1
 
   if ! mkdir -p "${dir}"; then
     flunk "Unable to create fixture directory '${dir}'."
@@ -102,7 +115,7 @@ fixture_create_dir() {
     path="${paths[index]}"
     target="${dir}/${path}"
 
-    fixture_validate_target "${dir}" "${path}" || return 1
+    _fixture_validate_target "${dir}" "${path}" || return 1
 
     if [ -d "${target}" ]; then
       flunk "Fixture path '${path}' exists as a directory."
@@ -132,12 +145,17 @@ fixture_create_dir() {
 #   STDOUT: The archive, with the entries ordered by path.
 ##
 fixture_dump_dir() {
-  local dir="${1?Directory is required.}"
+  if [ "$#" -lt 1 ]; then
+    flunk "Directory is required."
+    return 1
+  fi
+
+  local dir="${1}"
 
   assert_dir_exists "${dir}" || return 1
 
   local listing
-  listing="$(fixture_list_files "${dir}")" || return 1
+  listing="$(_fixture_list_files "${dir}")" || return 1
 
   [ -n "${listing}" ] || return 0
 
@@ -178,16 +196,21 @@ fixture_dump_dir() {
 #   1. dir: Directory to compare.
 ##
 fixture_assert_dir() {
-  local dir="${1?Directory is required.}"
+  if [ "$#" -lt 1 ]; then
+    flunk "Directory is required."
+    return 1
+  fi
+
+  local dir="${1}"
 
   assert_dir_exists "${dir}" || return 1
 
   local -a paths=()
   local -a contents=()
-  fixture_read_archive || return 1
+  _fixture_read_archive || return 1
 
   local listing
-  listing="$(fixture_list_files "${dir}")" || return 1
+  listing="$(_fixture_list_files "${dir}")" || return 1
 
   ##
   ## Expected files.
@@ -211,7 +234,7 @@ fixture_assert_dir() {
     # The listing decides what the directory holds, so a symlink standing where
     # the archive names a regular file is a difference rather than something to
     # read through.
-    if ! fixture_list_holds "${actual}" "${path}"; then
+    if ! _fixture_list_holds "${actual}" "${path}"; then
       if [ -L "${target}" ]; then
         summary="${summary}not a regular file: ${path}"$'\n'
       else
@@ -237,7 +260,7 @@ fixture_assert_dir() {
   while IFS= read -r file; do
     [ -n "${file}" ] || continue
 
-    if fixture_list_holds "${expected}" "${file}"; then
+    if _fixture_list_holds "${expected}" "${file}"; then
       continue
     fi
 
@@ -251,13 +274,13 @@ fixture_assert_dir() {
 
   [ "${differences}" -eq 0 ] && return 0
 
-  local message="Directory '${dir}' does not match the expected fixture"$'\n\n'"${summary%$'\n'}"
+  local -a rows=("directory" "${dir}" "summary" "${summary%$'\n'}")
 
   if [ -n "${report}" ]; then
-    message="${message}"$'\n\n'"${report%$'\n'}"
+    rows+=("difference" "${report%$'\n'}")
   fi
 
-  format_error "${message}" | flunk
+  format_error "Directory does not match the expected fixture" "${rows[@]}" | flunk
 }
 
 ##
@@ -271,7 +294,7 @@ fixture_assert_dir() {
 #     the order the entries appear.
 #   contents: Array the caller declares, filled with the matching contents.
 ##
-fixture_read_archive() {
+_fixture_read_archive() {
   # A content line carrying the escape loses one backslash, so a line that is
   # marker-shaped after the removal is the one to unescape.
   local escaped_marker='^\\+-- .* --$'
@@ -293,9 +316,9 @@ fixture_read_archive() {
         return 1
       fi
 
-      fixture_validate_path "${path}" || return 1
+      _fixture_validate_path "${path}" || return 1
 
-      if fixture_list_holds "${declared}" "${path}"; then
+      if _fixture_list_holds "${declared}" "${path}"; then
         flunk "Fixture path '${path}' is declared more than once."
         return 1
       fi
@@ -329,7 +352,7 @@ fixture_read_archive() {
 # Outputs:
 #   STDOUT: One path per line, relative to the directory and sorted.
 ##
-fixture_list_files() {
+_fixture_list_files() {
   local dir="${1}"
 
   local -a files=()
@@ -365,7 +388,7 @@ fixture_list_files() {
 # Arguments:
 #   1. path: Path to validate, relative to the fixture directory.
 ##
-fixture_validate_path() {
+_fixture_validate_path() {
   local path="${1}"
 
   case "${path}" in
@@ -408,7 +431,7 @@ fixture_validate_path() {
 #   1. dir: Directory the path is relative to.
 #   2. path: Path to walk.
 ##
-fixture_validate_target() {
+_fixture_validate_target() {
   local dir="${1}"
   local path="${2}"
 
@@ -449,7 +472,7 @@ fixture_validate_target() {
 # Returns:
 #   0 when the list holds the path, 1 when it does not.
 ##
-fixture_list_holds() {
+_fixture_list_holds() {
   local list="${1}"
   local path="${2}"
 

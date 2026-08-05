@@ -2,7 +2,7 @@
 #
 # Tests for file and directory assertions.
 #
-# shellcheck disable=SC2129,SC2030,SC2031,SC2034
+# shellcheck disable=SC2129,SC2030,SC2031,SC2034,SC2016
 
 load _test_helper
 
@@ -29,6 +29,13 @@ load _test_helper
   assert_failure
 
   run assert_file_exists "${BATS_TEST_TMPDIR}/other*"
+  assert_failure
+
+  # The glob expansion is unquoted, so a literal path has to be tried first.
+  file_mktouch "${BATS_TEST_TMPDIR}/some file.txt"
+  assert_file_exists "${BATS_TEST_TMPDIR}/some file.txt"
+
+  run assert_file_not_exists "${BATS_TEST_TMPDIR}/some file.txt"
   assert_failure
 }
 
@@ -83,6 +90,10 @@ load _test_helper
   assert_failure
 }
 
+@test "assert_dir_exists defaults to the current directory" {
+  assert_dir_exists
+}
+
 @test "assert_dir_not_exists" {
   assert_dir_not_exists "some dir"
 
@@ -93,7 +104,6 @@ load _test_helper
 @test "assert_symlink_exists" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_symlink"
 
-  # Assert file.
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_symlink/src.txt"
   ln -s "${BATS_TEST_TMPDIR}/fixture_symlink/src.txt" "${BATS_TEST_TMPDIR}/fixture_symlink/dst.txt"
   assert_symlink_exists "${BATS_TEST_TMPDIR}/fixture_symlink/dst.txt"
@@ -101,7 +111,6 @@ load _test_helper
   run assert_symlink_exists "${BATS_TEST_TMPDIR}/fixture_symlink/not-existing.txt"
   assert_failure
 
-  # Assert dir.
   mkdir "${BATS_TEST_TMPDIR}/fixture_symlink/symlink_src"
   ln -s "${BATS_TEST_TMPDIR}/fixture_symlink/symlink_src" "${BATS_TEST_TMPDIR}/fixture_symlink/symlink_dst"
   assert_symlink_exists "${BATS_TEST_TMPDIR}/fixture_symlink/symlink_dst"
@@ -115,7 +124,6 @@ load _test_helper
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_symlink/src.txt"
   ln -s "${BATS_TEST_TMPDIR}/fixture_symlink/src.txt" "${BATS_TEST_TMPDIR}/fixture_symlink/dst.txt"
 
-  # Assert others.
   assert_symlink_not_exists "${BATS_TEST_TMPDIR}/fixture_symlink/src.txt"
   assert_symlink_not_exists "${BATS_TEST_TMPDIR}/fixture_symlink/other_dst.txt"
   assert_symlink_not_exists "${BATS_TEST_TMPDIR}/fixture_symlink/some_dir"
@@ -342,6 +350,25 @@ load _test_helper
   assert_failure
 }
 
+@test "Failure report names the file and its contents" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_file_report"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_file_report/1.txt"
+
+  run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_report/1.txt" "absent"
+  assert_failure
+  assert_output_contains '-- File does not contain substring --
+file       : ${BATS_TEST_TMPDIR}/fixture_file_report/1.txt
+contents   : some existing text
+substring  : absent
+match mode : literal
+case       : insensitive
+--'
+
+  run assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_report/1.txt" "existing"
+  assert_failure
+  assert_output_contains "-- File contains substring, but should not --"
+}
+
 @test "assert_dir_empty" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dir1"
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dir2"
@@ -377,22 +404,28 @@ load _test_helper
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
 
   assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
+  assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "EXISTING"
 
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "non-existing"
+  assert_failure
+  assert_output_contains "-- Directory does not contain substring --"
+  assert_output_contains "match mode : literal"
+  assert_output_contains "case       : insensitive"
+
+  # The string is a literal, not a regular expression.
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "exist.*"
   assert_failure
 
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/non_existing"
   assert_failure
 
-  rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
+  rm "${BATS_TEST_TMPDIR}/fixture/1.txt"
 
-  # Excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
 
-  # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor three"
@@ -410,31 +443,136 @@ load _test_helper
 
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "non-existing"
 
+  # The string is a literal, not a regular expression.
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "exist.*"
+
   run assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
+  assert_output_contains "-- Directory contains substring, but should not --"
   assert_output_contains "fixture/1.txt"
   assert_output_contains "fixture/3.txt"
   assert_output_not_contains "fixture/2.txt"
 
-  # Non-existing dir.
+  run assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "EXISTING"
+  assert_failure
+  assert_output_contains "it does not match with the '_case' suffix"
+
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/non_existing" "existing"
 
-  rm "${BATS_TEST_TMPDIR}/fixture/1.txt" >/dev/null
-  rm "${BATS_TEST_TMPDIR}/fixture/2.txt" >/dev/null
-  rm "${BATS_TEST_TMPDIR}/fixture/3.txt" >/dev/null
+  rm "${BATS_TEST_TMPDIR}/fixture/1.txt"
+  rm "${BATS_TEST_TMPDIR}/fixture/2.txt"
+  rm "${BATS_TEST_TMPDIR}/fixture/3.txt"
 
-  # Excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor/2.txt"
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
 
-  # Globally excluded dir.
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor2"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor2/2.txt"
   mkdir -p "${BATS_TEST_TMPDIR}/fixture/scripts/vendor three"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor three/2.txt"
   declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2 "vendor three")
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
+}
+
+@test "assert_dir_contains_string_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_contains_string_case "${BATS_TEST_TMPDIR}/fixture" "existing"
+
+  run assert_dir_contains_string_case "${BATS_TEST_TMPDIR}/fixture" "EXISTING"
+  assert_failure
+  assert_output_contains "case       : sensitive"
+  assert_output_contains "note       : it matches without the '_case' suffix"
+
+  run assert_dir_contains_string_case "${BATS_TEST_TMPDIR}/non_existing" "existing"
+  assert_failure
+  assert_output_contains "does not exist"
+}
+
+@test "assert_dir_not_contains_string_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_not_contains_string_case "${BATS_TEST_TMPDIR}/fixture" "EXISTING"
+
+  # A directory that does not exist cannot contain the string.
+  assert_dir_not_contains_string_case "${BATS_TEST_TMPDIR}/non_existing" "existing"
+
+  run assert_dir_not_contains_string_case "${BATS_TEST_TMPDIR}/fixture" "existing"
+  assert_failure
+  assert_output_contains "-- Directory contains substring, but should not --"
+  assert_output_contains "fixture/1.txt"
+}
+
+@test "assert_dir_matches" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "Deleted 12 files in 0.5s" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" 'Deleted [0-9]+ files'
+  assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" 'DELETED [0-9]+ files'
+
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" 'Removed [0-9]+ files'
+  assert_failure
+  assert_output_contains "-- Directory does not match regular expression --"
+
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/non_existing" 'Deleted [0-9]+ files'
+  assert_failure
+  assert_output_contains "does not exist"
+
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" '['
+  assert_failure
+  assert_output_contains "Invalid regular expression '['."
+}
+
+@test "assert_dir_matches_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "Deleted 12 files in 0.5s" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_matches_case "${BATS_TEST_TMPDIR}/fixture" 'Deleted [0-9]+ files'
+
+  run assert_dir_matches_case "${BATS_TEST_TMPDIR}/fixture" 'DELETED [0-9]+ files'
+  assert_failure
+  assert_output_contains "it matches without the '_case' suffix"
+
+  run assert_dir_matches_case "${BATS_TEST_TMPDIR}/non_existing" 'Deleted [0-9]+ files'
+  assert_failure
+  assert_output_contains "does not exist"
+}
+
+@test "assert_dir_not_matches" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "Deleted 12 files in 0.5s" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_not_matches "${BATS_TEST_TMPDIR}/fixture" 'Removed [0-9]+ files'
+
+  # A directory that does not exist cannot match.
+  assert_dir_not_matches "${BATS_TEST_TMPDIR}/non_existing" 'Deleted [0-9]+ files'
+
+  run assert_dir_not_matches "${BATS_TEST_TMPDIR}/fixture" 'DELETED [0-9]+ files'
+  assert_failure
+  assert_output_contains "-- Directory matches regular expression, but should not --"
+  assert_output_contains "fixture/1.txt"
+
+  # An expression that does not compile is an error rather than a mismatch.
+  run assert_dir_not_matches "${BATS_TEST_TMPDIR}/fixture" '['
+  assert_failure
+  assert_output_contains "Invalid regular expression '['."
+}
+
+@test "assert_dir_not_matches_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "Deleted 12 files in 0.5s" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_not_matches_case "${BATS_TEST_TMPDIR}/fixture" 'DELETED [0-9]+ files'
+
+  # A directory that does not exist cannot match.
+  assert_dir_not_matches_case "${BATS_TEST_TMPDIR}/non_existing" 'Deleted [0-9]+ files'
+
+  run assert_dir_not_matches_case "${BATS_TEST_TMPDIR}/fixture" 'Deleted [0-9]+ files'
+  assert_failure
+  assert_output_contains "-- Directory matches regular expression, but should not --"
 }
 
 @test "assert_files_equal" {
@@ -504,6 +642,36 @@ load _test_helper
   assert_failure
 }
 
+@test "assert_files_equal_ignore_spaces" {
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  assert_files_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+
+  run assert_files_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+  assert_failure
+  assert_output_contains "-- Files are not equal --"
+
+  run assert_files_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/missing.txt"
+  assert_failure
+}
+
+@test "assert_files_not_equal_ignore_spaces" {
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  assert_files_not_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  run assert_files_not_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
+  assert_failure
+  assert_output_contains "-- Files are equal, but should not be --"
+
+  run assert_files_not_equal_ignore_spaces "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/missing.txt"
+  assert_failure
+}
+
 @test "assert_binary_files_equal" {
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/binary.png"
   echo "some other file" >"${BATS_TEST_TMPDIR}/binary_changed.png"
@@ -561,31 +729,26 @@ load _test_helper
 }
 
 @test "assert_dirs_equal" {
-  # Assert that files in the root are equal.
   mkdir -p "${BATS_TEST_TMPDIR}/t11"
   mkdir -p "${BATS_TEST_TMPDIR}/t12"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t11/binary.png"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t12/binary.png"
   assert_dirs_equal "${BATS_TEST_TMPDIR}/t11" "${BATS_TEST_TMPDIR}/t12"
 
-  # Assert that files in the root are not equal.
   echo "some other file" >"${BATS_TEST_TMPDIR}/t12/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t11" "${BATS_TEST_TMPDIR}/t12"
   assert_failure
 
-  # Assert that files in the subdirs are equal.
   mkdir -p "${BATS_TEST_TMPDIR}/t31/subdir"
   mkdir -p "${BATS_TEST_TMPDIR}/t32/subdir"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t31/subdir/binary.png"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t32/subdir/binary.png"
   assert_dirs_equal "${BATS_TEST_TMPDIR}/t31" "${BATS_TEST_TMPDIR}/t32"
 
-  # Assert that files in the subdirs are not equal.
   echo "some other file" >"${BATS_TEST_TMPDIR}/t32/subdir/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t31" "${BATS_TEST_TMPDIR}/t32"
   assert_failure
 
-  # Assert that files in the root and subdirs are equal.
   mkdir -p "${BATS_TEST_TMPDIR}/t41/subdir"
   mkdir -p "${BATS_TEST_TMPDIR}/t42/subdir"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t41/binary.png"
@@ -596,12 +759,10 @@ load _test_helper
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t42/subdir/binary.png"
   assert_dirs_equal "${BATS_TEST_TMPDIR}/t41" "${BATS_TEST_TMPDIR}/t42"
 
-  # Assert that files in the root and subdirs are not equal.
   echo "some other file" >"${BATS_TEST_TMPDIR}/t42/subdir/binary.png"
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t41" "${BATS_TEST_TMPDIR}/t42"
   assert_failure
 
-  # Assert that missing files trigger a failure.
   mkdir -p "${BATS_TEST_TMPDIR}/t51/subdir"
   mkdir -p "${BATS_TEST_TMPDIR}/t52/subdir"
   cp "${BATS_TEST_DIRNAME}/fixtures/binary.png" "${BATS_TEST_TMPDIR}/t51/binary.png"
@@ -614,7 +775,31 @@ load _test_helper
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t51" "${BATS_TEST_TMPDIR}/t52"
   assert_failure
 
-  # Assert non-existing dirs are failing.
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t61" "${BATS_TEST_TMPDIR}/t62"
   assert_failure
+}
+
+@test "assert_dirs_equal with paths containing a space" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/first dir/sub dir"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/second dir/sub dir"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/first dir/sub dir/some file.txt"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/second dir/sub dir/some file.txt"
+
+  assert_dirs_equal "${BATS_TEST_TMPDIR}/first dir" "${BATS_TEST_TMPDIR}/second dir"
+
+  echo "some other text" >"${BATS_TEST_TMPDIR}/second dir/sub dir/some file.txt"
+  run assert_dirs_equal "${BATS_TEST_TMPDIR}/first dir" "${BATS_TEST_TMPDIR}/second dir"
+  assert_failure
+}
+
+@test "assert_dirs_equal names both directories when a counterpart is missing" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/t71"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/t72"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/t71/only.txt"
+
+  run assert_dirs_equal "${BATS_TEST_TMPDIR}/t71" "${BATS_TEST_TMPDIR}/t72"
+  assert_failure
+  assert_output_contains "-- Directory holds a file the other directory does not --"
+  assert_output_contains 'directory       : ${BATS_TEST_TMPDIR}/t71'
+  assert_output_contains 'other directory : ${BATS_TEST_TMPDIR}/t72'
 }

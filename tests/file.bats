@@ -39,9 +39,11 @@ load _test_helper
   echo "VAR2=val2" >>.env
   # shellcheck disable=SC2016
   run file_read_env '$VAR1'
+  assert_success
   assert_output_contains "val1"
   # shellcheck disable=SC2016
   run file_read_env '$VAR2'
+  assert_success
   assert_output_contains "val2"
 
   popd
@@ -58,14 +60,14 @@ load _test_helper
 }
 
 @test "file_backup_path with a custom directory" {
-  export BATS_HELPERS_BACKUP_DIR="${BATS_TEST_TMPDIR}/custom"
+  export BATS_HELPERS_FILE_BACKUP_DIR="${BATS_TEST_TMPDIR}/custom"
 
   run file_backup_path "${BATS_TEST_TMPDIR}/.env"
   assert_success
   assert_output "${BATS_TEST_TMPDIR}/custom/${BATS_TEST_TMPDIR#/}/.env"
 
   # A trailing slash does not produce a double separator.
-  export BATS_HELPERS_BACKUP_DIR="${BATS_TEST_TMPDIR}/custom/"
+  export BATS_HELPERS_FILE_BACKUP_DIR="${BATS_TEST_TMPDIR}/custom/"
 
   run file_backup_path ".env"
   assert_success
@@ -122,13 +124,13 @@ load _test_helper
 }
 
 @test "file_add_var and file_restore in a custom directory" {
-  export BATS_HELPERS_BACKUP_DIR="${BATS_TEST_TMPDIR}/custom"
+  export BATS_HELPERS_FILE_BACKUP_DIR="${BATS_TEST_TMPDIR}/custom"
 
   echo "line1" >>"${BATS_TEST_TMPDIR}/.env"
 
   file_add_var "${BATS_TEST_TMPDIR}/.env" "VAR" "value"
 
-  assert_file_exists "${BATS_HELPERS_BACKUP_DIR}/${BATS_TEST_TMPDIR#/}/.env"
+  assert_file_exists "${BATS_HELPERS_FILE_BACKUP_DIR}/${BATS_TEST_TMPDIR#/}/.env"
   assert_file_not_exists "${BATS_TEST_TMPDIR}/bats-helpers-backup/${BATS_TEST_TMPDIR#/}/.env"
 
   file_restore "${BATS_TEST_TMPDIR}/.env"

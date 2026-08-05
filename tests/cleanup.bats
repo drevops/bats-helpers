@@ -123,7 +123,7 @@ two"
 
   run cleanup_run
   assert_failure
-  assert_output_contains "Cleanup command 'false' failed with exit status 1."
+  assert_output_contains "Cleanup command 'false' failed with exit status '1'."
 }
 
 @test "cleanup_run continues past a failing command" {
@@ -133,7 +133,7 @@ two"
 
   run cleanup_run
   assert_failure
-  assert_output_contains "failed with exit status 3"
+  assert_output_contains "failed with exit status '3'"
 
   assert_file_exists "${BATS_TEST_TMPDIR}/first.marker"
   assert_file_exists "${BATS_TEST_TMPDIR}/last.marker"
@@ -237,7 +237,7 @@ two"
 
 # The two tests below share one registry location, because with the per-test
 # default nothing could leak between them in the first place.
-@test "cleanup registrations do not leak into the next test" {
+@test "Cleanup registrations do not leak into the next test" {
   export BATS_HELPERS_CLEANUP_DIR="${BATS_FILE_TMPDIR}"
 
   cleanup_register touch "${BATS_FILE_TMPDIR}/leak.marker"
@@ -246,7 +246,7 @@ two"
   assert_file_not_exists "${BATS_FILE_TMPDIR}/leak.marker"
 }
 
-@test "cleanup registrations do not leak into the next test - next test" {
+@test "Cleanup registrations from the previous test are already drained" {
   export BATS_HELPERS_CLEANUP_DIR="${BATS_FILE_TMPDIR}"
 
   assert_file_exists "${BATS_FILE_TMPDIR}/leak.marker"
@@ -275,7 +275,7 @@ two"
   assert_failure
   assert_output_contains "not ok 1 passing test with a failing cleanup"
   assert_output_contains "from function \`teardown'"
-  assert_output_contains "Cleanup command 'false' failed with exit status 1."
+  assert_output_contains "Cleanup command 'false' failed with exit status '1'."
 }
 
 @test "cleanup_run from teardown does not mask a preceding failure" {
@@ -285,5 +285,5 @@ two"
   assert_output_contains "not ok 1 failing test with a failing cleanup"
   # The reported failure is the test's own, not the one raised in teardown.
   assert_output_not_contains "from function \`teardown'"
-  assert_output_contains "Cleanup command 'false' failed with exit status 1."
+  assert_output_contains "Cleanup command 'false' failed with exit status '1'."
 }

@@ -32,13 +32,13 @@ flunk() {
   fi
 
   local trace
-  trace="$(report_stack_trace)"
+  trace="$(_report_stack_trace)"
 
-  if [ "${trace}" != "" ]; then
-    message="${message}"$'\n\n'"$(report_decorate "stack trace" "${trace}")"
+  if [ -n "${trace}" ]; then
+    message="${message}"$'\n\n'"$(_report_decorate "stack trace" "${trace}")"
   fi
 
-  report_normalise_paths "$(report_banner "${message}")" >&2
+  _report_normalize_paths "$(_report_banner "${message}")" >&2
 
   return 1
 }
@@ -122,20 +122,20 @@ format_error() {
     fi
 
     if [ "${diffable}" = "1" ] && [ "${i}" -eq "${expected_index}" ]; then
-      body="${body}$(report_diff "${values[expected_index]}" "${values[actual_index]}")"$'\n'
+      body="${body}$(_report_diff "${values[expected_index]}" "${values[actual_index]}")"$'\n'
       continue
     fi
 
     if [ "${multiline}" = "1" ]; then
-      count="$(report_count_lines "${values[i]}")"
-      body="${body}${keys[i]} ($(report_plural_lines "${count}")):"$'\n'"${values[i]}"$'\n'
+      count="$(_report_count_lines "${values[i]}")"
+      body="${body}${keys[i]} ($(_report_plural_lines "${count}")):"$'\n'"${values[i]}"$'\n'
       continue
     fi
 
     body="${body}$(printf '%-*s : %s' "${width}" "${keys[i]}" "${values[i]}")"$'\n'
   done
 
-  report_normalise_paths "$(report_decorate "${title}" "${body%$'\n'}")"
+  _report_normalize_paths "$(_report_decorate "${title}" "${body%$'\n'}")"
 }
 
 ##
@@ -157,7 +157,7 @@ format_error() {
 # Outputs:
 #   STDOUT: The body, between the opening and the closing banner.
 ##
-report_banner() {
+_report_banner() {
   echo "##################################################"
   echo "#             BEGIN ERROR MESSAGE                #"
   echo "##################################################"
@@ -177,10 +177,10 @@ report_banner() {
 # Outputs:
 #   STDOUT: The decorated block.
 ##
-report_decorate() {
+_report_decorate() {
   printf -- '-- %s --\n' "${1}"
 
-  if [ "${2-}" != "" ]; then
+  if [ -n "${2-}" ]; then
     printf '%s\n' "${2}"
   fi
 
@@ -197,10 +197,10 @@ report_decorate() {
 # Outputs:
 #   STDOUT: The diff, labelled with the name of each side.
 ##
-report_diff() {
+_report_diff() {
   local -a options=(-u -L expected -L actual)
 
-  if report_color_enabled; then
+  if _report_color_enabled; then
     options+=(--color=always)
   fi
 
@@ -218,7 +218,7 @@ report_diff() {
 # Outputs:
 #   STDOUT: The number of lines, at least one.
 ##
-report_count_lines() {
+_report_count_lines() {
   local stripped="${1//$'\n'/}"
 
   printf '%s\n' "$((${#1} - ${#stripped} + 1))"
@@ -233,7 +233,7 @@ report_count_lines() {
 # Outputs:
 #   STDOUT: The count and the noun agreeing with it.
 ##
-report_plural_lines() {
+_report_plural_lines() {
   if [ "${1}" -eq 1 ]; then
     printf '1 line\n'
     return 0
@@ -257,16 +257,16 @@ report_plural_lines() {
 # Returns:
 #   0 when the diff should be coloured, 1 when it should not.
 ##
-report_color_enabled() {
+_report_color_enabled() {
   local override="${BATS_HELPERS_REPORT_COLOR-}"
 
   [ "${override}" = "0" ] && return 1
 
-  if [ "${override}" != "1" ] && [ "${NO_COLOR-}" != "" ]; then
+  if [ "${override}" != "1" ] && [ -n "${NO_COLOR-}" ]; then
     return 1
   fi
 
-  report_diff_color_supported
+  _report_diff_color_supported
 }
 
 ##
@@ -278,7 +278,7 @@ report_color_enabled() {
 # Returns:
 #   0 when the flag is understood, 1 when it is not.
 ##
-report_diff_color_supported() {
+_report_diff_color_supported() {
   diff --color=always /dev/null /dev/null >/dev/null 2>&1
 }
 
@@ -300,7 +300,7 @@ report_diff_color_supported() {
 #   STDOUT: One 'file:line: function' entry per frame, outermost last. Nothing
 #           when every frame belongs to the library or to bats-core.
 ##
-report_stack_trace() {
+_report_stack_trace() {
   local root="${BASH_SOURCE[0]%/*}"
   local bats_root="${BATS_ROOT-}"
   local source
@@ -311,13 +311,13 @@ report_stack_trace() {
 
     # The outermost frame is entered from the command line rather than from a
     # file, and there is nothing above it to walk to.
-    [ "${source}" = "" ] && break
+    [ -z "${source}" ] && break
 
     if [[ ${source} == "${root}"/* ]]; then
       continue
     fi
 
-    if [ "${bats_root}" != "" ] && [[ ${source} == "${bats_root}"/* ]]; then
+    if [ -n "${bats_root}" ] && [[ ${source} == "${bats_root}"/* ]]; then
       continue
     fi
 
@@ -344,10 +344,10 @@ report_stack_trace() {
 # Outputs:
 #   STDOUT: The rewritten text.
 ##
-report_normalise_paths() {
+_report_normalize_paths() {
   local text="${1}"
 
-  if [ "${BATS_TEST_SOURCE-}" != "" ] && [ "${BATS_TEST_FILENAME-}" != "" ]; then
+  if [ -n "${BATS_TEST_SOURCE-}" ] && [ -n "${BATS_TEST_FILENAME-}" ]; then
     text="${text//"${BATS_TEST_SOURCE}"/${BATS_TEST_FILENAME}}"
   fi
 
@@ -360,7 +360,7 @@ report_normalise_paths() {
 
     # The root directory is a prefix of every path, so rewriting it would leave
     # nothing readable behind.
-    if [ "${value}" = "" ] || [ "${value}" = "/" ]; then
+    if [ -z "${value}" ] || [ "${value}" = "/" ]; then
       continue
     fi
 

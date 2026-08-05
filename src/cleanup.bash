@@ -11,6 +11,7 @@
 #   BATS_HELPERS_CLEANUP_DIR: Directory holding the registry. Defaults to the
 #     per-test temporary directory, so that BATS removes the registry with the
 #     rest of the test sandbox.
+#   BATS_TEST_TMPDIR: Per-test sandbox, used when no directory is set.
 #
 # Outputs:
 #   STDOUT: The registry path.
@@ -29,7 +30,7 @@ cleanup_registry_path() {
     return 1
   fi
 
-  echo "${dir%/}/bats-helpers-cleanup"
+  printf '%s\n' "${dir%/}/bats-helpers-cleanup"
 }
 
 ##
@@ -86,7 +87,7 @@ cleanup_run() {
     return 0
   fi
 
-  local commands=()
+  local -a commands=()
   local line
   while IFS= read -r line; do
     commands+=("${line}")
@@ -97,7 +98,7 @@ cleanup_run() {
     return 1
   fi
 
-  local status=0
+  local run_status=0
   local command_status
   local i
   for ((i = ${#commands[@]} - 1; i >= 0; i--)); do
@@ -105,14 +106,14 @@ cleanup_run() {
     # 'eval' undoes the quoting 'cleanup_register' applied, turning the line
     # back into the argument vector it was registered with. Running the line
     # unevaluated would look for one command named after the whole of it.
-    eval "${commands[${i}]}" || command_status="$?"
+    eval "${commands[i]}" || command_status="$?"
 
     if [ "${command_status}" -ne 0 ]; then
       # 'flunk' returns non-zero, so the assignment both records the failure and
       # keeps the remaining commands running under errexit.
-      flunk "Cleanup command '${commands[${i}]}' failed with exit status ${command_status}." || status=1
+      flunk "Cleanup command '${commands[i]}' failed with exit status '${command_status}'." || run_status=1
     fi
   done
 
-  return "${status}"
+  return "${run_status}"
 }

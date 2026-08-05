@@ -16,6 +16,10 @@ assert_file_exists() {
   local file="${1}"
   local f
 
+  # The literal path is tried first, because the glob expansion below is
+  # unquoted and would word-split a path that contains a space.
+  [ -e "${file}" ] && return 0
+
   for f in ${file}; do
     if [ -e "${f}" ]; then
       return 0
@@ -39,6 +43,13 @@ assert_file_not_exists() {
   local file="${1}"
   local f
 
+  # The literal path is tried first, because the glob expansion below is
+  # unquoted and would word-split a path that contains a space.
+  if [ -e "${file}" ]; then
+    format_error "File exists, but should not" "file" "${file}" | flunk
+    return 1
+  fi
+
   for f in ${file}; do
     if [ -e "${f}" ]; then
       format_error "File exists, but should not" "file" "${file}" | flunk
@@ -56,10 +67,10 @@ assert_file_not_exists() {
 # Asserts that a directory exists.
 #
 # Arguments:
-#   1. dir: Path to check.
+#   1. dir: Path to check. Optional, defaults to the current directory.
 ##
 assert_dir_exists() {
-  local dir="${1}"
+  local dir="${1:-$(pwd)}"
 
   if [ -d "${dir}" ]; then
     return 0
@@ -94,7 +105,7 @@ assert_dir_empty() {
   local dir="${1:-$(pwd)}"
   assert_dir_exists "${dir}" || return 1
 
-  if [ "$(ls -A "${dir}")" ]; then
+  if [ -n "$(ls -A "${dir}")" ]; then
     format_error "Directory is not empty" "directory" "${dir}" | flunk
   else
     return 0
@@ -111,7 +122,7 @@ assert_dir_not_empty() {
   local dir="${1:-$(pwd)}"
   assert_dir_exists "${dir}" || return 1
 
-  if [ "$(ls -A "${dir}")" ]; then
+  if [ -n "$(ls -A "${dir}")" ]; then
     return 0
   else
     format_error "Directory is empty, but should not be" "directory" "${dir}" | flunk
@@ -171,9 +182,9 @@ assert_file_mode() {
   assert_file_exists "${file}" || return 1
 
   if [ "$(uname)" = "Darwin" ]; then
-    parsed=$(printf "%.3o\n" $(($(stat -f '0%Lp' "$file") & ~0022)))
+    parsed="$(printf "%.3o\n" $(($(stat -f '0%Lp' "${file}") & ~0022)))"
   else
-    parsed=$(printf "%.3o\n" $(($(stat --printf '0%a' "$file") & ~0022)))
+    parsed="$(printf "%.3o\n" $(($(stat --printf '0%a' "${file}") & ~0022)))"
   fi
 
   if [ "${parsed}" != "${perm}" ]; then
@@ -192,21 +203,22 @@ assert_file_mode() {
 # handed to 'cat'.
 #
 # Arguments:
-#   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
-#   2. negate: '1' to assert that the needle does not match.
-#   3. mode: How the needle is read - 'literal', 'regex' or 'format'.
-#   4. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
-#   5. file: File to search.
-#   6. string: String to search for.
+#   1. subject: What the haystack is reported as - 'file'.
+#   2. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
+#   3. negate: '1' to assert that the needle does not match.
+#   4. mode: How the needle is read - 'literal', 'regex' or 'format'.
+#   5. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   6. file: File to search.
+#   7. string: String to search for.
 ##
-file_assert_match() {
-  if [ "$#" -ne 6 ]; then
+_file_assert_match() {
+  if [ "$#" -ne 7 ]; then
     flunk "A file and a string are required."
     return 1
   fi
 
-  local negate="${2}"
-  local file="${5}"
+  local negate="${3}"
+  local file="${6}"
 
   if [ "${negate}" = "1" ]; then
     [ ! -f "${file}" ] && return 0
@@ -222,7 +234,7 @@ file_assert_match() {
   local contents
   contents="$(cat "${file}")"
 
-  string_assert_match "${1}" "${2}" "${3}" "${4}" "${contents}" "${6}"
+  _string_assert_match "${1}" "${2}" "${3}" "${4}" "${5}" "${contents}" "${7}" "${file}"
 }
 
 ##
@@ -233,7 +245,7 @@ file_assert_match() {
 #   2. string: String to search for.
 ##
 assert_file_contains() {
-  file_assert_match "anywhere" 0 "literal" 0 "$@"
+  _file_assert_match "file" "anywhere" 0 "literal" 0 "$@"
 }
 
 ##
@@ -244,7 +256,7 @@ assert_file_contains() {
 #   2. string: String to search for.
 ##
 assert_file_contains_case() {
-  file_assert_match "anywhere" 0 "literal" 1 "$@"
+  _file_assert_match "file" "anywhere" 0 "literal" 1 "$@"
 }
 
 ##
@@ -257,7 +269,7 @@ assert_file_contains_case() {
 #   2. string: String to search for.
 ##
 assert_file_not_contains() {
-  file_assert_match "anywhere" 1 "literal" 0 "$@"
+  _file_assert_match "file" "anywhere" 1 "literal" 0 "$@"
 }
 
 ##
@@ -270,7 +282,7 @@ assert_file_not_contains() {
 #   2. string: String to search for.
 ##
 assert_file_not_contains_case() {
-  file_assert_match "anywhere" 1 "literal" 1 "$@"
+  _file_assert_match "file" "anywhere" 1 "literal" 1 "$@"
 }
 
 ##
@@ -281,7 +293,7 @@ assert_file_not_contains_case() {
 #   2. string: Extended regular expression to match.
 ##
 assert_file_matches() {
-  file_assert_match "anywhere" 0 "regex" 0 "$@"
+  _file_assert_match "file" "anywhere" 0 "regex" 0 "$@"
 }
 
 ##
@@ -292,7 +304,7 @@ assert_file_matches() {
 #   2. string: Extended regular expression to match.
 ##
 assert_file_matches_case() {
-  file_assert_match "anywhere" 0 "regex" 1 "$@"
+  _file_assert_match "file" "anywhere" 0 "regex" 1 "$@"
 }
 
 ##
@@ -305,7 +317,7 @@ assert_file_matches_case() {
 #   2. string: Extended regular expression to match.
 ##
 assert_file_not_matches() {
-  file_assert_match "anywhere" 1 "regex" 0 "$@"
+  _file_assert_match "file" "anywhere" 1 "regex" 0 "$@"
 }
 
 ##
@@ -318,7 +330,7 @@ assert_file_not_matches() {
 #   2. string: Extended regular expression to match.
 ##
 assert_file_not_matches_case() {
-  file_assert_match "anywhere" 1 "regex" 1 "$@"
+  _file_assert_match "file" "anywhere" 1 "regex" 1 "$@"
 }
 
 ##
@@ -329,7 +341,7 @@ assert_file_not_matches_case() {
 #   2. string: Format string, see 'string_format_to_regex'.
 ##
 assert_file_matches_format() {
-  file_assert_match "anywhere" 0 "format" 0 "$@"
+  _file_assert_match "file" "anywhere" 0 "format" 0 "$@"
 }
 
 ##
@@ -340,7 +352,7 @@ assert_file_matches_format() {
 #   2. string: Format string, see 'string_format_to_regex'.
 ##
 assert_file_matches_format_case() {
-  file_assert_match "anywhere" 0 "format" 1 "$@"
+  _file_assert_match "file" "anywhere" 0 "format" 1 "$@"
 }
 
 ##
@@ -353,7 +365,7 @@ assert_file_matches_format_case() {
 #   2. string: Format string, see 'string_format_to_regex'.
 ##
 assert_file_not_matches_format() {
-  file_assert_match "anywhere" 1 "format" 0 "$@"
+  _file_assert_match "file" "anywhere" 1 "format" 0 "$@"
 }
 
 ##
@@ -366,21 +378,24 @@ assert_file_not_matches_format() {
 #   2. string: Format string, see 'string_format_to_regex'.
 ##
 assert_file_not_matches_format_case() {
-  file_assert_match "anywhere" 1 "format" 1 "$@"
+  _file_assert_match "file" "anywhere" 1 "format" 1 "$@"
 }
 
 ##
-# Builds the 'grep' parameters excluding directories from a recursive search.
+# Writes the directory names excluded from a recursive content search.
 #
 # Globals:
 #   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
 #     the search.
+#   ASSERT_DIR_EXCLUDE: Deprecated name of the above.
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 #
 # Outputs:
-#   STDOUT: One '--exclude-dir' parameter per line, so that a directory name
-#     containing spaces survives being read back into an array.
+#   STDOUT: One directory name per line, so that a name containing spaces
+#     survives being read back into an array.
 ##
-assert_dir_exclude_params() {
+_file_dir_exclude_names() {
   local -a exclude_dirs=(".git" ".idea" "vendor" "node_modules")
 
   if [ -n "${BATS_HELPERS_ASSERT_DIR_EXCLUDE+x}" ]; then
@@ -392,14 +407,180 @@ assert_dir_exclude_params() {
 
   local exclude_dir
   for exclude_dir in "${exclude_dirs[@]}"; do
-    [ -n "${exclude_dir}" ] && printf '%s\n' "--exclude-dir=${exclude_dir}"
+    [ -n "${exclude_dir}" ] && printf '%s\n' "${exclude_dir}"
   done
 
   return 0
 }
 
 ##
-# Asserts that a directory exists and contains a string in one of its files.
+# Writes the paths of the files of a directory whose contents a needle matches.
+#
+# Regular files only are searched, and binary files are skipped. The contents
+# of each file are matched as one string, so a needle may span lines and the
+# '^' and '$' anchors of a regular expression apply to the whole file.
+#
+# Arguments:
+#   1. mode: How the needle is read - 'literal' or 'regex'.
+#   2. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   3. dir: Directory to search.
+#   4. needle: String to search for.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+#
+# Outputs:
+#   STDOUT: One matching path per line.
+##
+_file_dir_match_files() {
+  local mode="${1}"
+  local case_sensitive="${2}"
+  local dir="${3}"
+  local needle="${4}"
+
+  local -a exclude_names
+  mapfile -t exclude_names < <(_file_dir_exclude_names)
+
+  local -a prune=()
+  local name
+
+  for name in "${exclude_names[@]}"; do
+    [ "${#prune[@]}" -gt 0 ] && prune+=(-o)
+    prune+=(-name "${name}")
+  done
+
+  local file
+  local contents
+
+  while IFS= read -r -d '' file; do
+    # Reading a binary file into a Bash string would stop at its first NUL, so
+    # binaries are told apart first, with the same probe the fixture serialiser
+    # uses.
+    if [ -s "${file}" ] && ! LC_ALL=C grep -Iq '^' "${file}"; then
+      continue
+    fi
+
+    contents="$(cat "${file}")"
+
+    if string_match "${contents}" "${needle}" "${mode}" "${case_sensitive}" "anywhere"; then
+      printf '%s\n' "${file}"
+    fi
+  done < <(find "${dir}" -type d \( "${prune[@]}" \) -prune -o -type f -print0)
+
+  return 0
+}
+
+##
+# Asserts that a needle matches the contents of the files of a directory.
+#
+# A negated assertion passes for a directory that does not exist, which cannot
+# hold the needle; a positive one asserts that the directory exists first. The
+# files the needle matched are reported on the negated polarity, where they are
+# the evidence.
+#
+# Arguments:
+#   1. negate: '1' to assert that the needle matches no file.
+#   2. mode: How the needle is read - 'literal' or 'regex'.
+#   3. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   4. dir: Directory to search.
+#   5. needle: String to search for.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+_file_assert_dir_match() {
+  if [ "$#" -ne 5 ]; then
+    flunk "A directory and a string are required."
+    return 1
+  fi
+
+  local negate="${1}"
+  local mode="${2}"
+  local case_sensitive="${3}"
+  local dir="${4}"
+  local needle="${5}"
+
+  if [ "${negate}" = "1" ]; then
+    [ ! -d "${dir}" ] && return 0
+  else
+    assert_dir_exists "${dir}" || return 1
+  fi
+
+  # An expression that does not compile is an error rather than a mismatch, and
+  # is checked up front so that it cannot pass silently over a tree with no
+  # file to fail against.
+  if [ "${mode}" = "regex" ]; then
+    local needle_status=0
+    string_match "" "${needle}" "regex" "${case_sensitive}" "anywhere" || needle_status=$?
+
+    if [ "${needle_status}" -eq 2 ]; then
+      flunk "Invalid regular expression '${needle}'."
+      return 1
+    fi
+  fi
+
+  local files
+  files="$(_file_dir_match_files "${mode}" "${case_sensitive}" "${dir}" "${needle}")"
+
+  if [ "${negate}" = "1" ]; then
+    [ -z "${files}" ] && return 0
+  else
+    [ -n "${files}" ] && return 0
+  fi
+
+  ##
+  ## Failure report.
+  ##
+
+  local noun
+  noun="$(_string_needle_noun "${mode}")"
+
+  local verb="contain"
+  local verb_third_person="contains"
+
+  if [ "${mode}" != "literal" ]; then
+    verb="match"
+    verb_third_person="matches"
+  fi
+
+  local title
+  if [ "${negate}" = "1" ]; then
+    title="Directory ${verb_third_person} ${noun}, but should not"
+  else
+    title="Directory does not ${verb} ${noun}"
+  fi
+
+  # The setting that was in force is only worth naming when the other one would
+  # have decided the assertion the other way.
+  local opposite_case=$((1 - case_sensitive))
+  local opposite_files
+  opposite_files="$(_file_dir_match_files "${mode}" "${opposite_case}" "${dir}" "${needle}")"
+
+  local matched=0
+  [ -n "${files}" ] && matched=1
+
+  local opposite_matched=0
+  [ -n "${opposite_files}" ] && opposite_matched=1
+
+  local case_decided=0
+  [ "${matched}" -ne "${opposite_matched}" ] && case_decided=1
+
+  local -a footer=()
+  mapfile -t footer < <(_string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
+
+  if [ "${negate}" = "1" ]; then
+    format_error "${title}" "directory" "${dir}" "${noun}" "${needle}" "${footer[@]}" "files" "${files}" | flunk
+    return 1
+  fi
+
+  format_error "${title}" "directory" "${dir}" "${noun}" "${needle}" "${footer[@]}" | flunk
+}
+
+##
+# Asserts that a directory exists and contains a string in one of its files,
+# ignoring case.
 #
 # Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
 # always excluded from the search.
@@ -413,23 +594,31 @@ assert_dir_exclude_params() {
 #     the search.
 ##
 assert_dir_contains_string() {
-  local dir="${1}"
-  local string="${2}"
-
-  assert_dir_exists "${dir}" || return 1
-
-  local -a exclude_params
-  mapfile -t exclude_params < <(assert_dir_exclude_params)
-
-  if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
-    return 0
-  else
-    format_error "Directory does not contain string" "directory" "${dir}" "string" "${string}" | flunk
-  fi
+  _file_assert_dir_match 0 "literal" 0 "$@"
 }
 
 ##
-# Asserts that a directory does not contain a string in any of its files.
+# Asserts that a directory exists and contains a string in one of its files,
+# case-sensitively.
+#
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: String to search for.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_contains_string_case() {
+  _file_assert_dir_match 0 "literal" 1 "$@"
+}
+
+##
+# Asserts that a directory does not contain a string in any of its files,
+# ignoring case.
 #
 # Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
 # always excluded from the search. A directory that does not exist cannot
@@ -444,19 +633,109 @@ assert_dir_contains_string() {
 #     the search.
 ##
 assert_dir_not_contains_string() {
-  local dir="${1}"
-  local string="${2}"
+  _file_assert_dir_match 1 "literal" 0 "$@"
+}
 
-  [ ! -d "${dir}" ] && return 0
+##
+# Asserts that a directory does not contain a string in any of its files,
+# case-sensitively.
+#
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search. A directory that does not exist cannot
+# contain the string, so it passes.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: String to search for.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_not_contains_string_case() {
+  _file_assert_dir_match 1 "literal" 1 "$@"
+}
 
-  local -a exclude_params
-  mapfile -t exclude_params < <(assert_dir_exclude_params)
+##
+# Asserts that a directory exists and the contents of one of its files match a
+# regular expression, ignoring case.
+#
+# The expression is matched against file contents rather than file names.
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: Extended regular expression to match.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_matches() {
+  _file_assert_dir_match 0 "regex" 0 "$@"
+}
 
-  if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
-    format_error "Directory contains string, but should not" "directory" "${dir}" "string" "${string}" | flunk
-  else
-    return 0
-  fi
+##
+# Asserts that a directory exists and the contents of one of its files match a
+# regular expression, case-sensitively.
+#
+# The expression is matched against file contents rather than file names.
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: Extended regular expression to match.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_matches_case() {
+  _file_assert_dir_match 0 "regex" 1 "$@"
+}
+
+##
+# Asserts that no file of a directory matches a regular expression, ignoring
+# case.
+#
+# The expression is matched against file contents rather than file names.
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search. A directory that does not exist cannot
+# match, so it passes.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: Extended regular expression to match.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_not_matches() {
+  _file_assert_dir_match 1 "regex" 0 "$@"
+}
+
+##
+# Asserts that no file of a directory matches a regular expression,
+# case-sensitively.
+#
+# The expression is matched against file contents rather than file names.
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search. A directory that does not exist cannot
+# match, so it passes.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: Extended regular expression to match.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_not_matches_case() {
+  _file_assert_dir_match 1 "regex" 1 "$@"
 }
 
 ##
@@ -474,7 +753,7 @@ assert_dir_not_contains_string() {
 #   0 when the status is a comparison result, non-zero via 'flunk' when it is
 #   not.
 ##
-file_compare_failed() {
+_file_compare_failed() {
   [ "${1}" -le 1 ] && return 0
 
   flunk "Unable to compare the files. ${2}"
@@ -487,28 +766,32 @@ file_compare_failed() {
 #   1. file1: First file.
 #   2. file2: Second file.
 #   3. ignore_spaces: Set to '1' to ignore blank lines and whitespace changes.
-#      Optional, defaults to '0'.
+#      Optional, defaults to '0'. Deprecated, use
+#      'assert_files_equal_ignore_spaces' instead.
+#
+# Globals:
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 assert_files_equal() {
-  local file1="${1}"
-  local file2="${2}"
   local ignore_spaces="${3:-0}"
 
-  local diff_opts=(--normal)
-  [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
+  if [ "${ignore_spaces}" = 1 ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'ignore_spaces' argument of 'assert_files_equal' will be removed in the next version. Use 'assert_files_equal_ignore_spaces' instead." >&3
+  fi
 
-  assert_file_exists "${file1}" || return 1
-  assert_file_exists "${file2}" || return 1
+  _file_assert_equal 0 "${ignore_spaces}" "${1}" "${2}"
+}
 
-  local difference
-  local compare_status=0
-  difference="$(diff "${diff_opts[@]}" "${file1}" "${file2}" 2>&1)" || compare_status=$?
-
-  [ "${compare_status}" -eq 0 ] && return 0
-
-  file_compare_failed "${compare_status}" "${difference}" || return 1
-
-  format_error "Files are not equal" "file" "${file1}" "other file" "${file2}" "difference" "${difference}" | flunk
+##
+# Asserts that two text files are equal, ignoring whitespace.
+#
+# Arguments:
+#   1. file1: First file.
+#   2. file2: Second file.
+##
+assert_files_equal_ignore_spaces() {
+  _file_assert_equal 0 1 "${1}" "${2}"
 }
 
 ##
@@ -518,14 +801,50 @@ assert_files_equal() {
 #   1. file1: First file.
 #   2. file2: Second file.
 #   3. ignore_spaces: Set to '1' to ignore blank lines and whitespace changes.
-#      Optional, defaults to '0'.
+#      Optional, defaults to '0'. Deprecated, use
+#      'assert_files_not_equal_ignore_spaces' instead.
+#
+# Globals:
+#   BATS_HELPERS_DEPRECATION_QUIET: Non-empty suppresses this library's
+#     deprecation notices.
 ##
 assert_files_not_equal() {
-  local file1="${1}"
-  local file2="${2}"
   local ignore_spaces="${3:-0}"
 
-  local diff_opts=(--normal)
+  if [ "${ignore_spaces}" = 1 ]; then
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'ignore_spaces' argument of 'assert_files_not_equal' will be removed in the next version. Use 'assert_files_not_equal_ignore_spaces' instead." >&3
+  fi
+
+  _file_assert_equal 1 "${ignore_spaces}" "${1}" "${2}"
+}
+
+##
+# Asserts that two text files are not equal, ignoring whitespace.
+#
+# Arguments:
+#   1. file1: First file.
+#   2. file2: Second file.
+##
+assert_files_not_equal_ignore_spaces() {
+  _file_assert_equal 1 1 "${1}" "${2}"
+}
+
+##
+# Asserts that two text files are equal, reporting the difference on failure.
+#
+# Arguments:
+#   1. negate: '1' to assert that the files differ.
+#   2. ignore_spaces: '1' to ignore blank lines and whitespace changes.
+#   3. file1: First file.
+#   4. file2: Second file.
+##
+_file_assert_equal() {
+  local negate="${1}"
+  local ignore_spaces="${2}"
+  local file1="${3}"
+  local file2="${4}"
+
+  local -a diff_opts=(--normal)
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
 
   assert_file_exists "${file1}" || return 1
@@ -535,11 +854,23 @@ assert_files_not_equal() {
   local compare_status=0
   difference="$(diff "${diff_opts[@]}" "${file1}" "${file2}" 2>&1)" || compare_status=$?
 
-  file_compare_failed "${compare_status}" "${difference}" || return 1
+  # A comparison that could not run is checked before the outcome, so that its
+  # status is never read as a difference between the files.
+  _file_compare_failed "${compare_status}" "${difference}" || return 1
 
-  [ "${compare_status}" -ne 0 ] && return 0
+  if [ "${negate}" = 1 ]; then
+    [ "${compare_status}" -ne 0 ] && return 0
 
-  format_error "Files are equal, but should not be" "file" "${file1}" "other file" "${file2}" | flunk
+    format_error "Files are equal, but should not be" "file" "${file1}" "other file" "${file2}" | flunk
+
+    return 1
+  fi
+
+  [ "${compare_status}" -eq 0 ] && return 0
+
+  format_error "Files are not equal" "file" "${file1}" "other file" "${file2}" "difference" "${difference}" | flunk
+
+  return 1
 }
 
 ##
@@ -560,9 +891,9 @@ assert_binary_files_equal() {
   local compare_status=0
   difference="$(cmp "${file1}" "${file2}" 2>&1)" || compare_status=$?
 
-  [ "${compare_status}" -eq 0 ] && return 0
+  _file_compare_failed "${compare_status}" "${difference}" || return 1
 
-  file_compare_failed "${compare_status}" "${difference}" || return 1
+  [ "${compare_status}" -eq 0 ] && return 0
 
   format_error "Files are not equal" "file" "${file1}" "other file" "${file2}" "difference" "${difference}" | flunk
 }
@@ -585,7 +916,7 @@ assert_binary_files_not_equal() {
   local compare_status=0
   difference="$(cmp "${file1}" "${file2}" 2>&1)" || compare_status=$?
 
-  file_compare_failed "${compare_status}" "${difference}" || return 1
+  _file_compare_failed "${compare_status}" "${difference}" || return 1
 
   [ "${compare_status}" -ne 0 ] && return 0
 
@@ -605,18 +936,38 @@ assert_binary_files_not_equal() {
 assert_dirs_equal() {
   local dir1="${1}"
   local dir2="${2}"
-  local file
 
   assert_dir_exists "${dir1}" || return 1
   assert_dir_exists "${dir2}" || return 1
 
-  for file in $(find "${dir1}/" -type f); do
-    assert_binary_files_equal "${file}" "${file/${dir1}/${dir2}}" || return 1
-  done
+  _file_dirs_equal_one_way "${dir1}" "${dir2}" || return 1
+  _file_dirs_equal_one_way "${dir2}" "${dir1}" || return 1
 
-  for file in $(find "${dir2}/" -type f); do
-    assert_binary_files_equal "${file}" "${file/${dir2}/${dir1}}" || return 1
-  done
+  return 0
+}
+
+##
+# Asserts that every file of one directory has an equal counterpart in another.
+#
+# Arguments:
+#   1. dir: Directory to walk.
+#   2. other: Directory the counterpart is expected in.
+##
+_file_dirs_equal_one_way() {
+  local dir="${1}"
+  local other="${2}"
+
+  local file
+  while IFS= read -r -d '' file; do
+    local counterpart="${other}/${file#"${dir}/"}"
+
+    if [ ! -e "${counterpart}" ]; then
+      format_error "Directory holds a file the other directory does not" "file" "${file}" "directory" "${dir}" "other directory" "${other}" | flunk
+      return 1
+    fi
+
+    assert_binary_files_equal "${file}" "${counterpart}" || return 1
+  done < <(find "${dir}/" -type f -print0)
 
   return 0
 }

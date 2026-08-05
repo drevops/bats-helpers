@@ -11,7 +11,7 @@
 #   1. string: String to check.
 ##
 assert_empty() {
-  if [ "${1-}" = "" ]; then
+  if [ -z "${1-}" ]; then
     return 0
   else
     format_error "String is not empty" "string" "${1}" | flunk
@@ -25,10 +25,10 @@ assert_empty() {
 #   1. string: String to check.
 ##
 assert_not_empty() {
-  if [ "${1-}" = "" ]; then
-    format_error "String is empty, but should not be" | flunk
-  else
+  if [ -n "${1-}" ]; then
     return 0
+  else
+    format_error "String is empty, but should not be" | flunk
   fi
 }
 
@@ -40,7 +40,9 @@ assert_not_empty() {
 #   2. actual: Actual string.
 ##
 assert_equal() {
-  if [ "${1-}" != "${2-}" ]; then
+  if [ "${1-}" = "${2-}" ]; then
+    return 0
+  else
     format_error "Strings are not equal" "expected" "${1-}" "actual" "${2-}" | flunk
   fi
 }
@@ -57,7 +59,7 @@ assert_equal() {
 #   2. needle: Substring to search for.
 ##
 assert_string_contains() {
-  string_assert_match "anywhere" 0 "literal" 0 "$@"
+  _string_assert_match "string" "anywhere" 0 "literal" 0 "$@"
 }
 
 ##
@@ -68,7 +70,7 @@ assert_string_contains() {
 #   2. needle: Substring to search for.
 ##
 assert_string_contains_case() {
-  string_assert_match "anywhere" 0 "literal" 1 "$@"
+  _string_assert_match "string" "anywhere" 0 "literal" 1 "$@"
 }
 
 ##
@@ -79,7 +81,7 @@ assert_string_contains_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_contains() {
-  string_assert_match "anywhere" 1 "literal" 0 "$@"
+  _string_assert_match "string" "anywhere" 1 "literal" 0 "$@"
 }
 
 ##
@@ -90,7 +92,7 @@ assert_string_not_contains() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_contains_case() {
-  string_assert_match "anywhere" 1 "literal" 1 "$@"
+  _string_assert_match "string" "anywhere" 1 "literal" 1 "$@"
 }
 
 ##
@@ -105,7 +107,7 @@ assert_string_not_contains_case() {
 #   2. needle: Extended regular expression to match.
 ##
 assert_string_matches() {
-  string_assert_match "anywhere" 0 "regex" 0 "$@"
+  _string_assert_match "string" "anywhere" 0 "regex" 0 "$@"
 }
 
 ##
@@ -116,7 +118,7 @@ assert_string_matches() {
 #   2. needle: Extended regular expression to match.
 ##
 assert_string_matches_case() {
-  string_assert_match "anywhere" 0 "regex" 1 "$@"
+  _string_assert_match "string" "anywhere" 0 "regex" 1 "$@"
 }
 
 ##
@@ -127,7 +129,7 @@ assert_string_matches_case() {
 #   2. needle: Extended regular expression to match.
 ##
 assert_string_not_matches() {
-  string_assert_match "anywhere" 1 "regex" 0 "$@"
+  _string_assert_match "string" "anywhere" 1 "regex" 0 "$@"
 }
 
 ##
@@ -138,7 +140,7 @@ assert_string_not_matches() {
 #   2. needle: Extended regular expression to match.
 ##
 assert_string_not_matches_case() {
-  string_assert_match "anywhere" 1 "regex" 1 "$@"
+  _string_assert_match "string" "anywhere" 1 "regex" 1 "$@"
 }
 
 ##
@@ -153,7 +155,7 @@ assert_string_not_matches_case() {
 #   2. needle: Format string, see 'string_format_to_regex'.
 ##
 assert_string_matches_format() {
-  string_assert_match "anywhere" 0 "format" 0 "$@"
+  _string_assert_match "string" "anywhere" 0 "format" 0 "$@"
 }
 
 ##
@@ -164,7 +166,7 @@ assert_string_matches_format() {
 #   2. needle: Format string, see 'string_format_to_regex'.
 ##
 assert_string_matches_format_case() {
-  string_assert_match "anywhere" 0 "format" 1 "$@"
+  _string_assert_match "string" "anywhere" 0 "format" 1 "$@"
 }
 
 ##
@@ -175,7 +177,7 @@ assert_string_matches_format_case() {
 #   2. needle: Format string, see 'string_format_to_regex'.
 ##
 assert_string_not_matches_format() {
-  string_assert_match "anywhere" 1 "format" 0 "$@"
+  _string_assert_match "string" "anywhere" 1 "format" 0 "$@"
 }
 
 ##
@@ -186,7 +188,7 @@ assert_string_not_matches_format() {
 #   2. needle: Format string, see 'string_format_to_regex'.
 ##
 assert_string_not_matches_format_case() {
-  string_assert_match "anywhere" 1 "format" 1 "$@"
+  _string_assert_match "string" "anywhere" 1 "format" 1 "$@"
 }
 
 ##
@@ -204,7 +206,7 @@ assert_string_not_matches_format_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_starts_with() {
-  string_assert_match "start" 0 "literal" 0 "$@"
+  _string_assert_match "string" "start" 0 "literal" 0 "$@"
 }
 
 ##
@@ -215,7 +217,7 @@ assert_string_starts_with() {
 #   2. needle: Substring to search for.
 ##
 assert_string_starts_with_case() {
-  string_assert_match "start" 0 "literal" 1 "$@"
+  _string_assert_match "string" "start" 0 "literal" 1 "$@"
 }
 
 ##
@@ -226,7 +228,7 @@ assert_string_starts_with_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_starts_with() {
-  string_assert_match "start" 1 "literal" 0 "$@"
+  _string_assert_match "string" "start" 1 "literal" 0 "$@"
 }
 
 ##
@@ -237,7 +239,7 @@ assert_string_not_starts_with() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_starts_with_case() {
-  string_assert_match "start" 1 "literal" 1 "$@"
+  _string_assert_match "string" "start" 1 "literal" 1 "$@"
 }
 
 ##
@@ -248,7 +250,7 @@ assert_string_not_starts_with_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_ends_with() {
-  string_assert_match "end" 0 "literal" 0 "$@"
+  _string_assert_match "string" "end" 0 "literal" 0 "$@"
 }
 
 ##
@@ -259,7 +261,7 @@ assert_string_ends_with() {
 #   2. needle: Substring to search for.
 ##
 assert_string_ends_with_case() {
-  string_assert_match "end" 0 "literal" 1 "$@"
+  _string_assert_match "string" "end" 0 "literal" 1 "$@"
 }
 
 ##
@@ -270,7 +272,7 @@ assert_string_ends_with_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_ends_with() {
-  string_assert_match "end" 1 "literal" 0 "$@"
+  _string_assert_match "string" "end" 1 "literal" 0 "$@"
 }
 
 ##
@@ -281,7 +283,7 @@ assert_string_not_ends_with() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_ends_with_case() {
-  string_assert_match "end" 1 "literal" 1 "$@"
+  _string_assert_match "string" "end" 1 "literal" 1 "$@"
 }
 
 ##
@@ -293,6 +295,8 @@ assert_string_not_ends_with_case() {
 #
 # Both anchors apply to the whole haystack rather than to each of its lines, so
 # a regular expression anchored with '^' or '$' behaves the same way.
+#
+# Runs inside the mock's own process, so it must not call 'flunk'.
 #
 # Arguments:
 #   1. haystack: String to search.
@@ -433,25 +437,34 @@ string_format_to_regex() {
 # Asserts that a needle matches a haystack, reporting how on failure.
 #
 # Arguments:
-#   1. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
-#   2. negate: '1' to assert that the needle does not match.
-#   3. mode: How the needle is read - 'literal', 'regex' or 'format'.
-#   4. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
-#   5. haystack: String to search.
-#   6. needle: String to search for.
+#   1. subject: What the haystack is - 'string', 'output', 'stderr' or 'file'.
+#      Opens the title with the matching noun and keys the haystack row.
+#   2. anchor: Where the needle must sit - 'anywhere', 'start' or 'end'.
+#   3. negate: '1' to assert that the needle does not match.
+#   4. mode: How the needle is read - 'literal', 'regex' or 'format'.
+#   5. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   6. haystack: String to search.
+#   7. needle: String to search for.
+#   8. file: Path the haystack was read from, reported as the 'file' row while
+#      the haystack reports under 'contents'. Required with subject 'file',
+#      absent otherwise.
 ##
-string_assert_match() {
-  if [ "$#" -ne 6 ]; then
+_string_assert_match() {
+  local expected_count=7
+  [ "${1-}" = "file" ] && expected_count=8
+
+  if [ "$#" -ne "${expected_count}" ]; then
     flunk "A haystack and a needle are required."
     return 1
   fi
 
-  local anchor="${1}"
-  local negate="${2}"
-  local mode="${3}"
-  local case_sensitive="${4}"
-  local haystack="${5}"
-  local needle="${6}"
+  local subject="${1}"
+  local anchor="${2}"
+  local negate="${3}"
+  local mode="${4}"
+  local case_sensitive="${5}"
+  local haystack="${6}"
+  local needle="${7}"
 
   ##
   ## Matching.
@@ -484,7 +497,7 @@ string_assert_match() {
   ##
 
   local noun
-  noun="$(string_needle_noun "${mode}")"
+  noun="$(_string_needle_noun "${mode}")"
 
   local verb
   local verb_third_person
@@ -509,11 +522,14 @@ string_assert_match() {
       ;;
   esac
 
+  local subject_noun
+  subject_noun="$(_string_subject_noun "${subject}")"
+
   local title
   if [ "${negate}" = "1" ]; then
-    title="String ${verb_third_person} ${noun}, but should not"
+    title="${subject_noun} ${verb_third_person} ${noun}, but should not"
   else
-    title="String does not ${verb} ${noun}"
+    title="${subject_noun} does not ${verb} ${noun}"
   fi
 
   # The setting that was in force is only worth naming when the other one would
@@ -525,10 +541,16 @@ string_assert_match() {
   local case_decided=0
   [ "${opposite_status}" -ne "${match_status}" ] && case_decided=1
 
-  local -a footer=()
-  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
+  local -a subject_rows=("${subject}" "${haystack}")
 
-  format_error "${title}" "string" "${haystack}" "${noun}" "${needle}" "${footer[@]}" | flunk
+  if [ "${subject}" = "file" ]; then
+    subject_rows=("file" "${8}" "contents" "${haystack}")
+  fi
+
+  local -a footer=()
+  mapfile -t footer < <(_string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
+
+  format_error "${title}" "${subject_rows[@]}" "${noun}" "${needle}" "${footer[@]}" | flunk
 }
 
 ##
@@ -540,7 +562,7 @@ string_assert_match() {
 # Outputs:
 #   STDOUT: The noun.
 ##
-string_needle_noun() {
+_string_needle_noun() {
   case "${1}" in
     regex)
       printf 'regular expression\n'
@@ -550,6 +572,32 @@ string_needle_noun() {
       ;;
     *)
       printf 'substring\n'
+      ;;
+  esac
+}
+
+##
+# Names the subject a match assertion reports under.
+#
+# Arguments:
+#   1. subject: What was searched - 'string', 'output', 'stderr' or 'file'.
+#
+# Outputs:
+#   STDOUT: The capitalised noun the title opens with.
+##
+_string_subject_noun() {
+  case "${1}" in
+    output)
+      printf 'Output\n'
+      ;;
+    stderr)
+      printf 'Stderr\n'
+      ;;
+    file)
+      printf 'File\n'
+      ;;
+    *)
+      printf 'String\n'
       ;;
   esac
 }
@@ -567,7 +615,7 @@ string_needle_noun() {
 #   STDOUT: Alternating keys and values, one per line, ending with a note naming
 #           the case setting when it is what decided the outcome.
 ##
-string_match_rows() {
+_string_match_rows() {
   local mode="${1}"
   local case_sensitive="${2}"
   local case_decided="${3}"
@@ -596,27 +644,27 @@ string_match_rows() {
 #   STDOUT: The generated string.
 ##
 string_random() {
-  local len="${1:-8}"
+  local length="${1:-8}"
   local alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   local ret=''
   local i
 
-  if ! [[ ${len} =~ ^[0-9]+$ ]]; then
+  if ! [[ ${length} =~ ^[0-9]+$ ]]; then
     flunk "Length must be a non-negative integer."
     return 1
   fi
 
   # Base 10 is explicit so that a zero-padded length is not read as octal.
-  len=$((10#${len}))
+  length=$((10#${length}))
 
   # A '/dev/urandom' pipeline is not usable here: its tools' STDERR reaches the
   # caller, where Bats' 'run' merges it into the returned value, and its reader
   # can outlive the writer and hang.
-  for ((i = 0; i < len; i++)); do
+  for ((i = 0; i < length; i++)); do
     ret="${ret}${alphabet:RANDOM%${#alphabet}:1}"
   done
 
-  echo "${ret}"
+  printf '%s\n' "${ret}"
 }
 
 ##
