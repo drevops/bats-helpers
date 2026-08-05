@@ -668,20 +668,20 @@ string_random() {
 }
 
 ##
-## Deprecated aliases, removed in the next version.
+## Deprecated aliases, removed in v2.1.
 ##
 
 assert_contains() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_contains' will be removed in the next version. Use 'assert_string_contains' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_contains' will be removed in v2.1. Use 'assert_string_contains' instead." >&3
   assert_string_contains "${2-}" "${1-}"
 }
 
 assert_not_contains() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_not_contains' will be removed in the next version. Use 'assert_string_not_contains' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_not_contains' will be removed in v2.1. Use 'assert_string_not_contains' instead." >&3
   assert_string_not_contains "${2-}" "${1-}"
 }
 
 random_string() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'random_string' will be removed in the next version. Use 'string_random' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'random_string' will be removed in v2.1. Use 'string_random' instead." >&3
   string_random "$@"
 }

@@ -48,7 +48,7 @@ assert_failure() {
   local expected=""
 
   if [ "${1-}" = "--status" ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_failure --status' will be removed in the next version. Use 'assert_failure_status' instead." >&3
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_failure --status' will be removed in v2.1. Use 'assert_failure_status' instead." >&3
 
     if [ "$#" -lt 2 ]; then
       flunk "Option '--status' requires an exit status."

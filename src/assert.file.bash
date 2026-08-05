@@ -401,7 +401,7 @@ _file_dir_exclude_names() {
   if [ -n "${BATS_HELPERS_ASSERT_DIR_EXCLUDE+x}" ]; then
     exclude_dirs+=("${BATS_HELPERS_ASSERT_DIR_EXCLUDE[@]}")
   elif [ -n "${ASSERT_DIR_EXCLUDE+x}" ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'ASSERT_DIR_EXCLUDE' will be removed in the next version. Use 'BATS_HELPERS_ASSERT_DIR_EXCLUDE' instead." >&3
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'ASSERT_DIR_EXCLUDE' will be removed in v2.1. Use 'BATS_HELPERS_ASSERT_DIR_EXCLUDE' instead." >&3
     exclude_dirs+=("${ASSERT_DIR_EXCLUDE[@]}")
   fi
 
@@ -777,7 +777,7 @@ assert_files_equal() {
   local ignore_spaces="${3:-0}"
 
   if [ "${ignore_spaces}" = 1 ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'ignore_spaces' argument of 'assert_files_equal' will be removed in the next version. Use 'assert_files_equal_ignore_spaces' instead." >&3
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'ignore_spaces' argument of 'assert_files_equal' will be removed in v2.1. Use 'assert_files_equal_ignore_spaces' instead." >&3
   fi
 
   _file_assert_equal 0 "${ignore_spaces}" "${1}" "${2}"
@@ -812,7 +812,7 @@ assert_files_not_equal() {
   local ignore_spaces="${3:-0}"
 
   if [ "${ignore_spaces}" = 1 ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'ignore_spaces' argument of 'assert_files_not_equal' will be removed in the next version. Use 'assert_files_not_equal_ignore_spaces' instead." >&3
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'ignore_spaces' argument of 'assert_files_not_equal' will be removed in v2.1. Use 'assert_files_not_equal_ignore_spaces' instead." >&3
   fi
 
   _file_assert_equal 1 "${ignore_spaces}" "${1}" "${2}"

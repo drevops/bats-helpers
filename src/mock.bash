@@ -58,7 +58,7 @@ _mock_resolve_tmp() {
   if [ -n "${BATS_HELPERS_MOCK_TMPDIR-}" ]; then
     dir="${BATS_HELPERS_MOCK_TMPDIR}"
   elif [ -n "${BATS_MOCK_TMPDIR-}" ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'BATS_MOCK_TMPDIR' will be removed in the next version. Use 'BATS_HELPERS_MOCK_TMPDIR' instead." >&3
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'BATS_MOCK_TMPDIR' will be removed in v2.1. Use 'BATS_HELPERS_MOCK_TMPDIR' instead." >&3
     dir="${BATS_MOCK_TMPDIR}"
   else
     dir="${BATS_TEST_TMPDIR-}"
@@ -193,7 +193,7 @@ mock_create() {
   # The notice is emitted here rather than from the mock, which runs as a
   # separate process with no file descriptor 3 to write to.
   if [ -z "${BATS_HELPERS_MOCK_USER-}" ] && [ -n "${_USER-}" ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: '_USER' will be removed in the next version. Use 'BATS_HELPERS_MOCK_USER' instead." >&3
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: '_USER' will be removed in v2.1. Use 'BATS_HELPERS_MOCK_USER' instead." >&3
   fi
 
   local index
@@ -2197,10 +2197,10 @@ _mock_verify_mock() {
 }
 
 ##
-## Deprecated aliases, removed in the next version.
+## Deprecated aliases, removed in v2.1.
 ##
 
 setup_mock() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'setup_mock' will be removed in the next version. Use 'mock_setup' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'setup_mock' will be removed in v2.1. Use 'mock_setup' instead." >&3
   mock_setup "$@"
 }

@@ -12,12 +12,12 @@ Assert a line by index. A negative index counts back from the end, so `-1` is th
 |----------------------------------|--------------------------------------------------------------------|
 | `assert_line`                    | Asserts that the line at an index equals a string                  |
 | `assert_line_not`                | Asserts that the line at an index does not equal a string          |
-| `assert_line_contains`           | Checks if the line at an index contains a string                   |
-| `assert_line_not_contains`       | Checks if the line at an index does not contain a string           |
-| `assert_line_matches`            | Checks if the line at an index matches a regular expression        |
-| `assert_line_not_matches`        | Checks if the line at an index does not match a regular expression |
-| `assert_line_matches_format`     | Checks if the line at an index matches a format string             |
-| `assert_line_not_matches_format` | Checks if the line at an index does not match a format string      |
+| `assert_line_contains`           | Asserts that the line at an index contains a string                |
+| `assert_line_not_contains`       | Asserts that the line at an index does not contain a string        |
+| `assert_line_matches`            | Asserts that the line at an index matches a regular expression     |
+| `assert_line_not_matches`        | Asserts that the line at an index does not match a regular expression |
+| `assert_line_matches_format`     | Asserts that the line at an index matches a format string          |
+| `assert_line_not_matches_format` | Asserts that the line at an index does not match a format string   |
 
 ## Any line
 
@@ -27,12 +27,12 @@ Assert that some line matches, without pinning which one. The positive reads `an
 |-------------------------------------|--------------------------------------------------------|
 | `assert_any_line`                   | Asserts that some line equals a string                 |
 | `assert_no_line`                    | Asserts that no line equals a string                   |
-| `assert_any_line_contains`          | Checks if some line contains a string                  |
-| `assert_no_line_contains`           | Checks if no line contains a string                    |
-| `assert_any_line_matches`           | Checks if some line matches a regular expression       |
-| `assert_no_line_matches`            | Checks if no line matches a regular expression         |
-| `assert_any_line_matches_format`    | Checks if some line matches a format string            |
-| `assert_no_line_matches_format`     | Checks if no line matches a format string              |
+| `assert_any_line_contains`          | Asserts that some line contains a string               |
+| `assert_no_line_contains`           | Asserts that no line contains a string                 |
+| `assert_any_line_matches`           | Asserts that some line matches a regular expression    |
+| `assert_no_line_matches`            | Asserts that no line matches a regular expression      |
+| `assert_any_line_matches_format`    | Asserts that some line matches a format string         |
+| `assert_no_line_matches_format`     | Asserts that no line matches a format string           |
 
 ## Counts
 
@@ -72,7 +72,7 @@ assert_line_count_contains 2 "error"
 An index outside the captured lines is an error naming both the index and the number of lines, rather than a comparison against an empty string that would read as an ordinary mismatch:
 
 ```text
-Line index 5 is out of range for output with 2 lines.
+Line index '5' is out of range for output with 2 lines.
 ```
 
 A failure shows the offending line in context rather than the whole stream. The mark overwrites the indent instead of being inserted, so the lines stay in the same column:

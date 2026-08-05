@@ -1,9 +1,9 @@
 # Migration
 
-Every name below still works and will keep working until `v2`. Each one prints a notice on file descriptor 3 when it is used, naming its replacement, so it shows up in the BATS output without being captured by `run` or by command substitution:
+Every name below still works and will keep working until `v2.1`. Each one prints a notice on file descriptor 3 when it is used, naming its replacement, so it shows up in the BATS output without being captured by `run` or by command substitution:
 
 ```text
-Deprecated: 'assert_not_git_repo' will be removed in the next version. Use 'assert_git_not_repo' instead.
+Deprecated: 'assert_not_git_repo' will be removed in v2.1. Use 'assert_git_not_repo' instead.
 ```
 
 Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence those notices while you migrate:

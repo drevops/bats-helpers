@@ -15,7 +15,7 @@ load _test_helper
 
   assert_not_git_repo "${BATS_TEST_TMPDIR}/fixture/not_git_repo" 3>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: 'assert_not_git_repo' will be removed in the next version. Use 'assert_git_not_repo' instead."
+  assert_file_contains "${notice}" "Deprecated: 'assert_not_git_repo' will be removed in v2.1. Use 'assert_git_not_repo' instead."
 }
 
 @test "assert_git_file_is_tracked" {
@@ -27,7 +27,7 @@ load _test_helper
 
   assert_git_file_is_tracked "1.txt" "${BATS_TEST_TMPDIR}/fixture/git_repo" 3>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: 'assert_git_file_is_tracked' will be removed in the next version. Use 'assert_git_file_tracked' instead."
+  assert_file_contains "${notice}" "Deprecated: 'assert_git_file_is_tracked' will be removed in v2.1. Use 'assert_git_file_tracked' instead."
 }
 
 @test "assert_git_file_is_not_tracked" {
@@ -40,7 +40,7 @@ load _test_helper
 
   assert_git_file_is_not_tracked "2.txt" "${BATS_TEST_TMPDIR}/fixture/git_repo" 3>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: 'assert_git_file_is_not_tracked' will be removed in the next version. Use 'assert_git_file_not_tracked' instead."
+  assert_file_contains "${notice}" "Deprecated: 'assert_git_file_is_not_tracked' will be removed in v2.1. Use 'assert_git_file_not_tracked' instead."
 }
 
 @test "assert_contains" {
@@ -48,7 +48,7 @@ load _test_helper
 
   assert_contains "needle" "some needle in a haystack" 3>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: 'assert_contains' will be removed in the next version. Use 'assert_string_contains' instead."
+  assert_file_contains "${notice}" "Deprecated: 'assert_contains' will be removed in v2.1. Use 'assert_string_contains' instead."
 }
 
 @test "assert_not_contains" {
@@ -56,7 +56,7 @@ load _test_helper
 
   assert_not_contains "otherneedle" "some needle in a haystack" 3>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: 'assert_not_contains' will be removed in the next version. Use 'assert_string_not_contains' instead."
+  assert_file_contains "${notice}" "Deprecated: 'assert_not_contains' will be removed in v2.1. Use 'assert_string_not_contains' instead."
 }
 
 @test "random_string" {
@@ -67,7 +67,7 @@ load _test_helper
   assert_success
   assert_equal 5 "${#output}"
   assert_empty "${output//[a-zA-Z0-9]/}"
-  assert_file_contains "${notice}" "Deprecated: 'random_string' will be removed in the next version. Use 'string_random' instead."
+  assert_file_contains "${notice}" "Deprecated: 'random_string' will be removed in v2.1. Use 'string_random' instead."
 }
 
 @test "run_steps" {
@@ -79,7 +79,7 @@ load _test_helper
   run echo "Some Substring"
   run_steps "assert" 3>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: 'run_steps' will be removed in the next version. Use 'steps_run' instead."
+  assert_file_contains "${notice}" "Deprecated: 'run_steps' will be removed in v2.1. Use 'steps_run' instead."
 }
 
 @test "setup_mock" {
@@ -88,7 +88,7 @@ load _test_helper
   setup_mock 3>"${notice}"
 
   assert_dir_exists "${BATS_HELPERS_MOCK_TMPDIR}"
-  assert_file_contains "${notice}" "Deprecated: 'setup_mock' will be removed in the next version. Use 'mock_setup' instead."
+  assert_file_contains "${notice}" "Deprecated: 'setup_mock' will be removed in v2.1. Use 'mock_setup' instead."
 }
 
 @test "mktouch" {
@@ -97,7 +97,7 @@ load _test_helper
   mktouch "${BATS_TEST_TMPDIR}/dir1/dir2/file.txt" 3>"${notice}"
 
   assert_file_exists "${BATS_TEST_TMPDIR}/dir1/dir2/file.txt"
-  assert_file_contains "${notice}" "Deprecated: 'mktouch' will be removed in the next version. Use 'file_mktouch' instead."
+  assert_file_contains "${notice}" "Deprecated: 'mktouch' will be removed in v2.1. Use 'file_mktouch' instead."
 }
 
 @test "file_add_var with the deprecated backup directory variable" {
@@ -108,7 +108,7 @@ load _test_helper
   file_add_var "${BATS_TEST_TMPDIR}/.env" "VAR" "value" 3>"${notice}"
 
   assert_file_exists "${BATS_TEST_TMPDIR}/backups/${BATS_TEST_TMPDIR#/}/.env"
-  assert_file_contains "${notice}" "Deprecated: 'BATS_HELPERS_BACKUP_DIR' will be removed in the next version. Use 'BATS_HELPERS_FILE_BACKUP_DIR' instead."
+  assert_file_contains "${notice}" "Deprecated: 'BATS_HELPERS_BACKUP_DIR' will be removed in v2.1. Use 'BATS_HELPERS_FILE_BACKUP_DIR' instead."
 }
 
 @test "assert_failure with the deprecated status option" {
@@ -117,7 +117,7 @@ load _test_helper
   run bash -c 'exit 2'
   assert_failure --status 2 3>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: 'assert_failure --status' will be removed in the next version. Use 'assert_failure_status' instead."
+  assert_file_contains "${notice}" "Deprecated: 'assert_failure --status' will be removed in v2.1. Use 'assert_failure_status' instead."
 }
 
 @test "assert_files_equal and assert_files_not_equal with the deprecated ignore_spaces argument" {
@@ -129,8 +129,8 @@ load _test_helper
   assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt" 1 3>"${notice}"
   assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt" 1 3>>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: the 'ignore_spaces' argument of 'assert_files_equal' will be removed in the next version. Use 'assert_files_equal_ignore_spaces' instead."
-  assert_file_contains "${notice}" "Deprecated: the 'ignore_spaces' argument of 'assert_files_not_equal' will be removed in the next version. Use 'assert_files_not_equal_ignore_spaces' instead."
+  assert_file_contains "${notice}" "Deprecated: the 'ignore_spaces' argument of 'assert_files_equal' will be removed in v2.1. Use 'assert_files_equal_ignore_spaces' instead."
+  assert_file_contains "${notice}" "Deprecated: the 'ignore_spaces' argument of 'assert_files_not_equal' will be removed in v2.1. Use 'assert_files_not_equal_ignore_spaces' instead."
 }
 
 @test "trim_file" {
@@ -141,7 +141,7 @@ load _test_helper
   trim_file "${BATS_TEST_TMPDIR}/file.txt" 3>"${notice}"
 
   assert_file_not_contains "${BATS_TEST_TMPDIR}/file.txt" "line2"
-  assert_file_contains "${notice}" "Deprecated: 'trim_file' will be removed in the next version. Use 'file_trim' instead."
+  assert_file_contains "${notice}" "Deprecated: 'trim_file' will be removed in v2.1. Use 'file_trim' instead."
 }
 
 @test "read_env" {
@@ -154,7 +154,7 @@ load _test_helper
 
   assert_success
   assert_output_contains "val1"
-  assert_file_contains "${notice}" "Deprecated: 'read_env' will be removed in the next version. Use 'file_read_env' instead."
+  assert_file_contains "${notice}" "Deprecated: 'read_env' will be removed in v2.1. Use 'file_read_env' instead."
 
   popd
 }
@@ -166,12 +166,12 @@ load _test_helper
   add_var_to_file "${BATS_TEST_TMPDIR}/.env" "VAR" "value" 3>"${notice}"
 
   assert_file_contains "${BATS_TEST_TMPDIR}/.env" "VAR=value"
-  assert_file_contains "${notice}" "Deprecated: 'add_var_to_file' will be removed in the next version. Use 'file_add_var' instead."
+  assert_file_contains "${notice}" "Deprecated: 'add_var_to_file' will be removed in v2.1. Use 'file_add_var' instead."
 
   restore_file "${BATS_TEST_TMPDIR}/.env" 3>>"${notice}"
 
   assert_file_not_contains "${BATS_TEST_TMPDIR}/.env" "VAR=value"
-  assert_file_contains "${notice}" "Deprecated: 'restore_file' will be removed in the next version. Use 'file_restore' instead."
+  assert_file_contains "${notice}" "Deprecated: 'restore_file' will be removed in v2.1. Use 'file_restore' instead."
 }
 
 @test "tui_run with the deprecated nothing answer" {
@@ -181,7 +181,7 @@ load _test_helper
   tui_run "nothing" "custom answer2" 3>"${notice}"
 
   assert_output_contains "default answer1"
-  assert_file_contains "${notice}" "Deprecated: the 'nothing' answer will be removed in the next version. Use an empty string instead."
+  assert_file_contains "${notice}" "Deprecated: the 'nothing' answer will be removed in v2.1. Use an empty string instead."
 }
 
 @test "steps_run with the deprecated debug variable" {
@@ -194,7 +194,7 @@ load _test_helper
   )
   steps_run "assert" 3>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: 'RUN_STEPS_DEBUG' will be removed in the next version. Use 'BATS_HELPERS_STEPS_DEBUG' instead."
+  assert_file_contains "${notice}" "Deprecated: 'RUN_STEPS_DEBUG' will be removed in v2.1. Use 'BATS_HELPERS_STEPS_DEBUG' instead."
   assert_file_contains "${notice}" "  > Total steps : 1"
 }
 
@@ -206,7 +206,7 @@ load _test_helper
 
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing" 3>"${notice}"
 
-  assert_file_contains "${notice}" "Deprecated: 'ASSERT_DIR_EXCLUDE' will be removed in the next version. Use 'BATS_HELPERS_ASSERT_DIR_EXCLUDE' instead."
+  assert_file_contains "${notice}" "Deprecated: 'ASSERT_DIR_EXCLUDE' will be removed in v2.1. Use 'BATS_HELPERS_ASSERT_DIR_EXCLUDE' instead."
 }
 
 @test "_mock_prepare_tmp with the deprecated temporary directory variable" {
@@ -218,7 +218,7 @@ load _test_helper
 
   assert_success
   assert_output "${BATS_TEST_TMPDIR}/custom/bats-helpers-mock"
-  assert_file_contains "${notice}" "Deprecated: 'BATS_MOCK_TMPDIR' will be removed in the next version. Use 'BATS_HELPERS_MOCK_TMPDIR' instead."
+  assert_file_contains "${notice}" "Deprecated: 'BATS_MOCK_TMPDIR' will be removed in v2.1. Use 'BATS_HELPERS_MOCK_TMPDIR' instead."
 }
 
 @test "mock_get_call_user with the deprecated user variable" {
@@ -229,7 +229,7 @@ load _test_helper
   curl example.com
 
   assert_equal "someoneelse" "$(mock_get_call_user "${mock_curl}")"
-  assert_file_contains "${notice}" "Deprecated: '_USER' will be removed in the next version. Use 'BATS_HELPERS_MOCK_USER' instead."
+  assert_file_contains "${notice}" "Deprecated: '_USER' will be removed in v2.1. Use 'BATS_HELPERS_MOCK_USER' instead."
 }
 
 @test "fixture_export_codebase with the deprecated enable variable" {
@@ -240,7 +240,7 @@ load _test_helper
   fixture_export_codebase "${BATS_TEST_TMPDIR}/build" 3>"${notice}"
 
   assert_file_exists "${BATS_TEST_TMPDIR}/build/README.md"
-  assert_file_contains "${notice}" "Deprecated: 'BATS_FIXTURE_EXPORT_CODEBASE_ENABLED' will be removed in the next version. Use 'BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED' instead."
+  assert_file_contains "${notice}" "Deprecated: 'BATS_FIXTURE_EXPORT_CODEBASE_ENABLED' will be removed in v2.1. Use 'BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED' instead."
 }
 
 @test "Prefixed variables take precedence and emit no notices" {

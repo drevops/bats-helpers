@@ -78,15 +78,20 @@ retry_run 10 0.5 curl -sf "http://localhost:8080/health"
 assert_string_contains "${BATS_HELPERS_RETRY_OUTPUT}" "\"status\":\"ok\""
 ```
 
-When every bound is exhausted the failure names the elapsed time, the attempt count and the last observed state, so the run does not have to be reproduced by hand to find out what it was doing:
+When every bound is exhausted the failure names the bound that was reached, the elapsed time, the attempt count and the last observed state, so the run does not have to be reproduced by hand to find out what it was doing:
 
 ```text
-Command 'curl' did not succeed within 5 attempt(s).
-attempts: 5
-elapsed: 4 second(s)
-last status: 7
-last output: 'curl: (7) Failed to connect to localhost port 8080'
+-- Command did not succeed within the retry limit --
+command     : curl
+limit       : 5 attempt(s)
+attempts    : 5
+elapsed     : 4 second(s)
+last status : 7
+last output : curl: (7) Failed to connect to localhost port 8080
+--
 ```
+
+The `limit` row names whichever bound ended the retry, so an exhausted attempt count reads as `5 attempt(s)` and an exhausted deadline as `the 10 second deadline`.
 
 ## What an attempt sees
 

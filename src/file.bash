@@ -99,7 +99,7 @@ file_backup_path() {
   if [ -n "${BATS_HELPERS_FILE_BACKUP_DIR-}" ]; then
     root="${BATS_HELPERS_FILE_BACKUP_DIR}"
   elif [ -n "${BATS_HELPERS_BACKUP_DIR-}" ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'BATS_HELPERS_BACKUP_DIR' will be removed in the next version. Use 'BATS_HELPERS_FILE_BACKUP_DIR' instead." >&3
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'BATS_HELPERS_BACKUP_DIR' will be removed in v2.1. Use 'BATS_HELPERS_FILE_BACKUP_DIR' instead." >&3
     root="${BATS_HELPERS_BACKUP_DIR}"
   else
     root="${BATS_TEST_TMPDIR:+${BATS_TEST_TMPDIR}/bats-helpers-backup}"
@@ -161,30 +161,30 @@ file_restore() {
 }
 
 ##
-## Deprecated aliases, removed in the next version.
+## Deprecated aliases, removed in v2.1.
 ##
 
 mktouch() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'mktouch' will be removed in the next version. Use 'file_mktouch' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'mktouch' will be removed in v2.1. Use 'file_mktouch' instead." >&3
   file_mktouch "$@"
 }
 
 trim_file() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'trim_file' will be removed in the next version. Use 'file_trim' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'trim_file' will be removed in v2.1. Use 'file_trim' instead." >&3
   file_trim "$@"
 }
 
 read_env() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'read_env' will be removed in the next version. Use 'file_read_env' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'read_env' will be removed in v2.1. Use 'file_read_env' instead." >&3
   file_read_env "$@"
 }
 
 add_var_to_file() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'add_var_to_file' will be removed in the next version. Use 'file_add_var' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'add_var_to_file' will be removed in v2.1. Use 'file_add_var' instead." >&3
   file_add_var "$@"
 }
 
 restore_file() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'restore_file' will be removed in the next version. Use 'file_restore' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'restore_file' will be removed in v2.1. Use 'file_restore' instead." >&3
   file_restore "$@"
 }

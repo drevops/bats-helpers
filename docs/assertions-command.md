@@ -8,17 +8,17 @@ Source: [`src/assert.command.bash`](../src/assert.command.bash)
 
 Use these after running a command with `run`.
 
-| Function Name                | Description                                            |
-|------------------------------|--------------------------------------------------------|
-| `assert_success`             | Asserts that a command succeeds                        |
-| `assert_failure`             | Asserts that a command fails                           |
-| `assert_output`              | Asserts that a command outputs an exact string         |
-| `assert_output_contains`     | Checks if output contains a specific string            |
-| `assert_output_not_contains` | Checks if output does not contain a specific string    |
-| `assert_output_matches`      | Checks if output matches a regular expression          |
-| `assert_output_not_matches`  | Checks if output does not match a regular expression   |
-| `assert_output_matches_format`     | Checks if output matches a format string         |
-| `assert_output_not_matches_format` | Checks if output does not match a format string  |
+| Function Name                       | Description                                          |
+|-------------------------------------|------------------------------------------------------|
+| `assert_success`                    | Asserts that a command succeeds                      |
+| `assert_failure`                    | Asserts that a command fails                         |
+| `assert_output`                     | Asserts that a command outputs an exact string       |
+| `assert_output_contains`            | Asserts that output contains a substring             |
+| `assert_output_not_contains`        | Asserts that output does not contain a substring     |
+| `assert_output_matches`             | Asserts that output matches a regular expression     |
+| `assert_output_not_matches`         | Asserts that output does not match a regular expression |
+| `assert_output_matches_format`      | Asserts that output matches a format string          |
+| `assert_output_not_matches_format`  | Asserts that output does not match a format string   |
 
 The six `contains`, `matches` and `matches_format` assertions each have a `_case` twin that matches case-sensitively - `assert_output_contains_case`, `assert_output_not_matches_format_case` and so on. See [Match modes](match-modes.md).
 
@@ -79,17 +79,17 @@ assert_status_command_not_found
 
 ## Standard error
 
-| Function Name                | Description                                                 |
-|------------------------------|-------------------------------------------------------------|
-| `assert_stderr`              | Asserts that a command writes an exact string to STDERR     |
-| `assert_stderr_contains`     | Checks if STDERR contains a specific string                 |
-| `assert_stderr_not_contains` | Checks if STDERR does not contain a specific string         |
-| `assert_stderr_matches`      | Checks if STDERR matches a regular expression               |
-| `assert_stderr_not_matches`  | Checks if STDERR does not match a regular expression        |
-| `assert_stderr_matches_format`     | Checks if STDERR matches a format string              |
-| `assert_stderr_not_matches_format` | Checks if STDERR does not match a format string       |
-| `assert_stderr_empty`        | Asserts that a command wrote nothing to STDERR              |
-| `assert_stderr_captured`     | Asserts that STDERR was captured separately from the output |
+| Function Name                       | Description                                                 |
+|-------------------------------------|-------------------------------------------------------------|
+| `assert_stderr`                     | Asserts that a command writes an exact string to STDERR     |
+| `assert_stderr_contains`            | Asserts that STDERR contains a substring                    |
+| `assert_stderr_not_contains`        | Asserts that STDERR does not contain a substring            |
+| `assert_stderr_matches`             | Asserts that STDERR matches a regular expression            |
+| `assert_stderr_not_matches`         | Asserts that STDERR does not match a regular expression     |
+| `assert_stderr_matches_format`      | Asserts that STDERR matches a format string                 |
+| `assert_stderr_not_matches_format`  | Asserts that STDERR does not match a format string          |
+| `assert_stderr_empty`               | Asserts that a command wrote nothing to STDERR              |
+| `assert_stderr_captured`            | Asserts that STDERR was captured separately from the output |
 
 The six `contains`, `matches` and `matches_format` assertions each have a `_case` twin that matches case-sensitively. See [Match modes](match-modes.md).
 

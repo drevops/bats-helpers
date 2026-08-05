@@ -182,7 +182,7 @@ Prose documentation lives in `docs/`, one page per module of `src/`, so the ques
 
 `README.md` holds only what a reader needs before choosing a page: the feature list, installation, the loader snippet, the index of documentation pages, the API reference table, and the contributing pointer. Prose that explains how a helper behaves belongs on the helper's page, never in the README.
 
-The API reference table in `README.md` is the index of the entire public surface: one row per public function, giving the name as inline code, a link to the source file that defines it, a one-line description, and a link to the heading that documents it. It is ordered by module in `load.bash` source order, and within a module in the order the functions are defined.
+The API reference table in `README.md` is the index of the entire public surface: one row per public function, giving the name as inline code, a link to the source file that defines it, a one-line description, and a link to the heading that documents it. It is ordered by module in `load.bash` source order, and within a module in the order that module's page presents its functions, so the Documentation column runs down each page's sections in turn rather than jumping between them.
 
 **Any change to the public surface updates the documentation in the same commit**, and the change is not complete until all of the following hold:
 
