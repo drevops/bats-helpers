@@ -41,3 +41,11 @@ A deprecated variable is read only when its replacement is unset or empty, so ex
 | `assert_files_equal <a> <b> 1` | `assert_files_equal_ignore_spaces <a> <b>` | Only the `1` form is deprecated. `assert_files_equal <a> <b>` and `assert_files_equal <a> <b> 0` stay as they are. |
 | `assert_files_not_equal <a> <b> 1` | `assert_files_not_equal_ignore_spaces <a> <b>` | As above. |
 | `nothing` as a TUI answer | an empty string | `declare -a answers=("nothing")` becomes `declare -a answers=("")`. |
+
+## Behaviour changes
+
+These are not renames: the name is unchanged and no notice is printed, so review call sites when upgrading.
+
+| Surface | Before | Now |
+| --- | --- | --- |
+| `assert_dir_contains_string`, `assert_dir_not_contains_string` | Case-sensitive; the string was read as a `grep` basic regular expression; the matched file list was printed to STDOUT | Case-insensitive and literal, with `_case` twins; a regular expression search is `assert_dir_matches` and friends, reading extended regular expressions; matched files are reported inside the failure report only |

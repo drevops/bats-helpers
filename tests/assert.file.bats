@@ -404,8 +404,16 @@ case       : insensitive
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
 
   assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
+  assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "EXISTING"
 
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "non-existing"
+  assert_failure
+  assert_output_contains "-- Directory does not contain substring --"
+  assert_output_contains "match mode : literal"
+  assert_output_contains "case       : insensitive"
+
+  # The string is a literal, not a regular expression.
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "exist.*"
   assert_failure
 
   run assert_dir_contains_string "${BATS_TEST_TMPDIR}/non_existing"
@@ -435,11 +443,19 @@ case       : insensitive
 
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "non-existing"
 
+  # The string is a literal, not a regular expression.
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "exist.*"
+
   run assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
   assert_failure
+  assert_output_contains "-- Directory contains substring, but should not --"
   assert_output_contains "fixture/1.txt"
   assert_output_contains "fixture/3.txt"
   assert_output_not_contains "fixture/2.txt"
+
+  run assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "EXISTING"
+  assert_failure
+  assert_output_contains "it does not match with the '_case' suffix"
 
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/non_existing" "existing"
 
@@ -457,6 +473,106 @@ case       : insensitive
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/scripts/vendor three/2.txt"
   declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=(vendor2 "vendor three")
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "existing"
+}
+
+@test "assert_dir_contains_string_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_contains_string_case "${BATS_TEST_TMPDIR}/fixture" "existing"
+
+  run assert_dir_contains_string_case "${BATS_TEST_TMPDIR}/fixture" "EXISTING"
+  assert_failure
+  assert_output_contains "case       : sensitive"
+  assert_output_contains "note       : it matches without the '_case' suffix"
+
+  run assert_dir_contains_string_case "${BATS_TEST_TMPDIR}/non_existing" "existing"
+  assert_failure
+  assert_output_contains "does not exist"
+}
+
+@test "assert_dir_not_contains_string_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_not_contains_string_case "${BATS_TEST_TMPDIR}/fixture" "EXISTING"
+
+  # A directory that does not exist cannot contain the string.
+  assert_dir_not_contains_string_case "${BATS_TEST_TMPDIR}/non_existing" "existing"
+
+  run assert_dir_not_contains_string_case "${BATS_TEST_TMPDIR}/fixture" "existing"
+  assert_failure
+  assert_output_contains "-- Directory contains substring, but should not --"
+  assert_output_contains "fixture/1.txt"
+}
+
+@test "assert_dir_matches" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "Deleted 12 files in 0.5s" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" 'Deleted [0-9]+ files'
+  assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" 'DELETED [0-9]+ files'
+
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" 'Removed [0-9]+ files'
+  assert_failure
+  assert_output_contains "-- Directory does not match regular expression --"
+
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/non_existing" 'Deleted [0-9]+ files'
+  assert_failure
+  assert_output_contains "does not exist"
+
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" '['
+  assert_failure
+  assert_output_contains "Invalid regular expression '['."
+}
+
+@test "assert_dir_matches_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "Deleted 12 files in 0.5s" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_matches_case "${BATS_TEST_TMPDIR}/fixture" 'Deleted [0-9]+ files'
+
+  run assert_dir_matches_case "${BATS_TEST_TMPDIR}/fixture" 'DELETED [0-9]+ files'
+  assert_failure
+  assert_output_contains "it matches without the '_case' suffix"
+
+  run assert_dir_matches_case "${BATS_TEST_TMPDIR}/non_existing" 'Deleted [0-9]+ files'
+  assert_failure
+  assert_output_contains "does not exist"
+}
+
+@test "assert_dir_not_matches" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "Deleted 12 files in 0.5s" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_not_matches "${BATS_TEST_TMPDIR}/fixture" 'Removed [0-9]+ files'
+
+  # A directory that does not exist cannot match.
+  assert_dir_not_matches "${BATS_TEST_TMPDIR}/non_existing" 'Deleted [0-9]+ files'
+
+  run assert_dir_not_matches "${BATS_TEST_TMPDIR}/fixture" 'DELETED [0-9]+ files'
+  assert_failure
+  assert_output_contains "-- Directory matches regular expression, but should not --"
+  assert_output_contains "fixture/1.txt"
+
+  # An expression that does not compile is an error rather than a mismatch.
+  run assert_dir_not_matches "${BATS_TEST_TMPDIR}/fixture" '['
+  assert_failure
+  assert_output_contains "Invalid regular expression '['."
+}
+
+@test "assert_dir_not_matches_case" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  echo "Deleted 12 files in 0.5s" >"${BATS_TEST_TMPDIR}/fixture/1.txt"
+
+  assert_dir_not_matches_case "${BATS_TEST_TMPDIR}/fixture" 'DELETED [0-9]+ files'
+
+  # A directory that does not exist cannot match.
+  assert_dir_not_matches_case "${BATS_TEST_TMPDIR}/non_existing" 'Deleted [0-9]+ files'
+
+  run assert_dir_not_matches_case "${BATS_TEST_TMPDIR}/fixture" 'Deleted [0-9]+ files'
+  assert_failure
+  assert_output_contains "-- Directory matches regular expression, but should not --"
 }
 
 @test "assert_files_equal" {

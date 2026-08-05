@@ -382,7 +382,7 @@ assert_file_not_matches_format_case() {
 }
 
 ##
-# Builds the 'grep' parameters excluding directories from a recursive search.
+# Writes the directory names excluded from a recursive content search.
 #
 # Globals:
 #   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
@@ -392,10 +392,10 @@ assert_file_not_matches_format_case() {
 #     deprecation notices.
 #
 # Outputs:
-#   STDOUT: One '--exclude-dir' parameter per line, so that a directory name
-#     containing spaces survives being read back into an array.
+#   STDOUT: One directory name per line, so that a name containing spaces
+#     survives being read back into an array.
 ##
-file_dir_exclude_params() {
+file_dir_exclude_names() {
   local -a exclude_dirs=(".git" ".idea" "vendor" "node_modules")
 
   if [ -n "${BATS_HELPERS_ASSERT_DIR_EXCLUDE+x}" ]; then
@@ -407,14 +407,180 @@ file_dir_exclude_params() {
 
   local exclude_dir
   for exclude_dir in "${exclude_dirs[@]}"; do
-    [ -n "${exclude_dir}" ] && printf '%s\n' "--exclude-dir=${exclude_dir}"
+    [ -n "${exclude_dir}" ] && printf '%s\n' "${exclude_dir}"
   done
 
   return 0
 }
 
 ##
-# Asserts that a directory exists and contains a string in one of its files.
+# Writes the paths of the files of a directory whose contents a needle matches.
+#
+# Regular files only are searched, and binary files are skipped. The contents
+# of each file are matched as one string, so a needle may span lines and the
+# '^' and '$' anchors of a regular expression apply to the whole file.
+#
+# Arguments:
+#   1. mode: How the needle is read - 'literal' or 'regex'.
+#   2. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   3. dir: Directory to search.
+#   4. needle: String to search for.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+#
+# Outputs:
+#   STDOUT: One matching path per line.
+##
+file_dir_match_files() {
+  local mode="${1}"
+  local case_sensitive="${2}"
+  local dir="${3}"
+  local needle="${4}"
+
+  local -a exclude_names
+  mapfile -t exclude_names < <(file_dir_exclude_names)
+
+  local -a prune=()
+  local name
+
+  for name in "${exclude_names[@]}"; do
+    [ "${#prune[@]}" -gt 0 ] && prune+=(-o)
+    prune+=(-name "${name}")
+  done
+
+  local file
+  local contents
+
+  while IFS= read -r -d '' file; do
+    # Reading a binary file into a Bash string would stop at its first NUL, so
+    # binaries are told apart first, with the same probe the fixture serialiser
+    # uses.
+    if [ -s "${file}" ] && ! LC_ALL=C grep -Iq '^' "${file}"; then
+      continue
+    fi
+
+    contents="$(cat "${file}")"
+
+    if string_match "${contents}" "${needle}" "${mode}" "${case_sensitive}" "anywhere"; then
+      printf '%s\n' "${file}"
+    fi
+  done < <(find "${dir}" -type d \( "${prune[@]}" \) -prune -o -type f -print0)
+
+  return 0
+}
+
+##
+# Asserts that a needle matches the contents of the files of a directory.
+#
+# A negated assertion passes for a directory that does not exist, which cannot
+# hold the needle; a positive one asserts that the directory exists first. The
+# files the needle matched are reported on the negated polarity, where they are
+# the evidence.
+#
+# Arguments:
+#   1. negate: '1' to assert that the needle matches no file.
+#   2. mode: How the needle is read - 'literal' or 'regex'.
+#   3. case_sensitive: '1' to match case-sensitively, '0' to ignore case.
+#   4. dir: Directory to search.
+#   5. needle: String to search for.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+file_assert_dir_match() {
+  if [ "$#" -ne 5 ]; then
+    flunk "A directory and a string are required."
+    return 1
+  fi
+
+  local negate="${1}"
+  local mode="${2}"
+  local case_sensitive="${3}"
+  local dir="${4}"
+  local needle="${5}"
+
+  if [ "${negate}" = "1" ]; then
+    [ ! -d "${dir}" ] && return 0
+  else
+    assert_dir_exists "${dir}" || return 1
+  fi
+
+  # An expression that does not compile is an error rather than a mismatch, and
+  # is checked up front so that it cannot pass silently over a tree with no
+  # file to fail against.
+  if [ "${mode}" = "regex" ]; then
+    local needle_status=0
+    string_match "" "${needle}" "regex" "${case_sensitive}" "anywhere" || needle_status=$?
+
+    if [ "${needle_status}" -eq 2 ]; then
+      flunk "Invalid regular expression '${needle}'."
+      return 1
+    fi
+  fi
+
+  local files
+  files="$(file_dir_match_files "${mode}" "${case_sensitive}" "${dir}" "${needle}")"
+
+  if [ "${negate}" = "1" ]; then
+    [ -z "${files}" ] && return 0
+  else
+    [ -n "${files}" ] && return 0
+  fi
+
+  ##
+  ## Failure report.
+  ##
+
+  local noun
+  noun="$(string_needle_noun "${mode}")"
+
+  local verb="contain"
+  local verb_third_person="contains"
+
+  if [ "${mode}" != "literal" ]; then
+    verb="match"
+    verb_third_person="matches"
+  fi
+
+  local title
+  if [ "${negate}" = "1" ]; then
+    title="Directory ${verb_third_person} ${noun}, but should not"
+  else
+    title="Directory does not ${verb} ${noun}"
+  fi
+
+  # The setting that was in force is only worth naming when the other one would
+  # have decided the assertion the other way.
+  local opposite_case=$((1 - case_sensitive))
+  local opposite_files
+  opposite_files="$(file_dir_match_files "${mode}" "${opposite_case}" "${dir}" "${needle}")"
+
+  local matched=0
+  [ -n "${files}" ] && matched=1
+
+  local opposite_matched=0
+  [ -n "${opposite_files}" ] && opposite_matched=1
+
+  local case_decided=0
+  [ "${matched}" -ne "${opposite_matched}" ] && case_decided=1
+
+  local -a footer=()
+  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
+
+  if [ "${negate}" = "1" ]; then
+    format_error "${title}" "directory" "${dir}" "${noun}" "${needle}" "${footer[@]}" "files" "${files}" | flunk
+    return 1
+  fi
+
+  format_error "${title}" "directory" "${dir}" "${noun}" "${needle}" "${footer[@]}" | flunk
+}
+
+##
+# Asserts that a directory exists and contains a string in one of its files,
+# ignoring case.
 #
 # Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
 # always excluded from the search.
@@ -428,23 +594,31 @@ file_dir_exclude_params() {
 #     the search.
 ##
 assert_dir_contains_string() {
-  local dir="${1}"
-  local string="${2}"
-
-  assert_dir_exists "${dir}" || return 1
-
-  local -a exclude_params
-  mapfile -t exclude_params < <(file_dir_exclude_params)
-
-  if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
-    return 0
-  else
-    format_error "Directory does not contain string" "directory" "${dir}" "string" "${string}" | flunk
-  fi
+  file_assert_dir_match 0 "literal" 0 "$@"
 }
 
 ##
-# Asserts that a directory does not contain a string in any of its files.
+# Asserts that a directory exists and contains a string in one of its files,
+# case-sensitively.
+#
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: String to search for.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_contains_string_case() {
+  file_assert_dir_match 0 "literal" 1 "$@"
+}
+
+##
+# Asserts that a directory does not contain a string in any of its files,
+# ignoring case.
 #
 # Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
 # always excluded from the search. A directory that does not exist cannot
@@ -459,19 +633,109 @@ assert_dir_contains_string() {
 #     the search.
 ##
 assert_dir_not_contains_string() {
-  local dir="${1}"
-  local string="${2}"
+  file_assert_dir_match 1 "literal" 0 "$@"
+}
 
-  [ ! -d "${dir}" ] && return 0
+##
+# Asserts that a directory does not contain a string in any of its files,
+# case-sensitively.
+#
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search. A directory that does not exist cannot
+# contain the string, so it passes.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: String to search for.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_not_contains_string_case() {
+  file_assert_dir_match 1 "literal" 1 "$@"
+}
 
-  local -a exclude_params
-  mapfile -t exclude_params < <(file_dir_exclude_params)
+##
+# Asserts that a directory exists and the contents of one of its files match a
+# regular expression, ignoring case.
+#
+# The expression is matched against file contents rather than file names.
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: Extended regular expression to match.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_matches() {
+  file_assert_dir_match 0 "regex" 0 "$@"
+}
 
-  if grep -rI "${exclude_params[@]}" -l "${string}" "${dir}"; then
-    format_error "Directory contains string, but should not" "directory" "${dir}" "string" "${string}" | flunk
-  else
-    return 0
-  fi
+##
+# Asserts that a directory exists and the contents of one of its files match a
+# regular expression, case-sensitively.
+#
+# The expression is matched against file contents rather than file names.
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: Extended regular expression to match.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_matches_case() {
+  file_assert_dir_match 0 "regex" 1 "$@"
+}
+
+##
+# Asserts that no file of a directory matches a regular expression, ignoring
+# case.
+#
+# The expression is matched against file contents rather than file names.
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search. A directory that does not exist cannot
+# match, so it passes.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: Extended regular expression to match.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_not_matches() {
+  file_assert_dir_match 1 "regex" 0 "$@"
+}
+
+##
+# Asserts that no file of a directory matches a regular expression,
+# case-sensitively.
+#
+# The expression is matched against file contents rather than file names.
+# Binary files are skipped. '.git', '.idea', 'vendor' and 'node_modules' are
+# always excluded from the search. A directory that does not exist cannot
+# match, so it passes.
+#
+# Arguments:
+#   1. dir: Directory to search.
+#   2. string: Extended regular expression to match.
+#
+# Globals:
+#   BATS_HELPERS_ASSERT_DIR_EXCLUDE: Additional directory names to exclude from
+#     the search.
+##
+assert_dir_not_matches_case() {
+  file_assert_dir_match 1 "regex" 1 "$@"
 }
 
 ##
