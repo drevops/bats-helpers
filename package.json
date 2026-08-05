@@ -1,6 +1,6 @@
 {
     "name": "@drevops/bats-helpers",
-    "version": "1.6.0",
+    "version": "2.0.0",
     "description": "Helpers and assertions for BATS testing.",
     "license": "GPL-3.0-or-later",
     "homepage": "https://github.com/drevops/bats-helpers",
