@@ -471,7 +471,10 @@ mock_spec_add() {
 #      argument satisfies the matcher.
 #   3. matcher: One of 'equals', 'starts_with', 'ends_with', 'contains',
 #      'matches' or 'present', each of which may carry a 'not_' prefix. At '*'
-#      a prefixed matcher requires that no argument satisfies it.
+#      a prefixed matcher requires that no argument satisfies it. The four
+#      needle matchers ignore case and each takes a '_case' suffix to match
+#      case-sensitively; 'equals' compares exactly and 'present' reads no
+#      needle, so neither takes the suffix.
 #   4. value: Value to match against. Required by every matcher except
 #      'present' and 'not_present', which take none.
 ##
@@ -493,8 +496,9 @@ mock_spec_arg() {
 
   case "${matcher}" in
     equals | not_equals | starts_with | not_starts_with | ends_with | not_ends_with | contains | not_contains | matches | not_matches | present | not_present) ;;
+    starts_with_case | not_starts_with_case | ends_with_case | not_ends_with_case | contains_case | not_contains_case | matches_case | not_matches_case) ;;
     *)
-      flunk "Matcher '${matcher}' is not known. Use 'equals', 'starts_with', 'ends_with', 'contains', 'matches' or 'present', optionally prefixed with 'not_'."
+      flunk "Matcher '${matcher}' is not known. Use 'equals', 'starts_with', 'ends_with', 'contains', 'matches' or 'present', optionally prefixed with 'not_'; all but 'equals' and 'present' also take a '_case' suffix."
       return 1
       ;;
   esac
@@ -509,9 +513,17 @@ mock_spec_arg() {
     return 1
   fi
 
-  if [ "${matcher}" = "matches" ] || [ "${matcher}" = "not_matches" ]; then
+  local verb="${matcher#not_}"
+  local case_sensitive=0
+
+  if [ "${verb%_case}" != "${verb}" ]; then
+    case_sensitive=1
+    verb="${verb%_case}"
+  fi
+
+  if [ "${verb}" = "matches" ]; then
     local match_status=0
-    string_match "" "${value}" "regex" 1 "anywhere" || match_status=$?
+    string_match "" "${value}" "regex" "${case_sensitive}" "anywhere" || match_status=$?
 
     if [ "${match_status}" -eq 2 ]; then
       flunk "Invalid regular expression '${value}'."
@@ -845,11 +857,15 @@ mock_match_any() {
 ##
 # Reports whether one value satisfies a matcher.
 #
+# The needle matchers ignore case unless the matcher carries the '_case'
+# suffix; 'equals' compares exactly.
+#
 # Runs inside the mock's own process, so it must not call 'flunk'.
 #
 # Arguments:
 #   1. value: Value to test.
-#   2. matcher: Matcher without its 'not_' prefix.
+#   2. matcher: Matcher without its 'not_' prefix, optionally carrying its
+#      '_case' suffix.
 #   3. needle: Value to match against.
 #
 # Returns:
@@ -861,21 +877,27 @@ mock_match_value() {
   local matcher="${2}"
   local needle="${3}"
 
+  local case_sensitive=0
+  if [ "${matcher%_case}" != "${matcher}" ]; then
+    case_sensitive=1
+    matcher="${matcher%_case}"
+  fi
+
   case "${matcher}" in
     equals)
       [ "${value}" = "${needle}" ]
       ;;
     starts_with)
-      string_match "${value}" "${needle}" "literal" 1 "start"
+      string_match "${value}" "${needle}" "literal" "${case_sensitive}" "start"
       ;;
     ends_with)
-      string_match "${value}" "${needle}" "literal" 1 "end"
+      string_match "${value}" "${needle}" "literal" "${case_sensitive}" "end"
       ;;
     contains)
-      string_match "${value}" "${needle}" "literal" 1 "anywhere"
+      string_match "${value}" "${needle}" "literal" "${case_sensitive}" "anywhere"
       ;;
     matches)
-      string_match "${value}" "${needle}" "regex" 1 "anywhere"
+      string_match "${value}" "${needle}" "regex" "${case_sensitive}" "anywhere"
       ;;
     *)
       return 1

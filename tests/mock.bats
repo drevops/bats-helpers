@@ -374,6 +374,7 @@ bats_require_minimum_version 1.13.0
   mock_spec_arg "${spec}" 1 starts_with "https://"
 
   mock_spec_matches "${spec}" "https://example.com"
+  mock_spec_matches "${spec}" "HTTPS://example.com"
 
   run mock_spec_matches "${spec}" "git@example.com"
   assert_failure
@@ -388,6 +389,30 @@ bats_require_minimum_version 1.13.0
 
   run mock_spec_matches "${spec}" "https://example.com"
   assert_failure
+  run mock_spec_matches "${spec}" "HTTPS://example.com"
+  assert_failure
+}
+
+@test "mock_spec_arg starts_with_case" {
+  mock_git="$(mock_command "git")"
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 starts_with_case "https://"
+
+  mock_spec_matches "${spec}" "https://example.com"
+
+  run mock_spec_matches "${spec}" "HTTPS://example.com"
+  assert_failure
+}
+
+@test "mock_spec_arg not_starts_with_case" {
+  mock_git="$(mock_command "git")"
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 not_starts_with_case "https://"
+
+  mock_spec_matches "${spec}" "HTTPS://example.com"
+
+  run mock_spec_matches "${spec}" "https://example.com"
+  assert_failure
 }
 
 @test "mock_spec_arg ends_with" {
@@ -396,6 +421,7 @@ bats_require_minimum_version 1.13.0
   mock_spec_arg "${spec}" 1 ends_with ".git"
 
   mock_spec_matches "${spec}" "https://example.com/repo.git"
+  mock_spec_matches "${spec}" "https://example.com/repo.GIT"
 
   run mock_spec_matches "${spec}" "https://example.com/repo"
   assert_failure
@@ -410,6 +436,30 @@ bats_require_minimum_version 1.13.0
 
   run mock_spec_matches "${spec}" "https://example.com/repo.git"
   assert_failure
+  run mock_spec_matches "${spec}" "https://example.com/repo.GIT"
+  assert_failure
+}
+
+@test "mock_spec_arg ends_with_case" {
+  mock_git="$(mock_command "git")"
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 ends_with_case ".git"
+
+  mock_spec_matches "${spec}" "https://example.com/repo.git"
+
+  run mock_spec_matches "${spec}" "https://example.com/repo.GIT"
+  assert_failure
+}
+
+@test "mock_spec_arg not_ends_with_case" {
+  mock_git="$(mock_command "git")"
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 not_ends_with_case ".git"
+
+  mock_spec_matches "${spec}" "https://example.com/repo.GIT"
+
+  run mock_spec_matches "${spec}" "https://example.com/repo.git"
+  assert_failure
 }
 
 @test "mock_spec_arg contains" {
@@ -418,6 +468,7 @@ bats_require_minimum_version 1.13.0
   mock_spec_arg "${spec}" 1 contains "example"
 
   mock_spec_matches "${spec}" "https://example.com/repo.git"
+  mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
 
   run mock_spec_matches "${spec}" "https://other.com/repo.git"
   assert_failure
@@ -432,6 +483,30 @@ bats_require_minimum_version 1.13.0
 
   run mock_spec_matches "${spec}" "https://example.com/repo.git"
   assert_failure
+  run mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
+  assert_failure
+}
+
+@test "mock_spec_arg contains_case" {
+  mock_git="$(mock_command "git")"
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 contains_case "example"
+
+  mock_spec_matches "${spec}" "https://example.com/repo.git"
+
+  run mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
+  assert_failure
+}
+
+@test "mock_spec_arg not_contains_case" {
+  mock_git="$(mock_command "git")"
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 not_contains_case "example"
+
+  mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
+
+  run mock_spec_matches "${spec}" "https://example.com/repo.git"
+  assert_failure
 }
 
 @test "mock_spec_arg matches" {
@@ -440,10 +515,9 @@ bats_require_minimum_version 1.13.0
   mock_spec_arg "${spec}" 1 matches '^v[0-9]+$'
 
   mock_spec_matches "${spec}" "v42"
+  mock_spec_matches "${spec}" "V42"
 
   run mock_spec_matches "${spec}" "v42.1"
-  assert_failure
-  run mock_spec_matches "${spec}" "V42"
   assert_failure
 }
 
@@ -453,6 +527,30 @@ bats_require_minimum_version 1.13.0
   mock_spec_arg "${spec}" 1 not_matches '^v[0-9]+$'
 
   mock_spec_matches "${spec}" "v42.1"
+
+  run mock_spec_matches "${spec}" "v42"
+  assert_failure
+  run mock_spec_matches "${spec}" "V42"
+  assert_failure
+}
+
+@test "mock_spec_arg matches_case" {
+  mock_git="$(mock_command "git")"
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 matches_case '^v[0-9]+$'
+
+  mock_spec_matches "${spec}" "v42"
+
+  run mock_spec_matches "${spec}" "V42"
+  assert_failure
+}
+
+@test "mock_spec_arg not_matches_case" {
+  mock_git="$(mock_command "git")"
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 not_matches_case '^v[0-9]+$'
+
+  mock_spec_matches "${spec}" "V42"
 
   run mock_spec_matches "${spec}" "v42"
   assert_failure
@@ -550,6 +648,16 @@ bats_require_minimum_version 1.13.0
   assert_failure
   assert_output_contains "Matcher 'startswith' is not known."
 
+  # 'equals' compares exactly and 'present' reads no needle, so neither takes
+  # the '_case' suffix.
+  run mock_spec_arg "${spec}" 2 equals_case "status"
+  assert_failure
+  assert_output_contains "Matcher 'equals_case' is not known."
+
+  run mock_spec_arg "${spec}" 2 present_case
+  assert_failure
+  assert_output_contains "Matcher 'present_case' is not known."
+
   run mock_spec_arg "${spec}" 2 present "value"
   assert_failure
   assert_output_contains "Matcher 'present' takes no value."
@@ -559,6 +667,10 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Matcher 'equals' requires a value."
 
   run mock_spec_arg "${spec}" 2 matches '['
+  assert_failure
+  assert_output_contains "Invalid regular expression '['."
+
+  run mock_spec_arg "${spec}" 2 matches_case '['
   assert_failure
   assert_output_contains "Invalid regular expression '['."
 

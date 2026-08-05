@@ -94,7 +94,7 @@ A renamed variable is resolved into a local at the top of the function that owns
 All assertion functions follow the pattern of checking conditions and calling `flunk()` with formatted error messages on failure.
 
 ### Match Modes
-A match mode is chosen by picking the assertion, never by passing an option or setting a variable. Every combination of the three axes has its own name, so a call site says what it compares without a reader having to resolve a flag: the verb says how the needle is read (`contains`, `starts_with`, `ends_with`, `matches`, `matches_format`), the `not_` prefix negates, and the `_case` suffix matches case-sensitively. Absent that suffix the match ignores case, which is what the library has always done, so no existing assertion changed meaning.
+A match mode is chosen by picking the assertion, never by passing an option or setting a variable. Every combination of the three axes has its own name, so a call site says what it compares without a reader having to resolve a flag: the verb says how the needle is read (`contains`, `starts_with`, `ends_with`, `matches`, `matches_format`), the `not_` prefix negates, and the `_case` suffix matches case-sensitively. Absent that suffix the match ignores case. The mock argument matchers speak the same vocabulary: `starts_with`, `ends_with`, `contains` and `matches` ignore case and take the same `_case` suffix, while `equals` compares exactly and `present` reads no needle, so neither takes it.
 
 Options were considered and rejected: an assertion argument is then either a needle or a flag depending on its spelling, which costs an escape hatch, and a needle such as `--verbose` stops being a plain string. Naming every cell trades a larger surface for a call site that cannot be misread.
 

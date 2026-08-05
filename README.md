@@ -793,7 +793,7 @@ The first argument of `mock_spec_arg` after the specification is the position: a
 | `matches`     | matches the value as an extended regexp       |
 | `present`     | exists, whatever its value. Takes no value    |
 
-Every matcher takes a `not_` prefix. At a numeric position it negates that one argument; at `*` it requires that *no* argument matches, which is the negation of "some argument matches":
+Every matcher takes a `not_` prefix. At a numeric position it negates that one argument; at `*` it requires that *no* argument matches, which is the negation of "some argument matches". `starts_with`, `ends_with`, `contains` and `matches` ignore case, and each takes a `_case` suffix to match case-sensitively, exactly as the [assertions](#match-modes) do; `equals` compares exactly, as `assert_equal` does, and `present` reads no needle, so neither takes the suffix:
 
 ```bash
 # Argument 2 is not a tag.
@@ -801,9 +801,12 @@ mock_spec_arg "${spec}" 2 not_matches '^v[0-9]+$'
 
 # No argument is '--force'.
 mock_spec_arg "${spec}" '*' not_equals "--force"
+
+# Argument 1 holds 'Accept' with exactly this case.
+mock_spec_arg "${spec}" 1 contains_case "Accept"
 ```
 
-Matching is case-sensitive, because a command's arguments are literal. `mock_spec_count` pins how many arguments the call carries:
+`mock_spec_count` pins how many arguments the call carries:
 
 ```bash
 mock_spec_count "${spec}" 2
