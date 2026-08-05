@@ -12,7 +12,7 @@ Set `BATS_HELPERS_DEPRECATION_QUIET` to any non-empty value to silence those not
 export BATS_HELPERS_DEPRECATION_QUIET=1
 ```
 
-A deprecated variable is read only when its replacement is unset or empty, so exporting the replacement as an empty string falls back to the old name rather than taking precedence. `BATS_HELPERS_ASSERT_DIR_EXCLUDE` is the exception: it holds an array, and a value test would read element 0 alone and fall back wrongly for an array such as `('' 'foo')`, so it falls back only when the replacement is *unset*. A declared empty array takes precedence over `ASSERT_DIR_EXCLUDE` rather than falling back to it.
+A deprecated variable is used only when its replacement is unset or empty, so exporting the replacement as an empty string falls back to the old name rather than taking precedence. `BATS_HELPERS_ASSERT_DIR_EXCLUDE` is the exception: it holds an array, and a value test would read element 0 alone and fall back wrongly for an array such as `('' 'foo')`, so it falls back only when the replacement is *unset*. A declared empty array takes precedence over `ASSERT_DIR_EXCLUDE` rather than falling back to it.
 
 ## Functions
 
@@ -62,7 +62,7 @@ assert_string_contains "some needle in a haystack" "needle"
 | `assert_files_not_equal <a> <b> 1` | `assert_files_not_equal_ignore_spaces <a> <b>` | As above. |
 | `nothing` as a TUI answer | an empty string | `declare -a answers=("nothing")` becomes `declare -a answers=("")`. |
 
-An empty string is what sends a blank line now, and `nothing` still sends one while printing a notice, so the literal string becomes answerable once it is removed:
+An empty string is what sends a blank line now, and `nothing` still sends one while printing a notice. Once that special case is removed, `nothing` will reach the script as the seven characters it spells, so a script that legitimately expects that answer becomes testable:
 
 ```bash
 tui_run "My site" "nothing" "yes"

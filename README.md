@@ -91,7 +91,7 @@ load _loader.bash
 
 ## 📖 Documentation
 
-Each page documents one module of the library, and names the variables that module reads beside the behaviour they change. Match modes are the one exception, describing what every assertion family shares. The [API reference](#-api-reference) below links every function into the page that documents it.
+Each page documents one module of the library, and names the variables that module reads beside the behaviour they change. Match modes are the one exception, describing what every assertion family shares. The [API reference](#-api-reference) below links every public function into the page that documents it.
 
 | Page                                              | Source                                                  | Covers                                                               |
 |---------------------------------------------------|---------------------------------------------------------|----------------------------------------------------------------------|
