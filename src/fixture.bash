@@ -100,7 +100,7 @@ fixture_create_dir() {
 
   local -a paths=()
   local -a contents=()
-  fixture_read_archive || return 1
+  _fixture_read_archive || return 1
 
   if ! mkdir -p "${dir}"; then
     flunk "Unable to create fixture directory '${dir}'."
@@ -115,7 +115,7 @@ fixture_create_dir() {
     path="${paths[index]}"
     target="${dir}/${path}"
 
-    fixture_validate_target "${dir}" "${path}" || return 1
+    _fixture_validate_target "${dir}" "${path}" || return 1
 
     if [ -d "${target}" ]; then
       flunk "Fixture path '${path}' exists as a directory."
@@ -155,7 +155,7 @@ fixture_dump_dir() {
   assert_dir_exists "${dir}" || return 1
 
   local listing
-  listing="$(fixture_list_files "${dir}")" || return 1
+  listing="$(_fixture_list_files "${dir}")" || return 1
 
   [ -n "${listing}" ] || return 0
 
@@ -207,10 +207,10 @@ fixture_assert_dir() {
 
   local -a paths=()
   local -a contents=()
-  fixture_read_archive || return 1
+  _fixture_read_archive || return 1
 
   local listing
-  listing="$(fixture_list_files "${dir}")" || return 1
+  listing="$(_fixture_list_files "${dir}")" || return 1
 
   ##
   ## Expected files.
@@ -234,7 +234,7 @@ fixture_assert_dir() {
     # The listing decides what the directory holds, so a symlink standing where
     # the archive names a regular file is a difference rather than something to
     # read through.
-    if ! fixture_list_holds "${actual}" "${path}"; then
+    if ! _fixture_list_holds "${actual}" "${path}"; then
       if [ -L "${target}" ]; then
         summary="${summary}not a regular file: ${path}"$'\n'
       else
@@ -260,7 +260,7 @@ fixture_assert_dir() {
   while IFS= read -r file; do
     [ -n "${file}" ] || continue
 
-    if fixture_list_holds "${expected}" "${file}"; then
+    if _fixture_list_holds "${expected}" "${file}"; then
       continue
     fi
 
@@ -294,7 +294,7 @@ fixture_assert_dir() {
 #     the order the entries appear.
 #   contents: Array the caller declares, filled with the matching contents.
 ##
-fixture_read_archive() {
+_fixture_read_archive() {
   # A content line carrying the escape loses one backslash, so a line that is
   # marker-shaped after the removal is the one to unescape.
   local escaped_marker='^\\+-- .* --$'
@@ -316,9 +316,9 @@ fixture_read_archive() {
         return 1
       fi
 
-      fixture_validate_path "${path}" || return 1
+      _fixture_validate_path "${path}" || return 1
 
-      if fixture_list_holds "${declared}" "${path}"; then
+      if _fixture_list_holds "${declared}" "${path}"; then
         flunk "Fixture path '${path}' is declared more than once."
         return 1
       fi
@@ -352,7 +352,7 @@ fixture_read_archive() {
 # Outputs:
 #   STDOUT: One path per line, relative to the directory and sorted.
 ##
-fixture_list_files() {
+_fixture_list_files() {
   local dir="${1}"
 
   local -a files=()
@@ -388,7 +388,7 @@ fixture_list_files() {
 # Arguments:
 #   1. path: Path to validate, relative to the fixture directory.
 ##
-fixture_validate_path() {
+_fixture_validate_path() {
   local path="${1}"
 
   case "${path}" in
@@ -431,7 +431,7 @@ fixture_validate_path() {
 #   1. dir: Directory the path is relative to.
 #   2. path: Path to walk.
 ##
-fixture_validate_target() {
+_fixture_validate_target() {
   local dir="${1}"
   local path="${2}"
 
@@ -472,7 +472,7 @@ fixture_validate_target() {
 # Returns:
 #   0 when the list holds the path, 1 when it does not.
 ##
-fixture_list_holds() {
+_fixture_list_holds() {
   local list="${1}"
   local path="${2}"
 

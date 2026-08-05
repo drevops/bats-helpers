@@ -465,8 +465,8 @@ EXPECTED
   assert_output_contains "contains a newline"
 }
 
-@test "fixture_list_files with a directory it cannot walk" {
-  run fixture_list_files "${BATS_TEST_TMPDIR}/missing"
+@test "_fixture_list_files with a directory it cannot walk" {
+  run _fixture_list_files "${BATS_TEST_TMPDIR}/missing"
   assert_failure
   assert_output_contains "Unable to list the files"
 }

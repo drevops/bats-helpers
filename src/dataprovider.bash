@@ -37,8 +37,8 @@ dataprovider_run() {
   ## Input validation.
   ##
 
-  dataprovider_validate_function "${func_name}" "Function" || return 1
-  dataprovider_validate_function "${assertion}" "Assertion" || return 1
+  _dataprovider_validate_function "${func_name}" "Function" || return 1
+  _dataprovider_validate_function "${assertion}" "Assertion" || return 1
 
   if ! [[ ${args_per_row} =~ ^-?[0-9]+$ ]]; then
     flunk "Number of arguments per test case '${args_per_row}' is not an integer."
@@ -92,7 +92,7 @@ dataprovider_run() {
     dataprovider_case "" "${TEST_CASES[@]:i:args_per_row}"
   done
 
-  dataprovider_report
+  _dataprovider_report
 }
 
 ##
@@ -122,9 +122,9 @@ dataprovider_run_cases() {
   local cases_func="${2-}"
   local assertion="${3:-assert_output_contains}"
 
-  dataprovider_validate_function "${func_name}" "Function" || return 1
-  dataprovider_validate_function "${cases_func}" "Cases function" || return 1
-  dataprovider_validate_function "${assertion}" "Assertion" || return 1
+  _dataprovider_validate_function "${func_name}" "Function" || return 1
+  _dataprovider_validate_function "${cases_func}" "Cases function" || return 1
+  _dataprovider_validate_function "${assertion}" "Assertion" || return 1
 
   # 'dataprovider_case' reads the run's state from this frame through dynamic
   # scoping, which is why the state is declared here and not in a shared helper.
@@ -145,7 +145,7 @@ dataprovider_run_cases() {
     return 1
   fi
 
-  dataprovider_report
+  _dataprovider_report
 }
 
 ##
@@ -241,7 +241,7 @@ dataprovider_case() {
 dataprovider_matrix() {
   local case_func="${1-}"
 
-  dataprovider_validate_function "${case_func}" "Case function" || return 1
+  _dataprovider_validate_function "${case_func}" "Case function" || return 1
 
   if [ "$#" -lt 2 ]; then
     flunk "At least one value list is required."
@@ -344,7 +344,7 @@ dataprovider_matrix() {
 #   1. name: Name to validate.
 #   2. noun: Capitalised role of the name, used to open both messages.
 ##
-dataprovider_validate_function() {
+_dataprovider_validate_function() {
   local name="${1}"
   local noun="${2}"
 
@@ -370,7 +370,7 @@ dataprovider_validate_function() {
 # Outputs:
 #   STDOUT: The failed cases, when there are any.
 ##
-dataprovider_report() {
+_dataprovider_report() {
   if [ "${#BATS_HELPERS_DATAPROVIDER_FAILED[@]}" -eq 0 ]; then
     return 0
   fi

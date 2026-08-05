@@ -198,7 +198,7 @@ file : ${BATS_TEST_TMPDIR}/some.txt
 }
 
 @test "format_error colours the diff when colour is enabled" {
-  if ! report_diff_color_supported; then
+  if ! _report_diff_color_supported; then
     skip "the platform's diff does not understand the colour flag"
   fi
 
@@ -214,107 +214,107 @@ file : ${BATS_TEST_TMPDIR}/some.txt
   assert_output_not_contains $'\033['
 }
 
-@test "report_decorate" {
-  run report_decorate "Some title" "Some body"
+@test "_report_decorate" {
+  run _report_decorate "Some title" "Some body"
   assert_success
   assert_output "-- Some title --
 Some body
 --"
 
-  run report_decorate "Some title" ""
+  run _report_decorate "Some title" ""
   assert_success
   assert_output "-- Some title --
 --"
 }
 
-@test "report_count_lines" {
-  run report_count_lines ""
+@test "_report_count_lines" {
+  run _report_count_lines ""
   assert_success
   assert_output "1"
 
-  run report_count_lines "one line"
+  run _report_count_lines "one line"
   assert_success
   assert_output "1"
 
-  run report_count_lines $'first\nsecond'
+  run _report_count_lines $'first\nsecond'
   assert_success
   assert_output "2"
 
   # A trailing newline closes one line and opens another.
-  run report_count_lines $'first\n'
+  run _report_count_lines $'first\n'
   assert_success
   assert_output "2"
 }
 
-@test "report_plural_lines" {
-  run report_plural_lines 0
+@test "_report_plural_lines" {
+  run _report_plural_lines 0
   assert_success
   assert_output "0 lines"
 
-  run report_plural_lines 1
+  run _report_plural_lines 1
   assert_success
   assert_output "1 line"
 
-  run report_plural_lines 2
+  run _report_plural_lines 2
   assert_success
   assert_output "2 lines"
 }
 
-@test "report_color_enabled" {
+@test "_report_color_enabled" {
   local supported=1
-  report_diff_color_supported || supported=0
+  _report_diff_color_supported || supported=0
 
   unset NO_COLOR
 
   BATS_HELPERS_REPORT_COLOR=0
-  run report_color_enabled
+  run _report_color_enabled
   assert_failure
 
   # The suppression is what the override overrides, so the platform decides.
   BATS_HELPERS_REPORT_COLOR=1
   export NO_COLOR=1
   local overridden=1
-  report_color_enabled || overridden=0
+  _report_color_enabled || overridden=0
   assert_equal "${supported}" "${overridden}"
 
   unset BATS_HELPERS_REPORT_COLOR
-  run report_color_enabled
+  run _report_color_enabled
   assert_failure
 
   unset NO_COLOR
   local automatic=1
-  report_color_enabled || automatic=0
+  _report_color_enabled || automatic=0
   assert_equal "${supported}" "${automatic}"
 }
 
-@test "report_diff_color_supported" {
+@test "_report_diff_color_supported" {
   local probed=1
   diff --color=always /dev/null /dev/null >/dev/null 2>&1 || probed=0
 
   local reported=1
-  report_diff_color_supported || reported=0
+  _report_diff_color_supported || reported=0
 
   assert_equal "${probed}" "${reported}"
 }
 
-@test "report_normalize_paths" {
-  run report_normalize_paths "in ${PWD}/src and ${HOME}/somewhere"
+@test "_report_normalize_paths" {
+  run _report_normalize_paths "in ${PWD}/src and ${HOME}/somewhere"
   assert_success
   assert_output 'in ${PWD}/src and ${HOME}/somewhere'
 
   # The temporary directories nest, so each is rewritten to the closest name
   # rather than to the name of a directory holding it.
-  run report_normalize_paths "${BATS_TEST_TMPDIR}/a ${BATS_FILE_TMPDIR}/b ${BATS_SUITE_TMPDIR}/c ${BATS_RUN_TMPDIR}/d"
+  run _report_normalize_paths "${BATS_TEST_TMPDIR}/a ${BATS_FILE_TMPDIR}/b ${BATS_SUITE_TMPDIR}/c ${BATS_RUN_TMPDIR}/d"
   assert_success
   assert_output '${BATS_TEST_TMPDIR}/a ${BATS_FILE_TMPDIR}/b ${BATS_SUITE_TMPDIR}/c ${BATS_RUN_TMPDIR}/d'
 
   # The preprocessed copy bats-core runs is rewritten to the file that was
   # written, so a stack trace names something the consumer can open.
-  run report_normalize_paths "${BATS_TEST_SOURCE}:12"
+  run _report_normalize_paths "${BATS_TEST_SOURCE}:12"
   assert_success
   assert_output '${PWD}/tests/assert.base.bats:12'
 
-  run report_normalize_paths "nothing to rewrite"
+  run _report_normalize_paths "nothing to rewrite"
   assert_success
   assert_output "nothing to rewrite"
 }

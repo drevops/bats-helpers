@@ -1437,6 +1437,8 @@ Nothing in the output marks a prompt as one, either. A script that echoes its an
 export BATS_HELPERS_FIXTURE_EXPORT_CODEBASE_ENABLED=1
 ```
 
+The functions documented in this README are the public API. Functions whose names start with an underscore - `_mock_log_quote`, `_report_diff` - are internal, are not part of the public API, and are exempt from the deprecation policy: they may change or disappear in any release without notice.
+
 #### Failure reporting
 
 Helpers report a failure by writing a message to STDERR and returning a non-zero status. None of them call `exit`, so the caller stays in control and can compose them with `||`, branch on them with `if`, or capture the status with `run`:
@@ -1645,7 +1647,7 @@ Every variable the library defines, in one place. Each is also covered by the se
 | `BATS_HELPERS_MOCK_TMPDIR`                     | `mock_setup`, `mock_create`                                   | Directory the mocks are written below. Defaults to `${BATS_TEST_TMPDIR}`, and `mock_setup` exports the resolved path |
 | `BATS_HELPERS_MOCK_USER`                       | `mock_get_call_user`                                          | User a mock call is reported as. Defaults to `id -un`                                       |
 | `BATS_HELPERS_MOCK_STRICT`                     | `mock_create`                                                 | Set to `0` to answer the calls a mock's expectations do not cover. Defaults to `1`, and is read when the mock is created |
-| `BATS_HELPERS_MOCK_SANDBOX_REPORT`             | `mock_sandbox_deny`                                           | Path to the sandbox report. Exported by `mock_sandbox_enable` so that a denial recorded in a child process reaches it |
+| `BATS_HELPERS_MOCK_SANDBOX_REPORT`             | `_mock_sandbox_deny`                                          | Path to the sandbox report. Exported by `mock_sandbox_enable` so that a denial recorded in a child process reaches it |
 | `BATS_HELPERS_REPORT_COLOR`                    | `format_error`                                                | `0` to never colour a diff, `1` to colour it whenever `diff` supports the flag. Unset or empty defers to `NO_COLOR` |
 | `BATS_HELPERS_DEPRECATION_QUIET`               | every module                                                  | Set to any non-empty value to silence every deprecation notice                              |
 
@@ -1680,7 +1682,7 @@ The variables follow the same pattern. The old name is read only when the new on
 | `_USER`                                | `BATS_HELPERS_MOCK_USER`                       |
 | `BATS_HELPERS_BACKUP_DIR`              | `BATS_HELPERS_FILE_BACKUP_DIR`                 |
 
-`mock_setup` now exports `BATS_HELPERS_MOCK_TMPDIR` rather than `BATS_MOCK_TMPDIR`. The old name is still read as an input, but it is no longer written, so a test that reads the mock directory back after `mock_setup` has to read the new name. `mock_resolve_tmp` also names the new variable when it cannot resolve a directory, so a test asserting on `Set BATS_MOCK_TMPDIR to a writable directory` has to be updated.
+`mock_setup` now exports `BATS_HELPERS_MOCK_TMPDIR` rather than `BATS_MOCK_TMPDIR`. The old name is still read as an input, but it is no longer written, so a test that reads the mock directory back after `mock_setup` has to read the new name. `_mock_resolve_tmp` also names the new variable when it cannot resolve a directory, so a test asserting on `Set BATS_MOCK_TMPDIR to a writable directory` has to be updated.
 
 Every helper in a module shares one prefix - `steps_*`, `mock_*`, `file_*`, `string_*` - matching how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`. Apart from the two below, each replacement keeps the arguments, the standard output and the return semantics, so a call is updated by swapping the name alone.
 

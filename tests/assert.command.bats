@@ -211,35 +211,35 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "actual   : 1"
 }
 
-@test "command_describe_status" {
-  run command_describe_status 0
+@test "_command_describe_status" {
+  run _command_describe_status 0
   assert_success
   assert_output "0"
 
-  run command_describe_status 3
+  run _command_describe_status 3
   assert_success
   assert_output "3"
 
-  run command_describe_status 127
+  run _command_describe_status 127
   assert_success
   assert_output "127 (command not found)"
 
   # Only the two signals every supported platform numbers the same way.
-  run command_describe_status 137
+  run _command_describe_status 137
   assert_success
   assert_output "137 (killed by SIGKILL)"
 
-  run command_describe_status 143
+  run _command_describe_status 143
   assert_success
   assert_output "143 (killed by SIGTERM)"
 
   # The offset leaves signal zero, which is not a signal.
-  run command_describe_status 128
+  run _command_describe_status 128
   assert_success
   assert_output "128"
 
   # No supported platform numbers a signal this high.
-  run command_describe_status 255
+  run _command_describe_status 255
   assert_success
   assert_output "255"
 }
@@ -631,7 +631,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "run --separate-stderr"
 }
 
-@test "command_assert_match" {
+@test "_command_assert_match" {
   # The first 'run' supplies the output the assertion reads, before the second
   # replaces it with the failure report.
   run echo "some existing text"

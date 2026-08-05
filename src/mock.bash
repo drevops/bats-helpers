@@ -28,14 +28,14 @@
 #   PATH: Prepended with the mock directory for the duration of the test.
 ##
 mock_setup() {
-  BATS_HELPERS_MOCK_TMPDIR="$(mock_prepare_tmp)" || return 1
+  BATS_HELPERS_MOCK_TMPDIR="$(_mock_prepare_tmp)" || return 1
   export BATS_HELPERS_MOCK_TMPDIR
 
   # The mock directory goes first so that a mocked name is found ahead of the
   # real command. Bats restores PATH after the test, so this reaches no further.
   PATH="${BATS_HELPERS_MOCK_TMPDIR}:${PATH}"
 
-  mock_path_record
+  _mock_path_record
 }
 
 ##
@@ -52,7 +52,7 @@ mock_setup() {
 #   STDOUT: Path to the directory.
 #   STDERR: The reason the directory could not be resolved.
 ##
-mock_resolve_tmp() {
+_mock_resolve_tmp() {
   local dir
 
   if [ -n "${BATS_HELPERS_MOCK_TMPDIR-}" ]; then
@@ -81,9 +81,9 @@ mock_resolve_tmp() {
 # Outputs:
 #   STDOUT: Path to the directory.
 ##
-mock_prepare_tmp() {
+_mock_prepare_tmp() {
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   rm -rf "${dir}/bats-helpers-mock" || return 1
   mkdir -p "${dir}/bats-helpers-mock" || return 1
@@ -97,9 +97,9 @@ mock_prepare_tmp() {
 # Globals:
 #   PATH: Written to the record so that a later change to it is detectable.
 ##
-mock_path_record() {
+_mock_path_record() {
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   printf '%s\n' "${PATH}" >"${dir}/.path"
 }
@@ -123,7 +123,7 @@ mock_path_record() {
 ##
 mock_path_check() {
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   local record="${dir}/.path"
   [ -e "${record}" ] || return 0
@@ -133,7 +133,7 @@ mock_path_check() {
 
   [ "${recorded}" = "${PATH}" ] && return 0
 
-  if mock_path_contains "${dir}"; then
+  if _mock_path_contains "${dir}"; then
     echo "Warning: 'PATH' changed after 'mock_setup'. The mocks are still found, but a command the test did not mock may resolve differently." >&3
     return 0
   fi
@@ -152,7 +152,7 @@ mock_path_check() {
 # Globals:
 #   PATH: Searched for the directory.
 ##
-mock_path_contains() {
+_mock_path_contains() {
   local dir="${1}"
 
   local -a entries=()
@@ -188,7 +188,7 @@ mock_path_contains() {
 #   STDOUT: Path to the mock.
 ##
 mock_create() {
-  BATS_HELPERS_MOCK_TMPDIR="$(mock_resolve_tmp)" || return 1
+  BATS_HELPERS_MOCK_TMPDIR="$(_mock_resolve_tmp)" || return 1
 
   # The notice is emitted here rather than from the mock, which runs as a
   # separate process with no file descriptor 3 to write to.
@@ -197,7 +197,7 @@ mock_create() {
   fi
 
   local index
-  index="$(mock_next_index "${BATS_HELPERS_MOCK_TMPDIR}")"
+  index="$(_mock_next_index "${BATS_HELPERS_MOCK_TMPDIR}")"
 
   local mock="${BATS_HELPERS_MOCK_TMPDIR}/mock.$$.${index}"
 
@@ -213,7 +213,7 @@ mock_create() {
   local src_dir
   src_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-  mock_write "${mock}" "${src_dir}" "${BATS_HELPERS_MOCK_TMPDIR}/mock.log"
+  _mock_write "${mock}" "${src_dir}" "${BATS_HELPERS_MOCK_TMPDIR}/mock.log"
   chmod +x "${mock}"
 
   printf '%s\n' "${mock}"
@@ -252,7 +252,7 @@ mock_command() {
 # Outputs:
 #   STDOUT: The index.
 ##
-mock_next_index() {
+_mock_next_index() {
   local dir="${1}"
   local counter="${dir}/mock.$$.index"
 
@@ -272,7 +272,7 @@ mock_next_index() {
 #   2. src_dir: Directory holding the library's modules.
 #   3. log: Path to the shared call log.
 ##
-mock_write() {
+_mock_write() {
   local mock="${1}"
   local src_dir="${2}"
   local log="${3}"
@@ -309,27 +309,27 @@ for var in \$(compgen -e); do
 done > "\${mock}.env.\${call_num}"
 
 name="\$(cat "\${mock}.name")"
-line="\$(mock_log_line "\${name}" "\$@")"
-mock_log_append ${log_quoted} "\${line}"
+line="\$(_mock_log_line "\${name}" "\$@")"
+_mock_log_append ${log_quoted} "\${line}"
 
-if spec="\$(mock_match_index "\${mock}" "\$@")"; then
-  mock_match_hit "\${mock}" "\${spec}"
-elif ! mock_response_ordinal_exists "\${mock}" "\${call_num}"; then
-  if mock_forward_enabled "\${mock}"; then
-    mock_forward_exec "\${mock}" "\${name}" "\$@"
+if spec="\$(_mock_match_index "\${mock}" "\$@")"; then
+  _mock_match_hit "\${mock}" "\${spec}"
+elif ! _mock_response_ordinal_exists "\${mock}" "\${call_num}"; then
+  if _mock_forward_enabled "\${mock}"; then
+    _mock_forward_exec "\${mock}" "\${name}" "\$@"
   fi
 
-  if ! mock_strict_accepts "\${mock}"; then
-    mock_strict_reject "\${mock}" "\${name}" "\${line}"
+  if ! _mock_strict_accepts "\${mock}"; then
+    _mock_strict_reject "\${mock}" "\${name}" "\${line}"
     exit 1
   fi
 fi
 
-cat "\$(mock_response_file "\${mock}" 'output' "\${call_num}" "\${spec}")"
+cat "\$(_mock_response_file "\${mock}" 'output' "\${call_num}" "\${spec}")"
 
-source "\$(mock_response_file "\${mock}" 'side_effect' "\${call_num}" "\${spec}")"
+source "\$(_mock_response_file "\${mock}" 'side_effect' "\${call_num}" "\${spec}")"
 
-exit "\$(cat "\$(mock_response_file "\${mock}" 'status' "\${call_num}" "\${spec}")")"
+exit "\$(cat "\$(_mock_response_file "\${mock}" 'status' "\${call_num}" "\${spec}")")"
 EOF
 }
 
@@ -350,7 +350,7 @@ mock_set_status() {
   local status="${2?'Status must be specified'}"
   local n="${3-}"
 
-  mock_set_property "${mock}" 'status' "${status}" "${n}"
+  _mock_set_property "${mock}" 'status' "${status}" "${n}"
 }
 
 ##
@@ -366,7 +366,7 @@ mock_set_output() {
   local output="${2?'Output must be specified'}"
   local n="${3-}"
 
-  mock_set_property "${mock}" 'output' "${output}" "${n}"
+  _mock_set_property "${mock}" 'output' "${output}" "${n}"
 }
 
 ##
@@ -382,7 +382,7 @@ mock_set_side_effect() {
   local side_effect="${2?'Side effect must be specified'}"
   local n="${3-}"
 
-  mock_set_property "${mock}" 'side_effect' "${side_effect}" "${n}"
+  _mock_set_property "${mock}" 'side_effect' "${side_effect}" "${n}"
 }
 
 ##
@@ -394,7 +394,7 @@ mock_set_side_effect() {
 #   3. property_value: Property value or '-' for STDIN.
 #   4. n: Index of the call. Optional, defaults to every call.
 ##
-mock_set_property() {
+_mock_set_property() {
   local mock="${1?'Mock must be specified'}"
   local property_name="${2?'Property name must be specified'}"
   local property_value="${3?'Property value must be specified'}"
@@ -419,7 +419,7 @@ mock_set_property() {
   printf '%s\n' "${property_value}" >"${mock}.${property_name}.${n}"
 
   # A response carrying a call index is an expectation that the call arrives.
-  mock_expect_ordinal "${mock}" "${n}"
+  _mock_expect_ordinal "${mock}" "${n}"
 }
 
 ##
@@ -589,7 +589,7 @@ mock_spec_set_status() {
   local spec="${1?'Specification must be specified'}"
   local status="${2?'Status must be specified'}"
 
-  mock_spec_set_property "${spec}" 'status' "${status}"
+  _mock_spec_set_property "${spec}" 'status' "${status}"
 }
 
 ##
@@ -603,7 +603,7 @@ mock_spec_set_output() {
   local spec="${1?'Specification must be specified'}"
   local output="${2?'Output must be specified'}"
 
-  mock_spec_set_property "${spec}" 'output' "${output}"
+  _mock_spec_set_property "${spec}" 'output' "${output}"
 }
 
 ##
@@ -617,7 +617,7 @@ mock_spec_set_side_effect() {
   local spec="${1?'Specification must be specified'}"
   local side_effect="${2?'Side effect must be specified'}"
 
-  mock_spec_set_property "${spec}" 'side_effect' "${side_effect}"
+  _mock_spec_set_property "${spec}" 'side_effect' "${side_effect}"
 }
 
 ##
@@ -628,7 +628,7 @@ mock_spec_set_side_effect() {
 #   2. property_name: Property name.
 #   3. property_value: Property value or '-' for STDIN.
 ##
-mock_spec_set_property() {
+_mock_spec_set_property() {
   local spec="${1?'Specification must be specified'}"
   local property_name="${2?'Property name must be specified'}"
   local property_value="${3?'Property value must be specified'}"
@@ -696,7 +696,7 @@ mock_set_forward() {
 # Returns:
 #   0 when a specification accepts the call, 1 when none does.
 ##
-mock_match_index() {
+_mock_match_index() {
   local mock="${1}"
   shift
 
@@ -707,7 +707,7 @@ mock_match_index() {
 
   local i
   for ((i = 1; i <= spec_num; i++)); do
-    if mock_spec_matches "${mock}.spec.${i}" "$@"; then
+    if _mock_spec_matches "${mock}.spec.${i}" "$@"; then
       printf '%s\n' "${i}"
       return 0
     fi
@@ -725,7 +725,7 @@ mock_match_index() {
 #   1. mock: Path to the mock.
 #   2. index: Index of the specification.
 ##
-mock_match_hit() {
+_mock_match_hit() {
   local mock="${1}"
   local index="${2}"
   local spec="${mock}.spec.${index}"
@@ -748,7 +748,7 @@ mock_match_hit() {
 # Returns:
 #   0 when every matcher accepts the call, 1 when one of them does not.
 ##
-mock_spec_matches() {
+_mock_spec_matches() {
   local spec="${1}"
   shift
 
@@ -777,9 +777,9 @@ mock_spec_matches() {
     fi
 
     if [ "${position}" = "*" ]; then
-      mock_match_any "${matcher}" "${value}" "${negate}" "$@" || return 1
+      _mock_match_any "${matcher}" "${value}" "${negate}" "$@" || return 1
     else
-      mock_match_at "${position}" "${matcher}" "${value}" "${negate}" "$@" || return 1
+      _mock_match_at "${position}" "${matcher}" "${value}" "${negate}" "$@" || return 1
     fi
   done
 
@@ -798,7 +798,7 @@ mock_spec_matches() {
 #   4. negate: '1' to require that the argument does not satisfy the matcher.
 #   5+. Arguments the command was called with.
 ##
-mock_match_at() {
+_mock_match_at() {
   local position="${1}"
   local matcher="${2}"
   local value="${3}"
@@ -810,7 +810,7 @@ mock_match_at() {
   if [ "${matcher}" = "present" ]; then
     [ "${position}" -le "$#" ] && matched=1
   elif [ "${position}" -le "$#" ]; then
-    mock_match_value "${!position}" "${matcher}" "${value}" && matched=1
+    _mock_match_value "${!position}" "${matcher}" "${value}" && matched=1
   fi
 
   [ "${negate}" = "1" ] && matched=$((1 - matched))
@@ -829,7 +829,7 @@ mock_match_at() {
 #   3. negate: '1' to require that no argument satisfies the matcher.
 #   4+. Arguments the command was called with.
 ##
-mock_match_any() {
+_mock_match_any() {
   local matcher="${1}"
   local value="${2}"
   local negate="${3}"
@@ -842,7 +842,7 @@ mock_match_any() {
   else
     local argument
     for argument in "$@"; do
-      if mock_match_value "${argument}" "${matcher}" "${value}"; then
+      if _mock_match_value "${argument}" "${matcher}" "${value}"; then
         matched=1
         break
       fi
@@ -872,7 +872,7 @@ mock_match_any() {
 #   0 when the value satisfies the matcher, 1 when it does not or the matcher
 #   is not known.
 ##
-mock_match_value() {
+_mock_match_value() {
   local value="${1}"
   local matcher="${2}"
   local needle="${3}"
@@ -916,7 +916,7 @@ mock_match_value() {
 # Outputs:
 #   STDOUT: The requirements, comma-separated.
 ##
-mock_spec_describe() {
+_mock_spec_describe() {
   local spec="${1}"
   local description=""
 
@@ -971,7 +971,7 @@ mock_spec_describe() {
 #   STDOUT: One indented line per specification, and nothing when the mock has
 #           none.
 ##
-mock_spec_describe_all() {
+_mock_spec_describe_all() {
   local mock="${1}"
 
   [ -e "${mock}.spec_num" ] || return 0
@@ -981,7 +981,7 @@ mock_spec_describe_all() {
 
   local i
   for ((i = 1; i <= spec_num; i++)); do
-    echo "  specification ${i}: $(mock_spec_describe "${mock}.spec.${i}")"
+    echo "  specification ${i}: $(_mock_spec_describe "${mock}.spec.${i}")"
   done
 
   return 0
@@ -1002,7 +1002,7 @@ mock_spec_describe_all() {
 #   STDOUT: Path to the specification's file, else the call's own file, else
 #           the mock's default file.
 ##
-mock_response_file() {
+_mock_response_file() {
   local mock="${1}"
   local property="${2}"
   local call_num="${3}"
@@ -1033,7 +1033,7 @@ mock_response_file() {
 # Returns:
 #   0 when any response property is configured for the call, 1 when none is.
 ##
-mock_response_ordinal_exists() {
+_mock_response_ordinal_exists() {
   local mock="${1}"
   local call_num="${2}"
 
@@ -1052,7 +1052,7 @@ mock_response_ordinal_exists() {
 # Arguments:
 #   1. mock: Path to the mock.
 ##
-mock_forward_enabled() {
+_mock_forward_enabled() {
   local mock="${1}"
 
   [ -e "${mock}.forward" ]
@@ -1075,13 +1075,13 @@ mock_forward_enabled() {
 #   Never returns to the caller. The process is replaced by the real command,
 #   or exits 127 when the real command is not on PATH.
 ##
-mock_forward_exec() {
+_mock_forward_exec() {
   local mock="${1}"
   local name="${2}"
   shift 2
 
   local forward_path
-  forward_path="$(mock_forward_path "${mock%/*}")"
+  forward_path="$(_mock_forward_path "${mock%/*}")"
 
   local real
   real="$(PATH="${forward_path}" command -v "${name}")" || real=""
@@ -1111,7 +1111,7 @@ mock_forward_exec() {
 # Outputs:
 #   STDOUT: The remaining PATH entries.
 ##
-mock_forward_path() {
+_mock_forward_path() {
   local dir="${1}"
   local path="${2:-${PATH}}"
   local -a entries=()
@@ -1174,7 +1174,7 @@ mock_set_strict() {
 # Arguments:
 #   1. mock: Path to the mock.
 ##
-mock_strict_enabled() {
+_mock_strict_enabled() {
   local mock="${1}"
 
   [ -e "${mock}.strict" ] || return 1
@@ -1189,7 +1189,7 @@ mock_strict_enabled() {
 #   1. mock: Path to the mock.
 #   2. n: Index of the call.
 ##
-mock_expect_ordinal() {
+_mock_expect_ordinal() {
   local mock="${1}"
   local n="${2}"
   local file="${mock}.expect_ordinal"
@@ -1212,7 +1212,7 @@ mock_expect_ordinal() {
 # Arguments:
 #   1. mock: Path to the mock.
 ##
-mock_expectations_exist() {
+_mock_expectations_exist() {
   local mock="${1}"
 
   [ -e "${mock}.expect_ordinal" ] && return 0
@@ -1229,12 +1229,12 @@ mock_expectations_exist() {
 # Arguments:
 #   1. mock: Path to the mock.
 ##
-mock_strict_accepts() {
+_mock_strict_accepts() {
   local mock="${1}"
 
-  mock_strict_enabled "${mock}" || return 0
+  _mock_strict_enabled "${mock}" || return 0
   [ -e "${mock}.default" ] && return 0
-  mock_expectations_exist "${mock}" || return 0
+  _mock_expectations_exist "${mock}" || return 0
 
   return 1
 }
@@ -1247,19 +1247,19 @@ mock_strict_accepts() {
 # Arguments:
 #   1. mock: Path to the mock.
 #   2. name: Command name.
-#   3. line: The call, serialised by 'mock_log_line'.
+#   3. line: The call, serialised by '_mock_log_line'.
 #
 # Outputs:
 #   STDERR: A diagnostic naming the call and every specification that turned
 #           it down.
 ##
-mock_strict_reject() {
+_mock_strict_reject() {
   local mock="${1}"
   local name="${2}"
   local line="${3}"
 
   echo "Mock '${name}' received a call that no expectation covers: ${line}" >&2
-  mock_spec_describe_all "${mock}" >&2
+  _mock_spec_describe_all "${mock}" >&2
 
   printf '%s\n' "${line}" >>"${mock}.unexpected"
 }
@@ -1290,7 +1290,7 @@ mock_strict_reject() {
 ##
 mock_sandbox_enable() {
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   local sandbox="${dir}/.sandbox"
 
@@ -1303,7 +1303,7 @@ mock_sandbox_enable() {
   # not record the sandbox over the PATH it has to be restored to.
   [ -e "${sandbox}/path" ] || printf '%s\n' "${PATH}" >"${sandbox}/path"
 
-  mock_sandbox_link_base "${sandbox}/bin" || return 1
+  _mock_sandbox_link_base "${sandbox}/bin" || return 1
 
   if [ "$#" -gt 0 ]; then
     mock_sandbox_allow "$@" || return 1
@@ -1317,13 +1317,13 @@ mock_sandbox_enable() {
   # exported so that a Bash script under test reports the same way the test
   # shell does.
   # shellcheck disable=SC2329 # Bash calls this itself on a failed lookup.
-  command_not_found_handle() { mock_sandbox_deny "$@"; }
-  export -f mock_sandbox_deny
+  command_not_found_handle() { _mock_sandbox_deny "$@"; }
+  export -f _mock_sandbox_deny
   export -f command_not_found_handle
 
   PATH="${dir}:${sandbox}/bin"
 
-  mock_path_record
+  _mock_path_record
 }
 
 ##
@@ -1342,7 +1342,7 @@ mock_sandbox_allow() {
   fi
 
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   local sandbox="${dir}/.sandbox"
 
@@ -1352,7 +1352,7 @@ mock_sandbox_allow() {
   fi
 
   local real_path
-  real_path="$(mock_sandbox_real_path)" || return 1
+  real_path="$(_mock_sandbox_real_path)" || return 1
 
   local name
   local real
@@ -1369,7 +1369,7 @@ mock_sandbox_allow() {
         ;;
     esac
 
-    mock_sandbox_write_shim "${sandbox}/bin/${name}" "${name}" "${real}" "${sandbox}/report"
+    _mock_sandbox_write_shim "${sandbox}/bin/${name}" "${name}" "${real}" "${sandbox}/report"
     chmod +x "${sandbox}/bin/${name}"
   done
 }
@@ -1384,7 +1384,7 @@ mock_sandbox_allow() {
 ##
 mock_sandbox_disable() {
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   local saved="${dir}/.sandbox/path"
 
@@ -1397,10 +1397,10 @@ mock_sandbox_disable() {
   rm -f "${saved}"
 
   unset -f command_not_found_handle
-  export -fn mock_sandbox_deny
+  export -fn _mock_sandbox_deny
   unset BATS_HELPERS_MOCK_SANDBOX_REPORT
 
-  mock_path_record
+  _mock_path_record
 }
 
 ##
@@ -1408,7 +1408,7 @@ mock_sandbox_disable() {
 ##
 mock_sandbox_enabled() {
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   [ -e "${dir}/.sandbox/path" ]
 }
@@ -1436,7 +1436,7 @@ mock_sandbox_report() {
   esac
 
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   local report="${dir}/.sandbox/report"
   [ -e "${report}" ] || return 0
@@ -1485,7 +1485,7 @@ mock_sandbox_report() {
 # Returns:
 #   127 always, the status of a command that was not found.
 ##
-mock_sandbox_deny() {
+_mock_sandbox_deny() {
   local name="${1}"
 
   if [ -n "${BATS_HELPERS_MOCK_SANDBOX_REPORT-}" ]; then
@@ -1509,7 +1509,7 @@ mock_sandbox_deny() {
 # Outputs:
 #   STDOUT: The command names, separated by spaces.
 ##
-mock_sandbox_base_commands() {
+_mock_sandbox_base_commands() {
   echo 'bash cat chmod cp diff dirname find grep head id ln ls mkdir mktemp rm sed stat touch wc'
 }
 
@@ -1519,14 +1519,14 @@ mock_sandbox_base_commands() {
 # Arguments:
 #   1. bin: Directory to link them into.
 ##
-mock_sandbox_link_base() {
+_mock_sandbox_link_base() {
   local bin="${1}"
 
   local real_path
-  real_path="$(mock_sandbox_real_path)" || return 1
+  real_path="$(_mock_sandbox_real_path)" || return 1
 
   local -a names=()
-  read -ra names <<<"$(mock_sandbox_base_commands)"
+  read -ra names <<<"$(_mock_sandbox_base_commands)"
 
   local name
   local real
@@ -1559,16 +1559,16 @@ mock_sandbox_link_base() {
 #   STDOUT: The PATH saved when the sandbox was enabled, else the current one,
 #           in both cases without the mock directory.
 ##
-mock_sandbox_real_path() {
+_mock_sandbox_real_path() {
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   local saved="${dir}/.sandbox/path"
   local path="${PATH}"
 
   [ -e "${saved}" ] && path="$(cat "${saved}")"
 
-  mock_forward_path "${dir}" "${path}"
+  _mock_forward_path "${dir}" "${path}"
 }
 
 ##
@@ -1580,14 +1580,14 @@ mock_sandbox_real_path() {
 #   3. real: Path to the real command.
 #   4. report: Path to the report.
 ##
-mock_sandbox_write_shim() {
+_mock_sandbox_write_shim() {
   local shim="${1}"
   local name="${2}"
   local real="${3}"
   local report="${4}"
 
   # Every value is quoted for the shell rather than interpolated raw, for the
-  # same reason 'mock_write' quotes: the directory holding them is
+  # same reason '_mock_write' quotes: the directory holding them is
   # consumer-supplied through BATS_HELPERS_MOCK_TMPDIR.
   local name_quoted
   local real_quoted
@@ -1626,7 +1626,7 @@ EOF
 # Outputs:
 #   STDOUT: The quoted value.
 ##
-mock_log_quote() {
+_mock_log_quote() {
   local value="${1-}"
 
   value="${value//\\/\\\\}"
@@ -1648,9 +1648,9 @@ mock_log_quote() {
 #
 # Outputs:
 #   STDOUT: The command name followed by every argument, each quoted by
-#           'mock_log_quote'.
+#           '_mock_log_quote'.
 ##
-mock_log_line() {
+_mock_log_line() {
   local name="${1}"
   shift
 
@@ -1658,7 +1658,7 @@ mock_log_line() {
   local argument
 
   for argument in "$@"; do
-    line="${line} $(mock_log_quote "${argument}")"
+    line="${line} $(_mock_log_quote "${argument}")"
   done
 
   printf '%s\n' "${line}"
@@ -1673,7 +1673,7 @@ mock_log_line() {
 #   1. log: Path to the log.
 #   2. line: Line to append.
 ##
-mock_log_append() {
+_mock_log_append() {
   local log="${1}"
   local line="${2}"
 
@@ -1689,9 +1689,9 @@ mock_log_append() {
 # Outputs:
 #   STDOUT: Path to the log, which does not exist until the first call.
 ##
-mock_log_path() {
+_mock_log_path() {
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   printf '%s\n' "${dir}/mock.log"
 }
@@ -1705,7 +1705,7 @@ mock_log_path() {
 ##
 mock_log_print() {
   local log
-  log="$(mock_log_path)" || return 1
+  log="$(_mock_log_path)" || return 1
 
   [ -e "${log}" ] || return 0
 
@@ -1729,7 +1729,7 @@ mock_log_exclude() {
   fi
 
   local log
-  log="$(mock_log_path)" || return 1
+  log="$(_mock_log_path)" || return 1
 
   local name
   for name in "$@"; do
@@ -1743,9 +1743,9 @@ mock_log_exclude() {
 # Outputs:
 #   STDOUT: Every recorded call that 'mock_log_exclude' did not exclude.
 ##
-mock_log_filtered() {
+_mock_log_filtered() {
   local log
-  log="$(mock_log_path)" || return 1
+  log="$(_mock_log_path)" || return 1
 
   [ -e "${log}" ] || return 0
 
@@ -1787,10 +1787,10 @@ mock_log_filtered() {
 #   STDOUT: Every recorded call of the command, in the order the calls were
 #           made.
 ##
-mock_log_calls_of() {
+_mock_log_calls_of() {
   local name="${1}"
   local log
-  log="$(mock_log_path)" || return 1
+  log="$(_mock_log_path)" || return 1
 
   [ -e "${log}" ] || return 0
 
@@ -1834,7 +1834,7 @@ mock_get_call_num() {
 mock_get_call_args() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_resolve_n "${mock}" "${2-}")" || return 1
+  n="$(_mock_resolve_n "${mock}" "${2-}")" || return 1
 
   cat "${mock}.args.${n}"
 }
@@ -1852,7 +1852,7 @@ mock_get_call_args() {
 mock_get_call_user() {
   local mock="${1?'Mock must be specified'}"
   local n
-  n="$(mock_resolve_n "${mock}" "${2-}")" || return 1
+  n="$(_mock_resolve_n "${mock}" "${2-}")" || return 1
 
   cat "${mock}.user.${n}"
 }
@@ -1872,7 +1872,7 @@ mock_get_call_env() {
   local mock="${1?'Mock must be specified'}"
   local var="${2?'Variable name must be specified'}"
   local n
-  n="$(mock_resolve_n "${mock}" "${3-}")" || return 1
+  n="$(_mock_resolve_n "${mock}" "${3-}")" || return 1
 
   source "${mock}.env.${n}"
 
@@ -1915,7 +1915,7 @@ mock_assert_call_args() {
 # Outputs:
 #   STDOUT: Call index.
 ##
-mock_resolve_n() {
+_mock_resolve_n() {
   local mock="${1?'Mock must be specified'}"
 
   local call_num
@@ -1945,13 +1945,13 @@ mock_resolve_n() {
 # Returns:
 #   0 when a mock is registered under the name, 1 when none is.
 ##
-mock_name_registered() {
+_mock_name_registered() {
   local name="${1}"
   local registered
 
   while IFS= read -r registered; do
     [ "${registered}" = "${name}" ] && return 0
-  done < <(mock_names)
+  done < <(_mock_names)
 
   return 1
 }
@@ -1962,9 +1962,9 @@ mock_name_registered() {
 # Outputs:
 #   STDOUT: One mock path per line.
 ##
-mock_paths() {
+_mock_paths() {
   local dir
-  dir="$(mock_resolve_tmp)" || return 1
+  dir="$(_mock_resolve_tmp)" || return 1
 
   local name_file
   for name_file in "${dir}"/*.name; do
@@ -1981,9 +1981,9 @@ mock_paths() {
 # Outputs:
 #   STDOUT: One command name per line.
 ##
-mock_names() {
+_mock_names() {
   local paths
-  paths="$(mock_paths)" || return 1
+  paths="$(_mock_paths)" || return 1
 
   [ -n "${paths}" ] || return 0
 
@@ -2005,7 +2005,7 @@ mock_names() {
 #
 # Arguments:
 #   1+. Expected calls, one per argument, each in the serialisation
-#       'mock_log_quote' documents. No arguments asserts that nothing was
+#       '_mock_log_quote' documents. No arguments asserts that nothing was
 #       called.
 ##
 mock_assert_calls() {
@@ -2019,7 +2019,7 @@ mock_assert_calls() {
   fi
 
   local actual
-  actual="$(mock_log_filtered)" || return 1
+  actual="$(_mock_log_filtered)" || return 1
 
   [ "${expected}" = "${actual}" ] && return 0
 
@@ -2031,7 +2031,7 @@ mock_assert_calls() {
 ##
 mock_assert_no_calls() {
   local actual
-  actual="$(mock_log_filtered)" || return 1
+  actual="$(_mock_log_filtered)" || return 1
 
   [ -z "${actual}" ] && return 0
 
@@ -2047,13 +2047,13 @@ mock_assert_no_calls() {
 mock_assert_called() {
   local name="${1?'Command name must be specified'}"
 
-  if ! mock_name_registered "${name}"; then
+  if ! _mock_name_registered "${name}"; then
     flunk "Command '${name}' is not mocked. Register it with 'mock_command' first."
     return 1
   fi
 
   local matched
-  matched="$(mock_log_calls_of "${name}")" || return 1
+  matched="$(_mock_log_calls_of "${name}")" || return 1
 
   [ -n "${matched}" ] && return 0
 
@@ -2069,13 +2069,13 @@ mock_assert_called() {
 mock_assert_not_called() {
   local name="${1?'Command name must be specified'}"
 
-  if ! mock_name_registered "${name}"; then
+  if ! _mock_name_registered "${name}"; then
     flunk "Command '${name}' is not mocked. Register it with 'mock_command' first."
     return 1
   fi
 
   local matched
-  matched="$(mock_log_calls_of "${name}")" || return 1
+  matched="$(_mock_log_calls_of "${name}")" || return 1
 
   [ -z "${matched}" ] && return 0
 
@@ -2101,7 +2101,7 @@ mock_verify() {
   if [ "$#" -gt 0 ]; then
     mocks=("$@")
   else
-    mapfile -t mocks < <(mock_paths)
+    mapfile -t mocks < <(_mock_paths)
   fi
 
   local mock
@@ -2118,7 +2118,7 @@ mock_verify() {
   for mock in "${mocks[@]}"; do
     while IFS= read -r problem; do
       problems+=("${problem}")
-    done < <(mock_verify_mock "${mock}")
+    done < <(_mock_verify_mock "${mock}")
   done
 
   mock_path_check
@@ -2156,7 +2156,7 @@ mock_verify() {
 #   0 always. An unmet expectation is reported on STDOUT rather than by the
 #   exit status.
 ##
-mock_verify_mock() {
+_mock_verify_mock() {
   local mock="${1}"
 
   local name
@@ -2168,7 +2168,7 @@ mock_verify_mock() {
       echo "Mock '${name}' received a call that no expectation covers: ${line}"
     done <"${mock}.unexpected"
 
-    mock_spec_describe_all "${mock}"
+    _mock_spec_describe_all "${mock}"
   fi
 
   local call_num

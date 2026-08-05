@@ -59,7 +59,7 @@ assert_equal() {
 #   2. needle: Substring to search for.
 ##
 assert_string_contains() {
-  string_assert_match "string" "anywhere" 0 "literal" 0 "$@"
+  _string_assert_match "string" "anywhere" 0 "literal" 0 "$@"
 }
 
 ##
@@ -70,7 +70,7 @@ assert_string_contains() {
 #   2. needle: Substring to search for.
 ##
 assert_string_contains_case() {
-  string_assert_match "string" "anywhere" 0 "literal" 1 "$@"
+  _string_assert_match "string" "anywhere" 0 "literal" 1 "$@"
 }
 
 ##
@@ -81,7 +81,7 @@ assert_string_contains_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_contains() {
-  string_assert_match "string" "anywhere" 1 "literal" 0 "$@"
+  _string_assert_match "string" "anywhere" 1 "literal" 0 "$@"
 }
 
 ##
@@ -92,7 +92,7 @@ assert_string_not_contains() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_contains_case() {
-  string_assert_match "string" "anywhere" 1 "literal" 1 "$@"
+  _string_assert_match "string" "anywhere" 1 "literal" 1 "$@"
 }
 
 ##
@@ -107,7 +107,7 @@ assert_string_not_contains_case() {
 #   2. needle: Extended regular expression to match.
 ##
 assert_string_matches() {
-  string_assert_match "string" "anywhere" 0 "regex" 0 "$@"
+  _string_assert_match "string" "anywhere" 0 "regex" 0 "$@"
 }
 
 ##
@@ -118,7 +118,7 @@ assert_string_matches() {
 #   2. needle: Extended regular expression to match.
 ##
 assert_string_matches_case() {
-  string_assert_match "string" "anywhere" 0 "regex" 1 "$@"
+  _string_assert_match "string" "anywhere" 0 "regex" 1 "$@"
 }
 
 ##
@@ -129,7 +129,7 @@ assert_string_matches_case() {
 #   2. needle: Extended regular expression to match.
 ##
 assert_string_not_matches() {
-  string_assert_match "string" "anywhere" 1 "regex" 0 "$@"
+  _string_assert_match "string" "anywhere" 1 "regex" 0 "$@"
 }
 
 ##
@@ -140,7 +140,7 @@ assert_string_not_matches() {
 #   2. needle: Extended regular expression to match.
 ##
 assert_string_not_matches_case() {
-  string_assert_match "string" "anywhere" 1 "regex" 1 "$@"
+  _string_assert_match "string" "anywhere" 1 "regex" 1 "$@"
 }
 
 ##
@@ -155,7 +155,7 @@ assert_string_not_matches_case() {
 #   2. needle: Format string, see 'string_format_to_regex'.
 ##
 assert_string_matches_format() {
-  string_assert_match "string" "anywhere" 0 "format" 0 "$@"
+  _string_assert_match "string" "anywhere" 0 "format" 0 "$@"
 }
 
 ##
@@ -166,7 +166,7 @@ assert_string_matches_format() {
 #   2. needle: Format string, see 'string_format_to_regex'.
 ##
 assert_string_matches_format_case() {
-  string_assert_match "string" "anywhere" 0 "format" 1 "$@"
+  _string_assert_match "string" "anywhere" 0 "format" 1 "$@"
 }
 
 ##
@@ -177,7 +177,7 @@ assert_string_matches_format_case() {
 #   2. needle: Format string, see 'string_format_to_regex'.
 ##
 assert_string_not_matches_format() {
-  string_assert_match "string" "anywhere" 1 "format" 0 "$@"
+  _string_assert_match "string" "anywhere" 1 "format" 0 "$@"
 }
 
 ##
@@ -188,7 +188,7 @@ assert_string_not_matches_format() {
 #   2. needle: Format string, see 'string_format_to_regex'.
 ##
 assert_string_not_matches_format_case() {
-  string_assert_match "string" "anywhere" 1 "format" 1 "$@"
+  _string_assert_match "string" "anywhere" 1 "format" 1 "$@"
 }
 
 ##
@@ -206,7 +206,7 @@ assert_string_not_matches_format_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_starts_with() {
-  string_assert_match "string" "start" 0 "literal" 0 "$@"
+  _string_assert_match "string" "start" 0 "literal" 0 "$@"
 }
 
 ##
@@ -217,7 +217,7 @@ assert_string_starts_with() {
 #   2. needle: Substring to search for.
 ##
 assert_string_starts_with_case() {
-  string_assert_match "string" "start" 0 "literal" 1 "$@"
+  _string_assert_match "string" "start" 0 "literal" 1 "$@"
 }
 
 ##
@@ -228,7 +228,7 @@ assert_string_starts_with_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_starts_with() {
-  string_assert_match "string" "start" 1 "literal" 0 "$@"
+  _string_assert_match "string" "start" 1 "literal" 0 "$@"
 }
 
 ##
@@ -239,7 +239,7 @@ assert_string_not_starts_with() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_starts_with_case() {
-  string_assert_match "string" "start" 1 "literal" 1 "$@"
+  _string_assert_match "string" "start" 1 "literal" 1 "$@"
 }
 
 ##
@@ -250,7 +250,7 @@ assert_string_not_starts_with_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_ends_with() {
-  string_assert_match "string" "end" 0 "literal" 0 "$@"
+  _string_assert_match "string" "end" 0 "literal" 0 "$@"
 }
 
 ##
@@ -261,7 +261,7 @@ assert_string_ends_with() {
 #   2. needle: Substring to search for.
 ##
 assert_string_ends_with_case() {
-  string_assert_match "string" "end" 0 "literal" 1 "$@"
+  _string_assert_match "string" "end" 0 "literal" 1 "$@"
 }
 
 ##
@@ -272,7 +272,7 @@ assert_string_ends_with_case() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_ends_with() {
-  string_assert_match "string" "end" 1 "literal" 0 "$@"
+  _string_assert_match "string" "end" 1 "literal" 0 "$@"
 }
 
 ##
@@ -283,7 +283,7 @@ assert_string_not_ends_with() {
 #   2. needle: Substring to search for.
 ##
 assert_string_not_ends_with_case() {
-  string_assert_match "string" "end" 1 "literal" 1 "$@"
+  _string_assert_match "string" "end" 1 "literal" 1 "$@"
 }
 
 ##
@@ -449,7 +449,7 @@ string_format_to_regex() {
 #      the haystack reports under 'contents'. Required with subject 'file',
 #      absent otherwise.
 ##
-string_assert_match() {
+_string_assert_match() {
   local expected_count=7
   [ "${1-}" = "file" ] && expected_count=8
 
@@ -497,7 +497,7 @@ string_assert_match() {
   ##
 
   local noun
-  noun="$(string_needle_noun "${mode}")"
+  noun="$(_string_needle_noun "${mode}")"
 
   local verb
   local verb_third_person
@@ -523,7 +523,7 @@ string_assert_match() {
   esac
 
   local subject_noun
-  subject_noun="$(string_subject_noun "${subject}")"
+  subject_noun="$(_string_subject_noun "${subject}")"
 
   local title
   if [ "${negate}" = "1" ]; then
@@ -548,7 +548,7 @@ string_assert_match() {
   fi
 
   local -a footer=()
-  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
+  mapfile -t footer < <(_string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
 
   format_error "${title}" "${subject_rows[@]}" "${noun}" "${needle}" "${footer[@]}" | flunk
 }
@@ -562,7 +562,7 @@ string_assert_match() {
 # Outputs:
 #   STDOUT: The noun.
 ##
-string_needle_noun() {
+_string_needle_noun() {
   case "${1}" in
     regex)
       printf 'regular expression\n'
@@ -585,7 +585,7 @@ string_needle_noun() {
 # Outputs:
 #   STDOUT: The capitalised noun the title opens with.
 ##
-string_subject_noun() {
+_string_subject_noun() {
   case "${1}" in
     output)
       printf 'Output\n'
@@ -615,7 +615,7 @@ string_subject_noun() {
 #   STDOUT: Alternating keys and values, one per line, ending with a note naming
 #           the case setting when it is what decided the outcome.
 ##
-string_match_rows() {
+_string_match_rows() {
   local mode="${1}"
   local case_sensitive="${2}"
   local case_decided="${3}"

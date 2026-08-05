@@ -353,13 +353,13 @@ sensitive'
   assert_output_contains "Prompt must not be empty."
 }
 
-@test "tui_prompts_assert_match" {
+@test "_tui_prompts_assert_match" {
   export SCRIPT_FILE="tests/fixtures/tui_script_prompts.sh"
 
   tui_run "one" "two"
-  tui_prompts_assert_match 0 "Answer1" "Answer2"
+  _tui_prompts_assert_match 0 "Answer1" "Answer2"
 
-  run tui_prompts_assert_match
+  run _tui_prompts_assert_match
   assert_failure
   assert_output_contains "A case sensitivity flag is required."
 }

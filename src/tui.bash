@@ -102,7 +102,7 @@ tui_run() {
   printf '%s' "${input}" >"${input_file}"
   rm -f "${expiry_file}"
 
-  run tui_exec "${script_path}" "${input_file}" "${output_file}" "${expiry_file}" "${timeout}"
+  run _tui_exec "${script_path}" "${input_file}" "${output_file}" "${expiry_file}" "${timeout}"
 
   ##
   ## Failure report.
@@ -152,7 +152,7 @@ tui_run() {
 # Returns:
 #   The exit status of the script.
 ##
-tui_exec() {
+_tui_exec() {
   local script_path="${1}"
   local input_file="${2}"
   local output_file="${3}"
@@ -210,7 +210,7 @@ tui_exec() {
 #      submitted.
 ##
 tui_assert_prompts() {
-  tui_prompts_assert_match 0 "$@"
+  _tui_prompts_assert_match 0 "$@"
 }
 
 ##
@@ -222,7 +222,7 @@ tui_assert_prompts() {
 #      submitted.
 ##
 tui_assert_prompts_case() {
-  tui_prompts_assert_match 1 "$@"
+  _tui_prompts_assert_match 1 "$@"
 }
 
 ##
@@ -251,7 +251,7 @@ tui_assert_prompts_case() {
 #   BATS_HELPERS_TUI_ANSWERS: Number of answers the last 'tui_run' submitted.
 #   output: Output captured by the last 'tui_run'.
 ##
-tui_prompts_assert_match() {
+_tui_prompts_assert_match() {
   if [ "$#" -lt 1 ]; then
     flunk "A case sensitivity flag is required."
     return 1
@@ -308,7 +308,7 @@ tui_prompts_assert_match() {
       string_match "${remaining}" "${prompt}" "literal" "${opposite_case}" "anywhere" && case_decided=1
 
       local -a footer=()
-      mapfile -t footer < <(string_match_rows "literal" "${case_sensitive}" "${case_decided}")
+      mapfile -t footer < <(_string_match_rows "literal" "${case_sensitive}" "${case_decided}")
 
       format_error "Prompt does not appear in the remaining output" \
         "prompt" "${prompt}" \

@@ -20,7 +20,7 @@
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line() {
-  line_assert_index_equal 0 "$@"
+  _line_assert_index_equal 0 "$@"
 }
 
 ##
@@ -34,7 +34,7 @@ assert_line() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_not() {
-  line_assert_index_equal 1 "$@"
+  _line_assert_index_equal 1 "$@"
 }
 
 ##
@@ -52,7 +52,7 @@ assert_line_not() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_contains() {
-  line_assert_index_match 0 "literal" 0 "$@"
+  _line_assert_index_match 0 "literal" 0 "$@"
 }
 
 ##
@@ -66,7 +66,7 @@ assert_line_contains() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_contains_case() {
-  line_assert_index_match 0 "literal" 1 "$@"
+  _line_assert_index_match 0 "literal" 1 "$@"
 }
 
 ##
@@ -80,7 +80,7 @@ assert_line_contains_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_not_contains() {
-  line_assert_index_match 1 "literal" 0 "$@"
+  _line_assert_index_match 1 "literal" 0 "$@"
 }
 
 ##
@@ -95,7 +95,7 @@ assert_line_not_contains() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_not_contains_case() {
-  line_assert_index_match 1 "literal" 1 "$@"
+  _line_assert_index_match 1 "literal" 1 "$@"
 }
 
 ##
@@ -114,7 +114,7 @@ assert_line_not_contains_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_matches() {
-  line_assert_index_match 0 "regex" 0 "$@"
+  _line_assert_index_match 0 "regex" 0 "$@"
 }
 
 ##
@@ -129,7 +129,7 @@ assert_line_matches() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_matches_case() {
-  line_assert_index_match 0 "regex" 1 "$@"
+  _line_assert_index_match 0 "regex" 1 "$@"
 }
 
 ##
@@ -144,7 +144,7 @@ assert_line_matches_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_not_matches() {
-  line_assert_index_match 1 "regex" 0 "$@"
+  _line_assert_index_match 1 "regex" 0 "$@"
 }
 
 ##
@@ -159,7 +159,7 @@ assert_line_not_matches() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_not_matches_case() {
-  line_assert_index_match 1 "regex" 1 "$@"
+  _line_assert_index_match 1 "regex" 1 "$@"
 }
 
 ##
@@ -177,7 +177,7 @@ assert_line_not_matches_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_matches_format() {
-  line_assert_index_match 0 "format" 0 "$@"
+  _line_assert_index_match 0 "format" 0 "$@"
 }
 
 ##
@@ -191,7 +191,7 @@ assert_line_matches_format() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_matches_format_case() {
-  line_assert_index_match 0 "format" 1 "$@"
+  _line_assert_index_match 0 "format" 1 "$@"
 }
 
 ##
@@ -206,7 +206,7 @@ assert_line_matches_format_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_not_matches_format() {
-  line_assert_index_match 1 "format" 0 "$@"
+  _line_assert_index_match 1 "format" 0 "$@"
 }
 
 ##
@@ -221,7 +221,7 @@ assert_line_not_matches_format() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_not_matches_format_case() {
-  line_assert_index_match 1 "format" 1 "$@"
+  _line_assert_index_match 1 "format" 1 "$@"
 }
 
 ##
@@ -238,7 +238,7 @@ assert_line_not_matches_format_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line() {
-  line_assert_any_equal 0 "$@"
+  _line_assert_any_equal 0 "$@"
 }
 
 ##
@@ -251,7 +251,7 @@ assert_any_line() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line() {
-  line_assert_any_equal 1 "$@"
+  _line_assert_any_equal 1 "$@"
 }
 
 ##
@@ -268,7 +268,7 @@ assert_no_line() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_contains() {
-  line_assert_any_match 0 "literal" 0 "$@"
+  _line_assert_any_match 0 "literal" 0 "$@"
 }
 
 ##
@@ -281,7 +281,7 @@ assert_any_line_contains() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_contains_case() {
-  line_assert_any_match 0 "literal" 1 "$@"
+  _line_assert_any_match 0 "literal" 1 "$@"
 }
 
 ##
@@ -294,7 +294,7 @@ assert_any_line_contains_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_contains() {
-  line_assert_any_match 1 "literal" 0 "$@"
+  _line_assert_any_match 1 "literal" 0 "$@"
 }
 
 ##
@@ -307,7 +307,7 @@ assert_no_line_contains() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_contains_case() {
-  line_assert_any_match 1 "literal" 1 "$@"
+  _line_assert_any_match 1 "literal" 1 "$@"
 }
 
 ##
@@ -324,7 +324,7 @@ assert_no_line_contains_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_matches() {
-  line_assert_any_match 0 "regex" 0 "$@"
+  _line_assert_any_match 0 "regex" 0 "$@"
 }
 
 ##
@@ -337,7 +337,7 @@ assert_any_line_matches() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_matches_case() {
-  line_assert_any_match 0 "regex" 1 "$@"
+  _line_assert_any_match 0 "regex" 1 "$@"
 }
 
 ##
@@ -350,7 +350,7 @@ assert_any_line_matches_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_matches() {
-  line_assert_any_match 1 "regex" 0 "$@"
+  _line_assert_any_match 1 "regex" 0 "$@"
 }
 
 ##
@@ -363,7 +363,7 @@ assert_no_line_matches() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_matches_case() {
-  line_assert_any_match 1 "regex" 1 "$@"
+  _line_assert_any_match 1 "regex" 1 "$@"
 }
 
 ##
@@ -380,7 +380,7 @@ assert_no_line_matches_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_matches_format() {
-  line_assert_any_match 0 "format" 0 "$@"
+  _line_assert_any_match 0 "format" 0 "$@"
 }
 
 ##
@@ -393,7 +393,7 @@ assert_any_line_matches_format() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_any_line_matches_format_case() {
-  line_assert_any_match 0 "format" 1 "$@"
+  _line_assert_any_match 0 "format" 1 "$@"
 }
 
 ##
@@ -406,7 +406,7 @@ assert_any_line_matches_format_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_matches_format() {
-  line_assert_any_match 1 "format" 0 "$@"
+  _line_assert_any_match 1 "format" 0 "$@"
 }
 
 ##
@@ -419,7 +419,7 @@ assert_no_line_matches_format() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_no_line_matches_format_case() {
-  line_assert_any_match 1 "format" 1 "$@"
+  _line_assert_any_match 1 "format" 1 "$@"
 }
 
 ##
@@ -436,7 +436,7 @@ assert_no_line_matches_format_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count() {
-  line_assert_count 0 "$@"
+  _line_assert_count 0 "$@"
 }
 
 ##
@@ -449,7 +449,7 @@ assert_line_count() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_not() {
-  line_assert_count 1 "$@"
+  _line_assert_count 1 "$@"
 }
 
 ##
@@ -467,7 +467,7 @@ assert_line_count_not() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_contains() {
-  line_assert_count_match 0 "literal" 0 "$@"
+  _line_assert_count_match 0 "literal" 0 "$@"
 }
 
 ##
@@ -481,7 +481,7 @@ assert_line_count_contains() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_contains_case() {
-  line_assert_count_match 0 "literal" 1 "$@"
+  _line_assert_count_match 0 "literal" 1 "$@"
 }
 
 ##
@@ -495,7 +495,7 @@ assert_line_count_contains_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_not_contains() {
-  line_assert_count_match 1 "literal" 0 "$@"
+  _line_assert_count_match 1 "literal" 0 "$@"
 }
 
 ##
@@ -509,7 +509,7 @@ assert_line_count_not_contains() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_not_contains_case() {
-  line_assert_count_match 1 "literal" 1 "$@"
+  _line_assert_count_match 1 "literal" 1 "$@"
 }
 
 ##
@@ -527,7 +527,7 @@ assert_line_count_not_contains_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_matches() {
-  line_assert_count_match 0 "regex" 0 "$@"
+  _line_assert_count_match 0 "regex" 0 "$@"
 }
 
 ##
@@ -541,7 +541,7 @@ assert_line_count_matches() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_matches_case() {
-  line_assert_count_match 0 "regex" 1 "$@"
+  _line_assert_count_match 0 "regex" 1 "$@"
 }
 
 ##
@@ -555,7 +555,7 @@ assert_line_count_matches_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_not_matches() {
-  line_assert_count_match 1 "regex" 0 "$@"
+  _line_assert_count_match 1 "regex" 0 "$@"
 }
 
 ##
@@ -569,7 +569,7 @@ assert_line_count_not_matches() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_not_matches_case() {
-  line_assert_count_match 1 "regex" 1 "$@"
+  _line_assert_count_match 1 "regex" 1 "$@"
 }
 
 ##
@@ -587,7 +587,7 @@ assert_line_count_not_matches_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_matches_format() {
-  line_assert_count_match 0 "format" 0 "$@"
+  _line_assert_count_match 0 "format" 0 "$@"
 }
 
 ##
@@ -601,7 +601,7 @@ assert_line_count_matches_format() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_matches_format_case() {
-  line_assert_count_match 0 "format" 1 "$@"
+  _line_assert_count_match 0 "format" 1 "$@"
 }
 
 ##
@@ -615,7 +615,7 @@ assert_line_count_matches_format_case() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_not_matches_format() {
-  line_assert_count_match 1 "format" 0 "$@"
+  _line_assert_count_match 1 "format" 0 "$@"
 }
 
 ##
@@ -629,7 +629,7 @@ assert_line_count_not_matches_format() {
 #   lines: Lines captured by the last 'run' call.
 ##
 assert_line_count_not_matches_format_case() {
-  line_assert_count_match 1 "format" 1 "$@"
+  _line_assert_count_match 1 "format" 1 "$@"
 }
 
 ##
@@ -649,7 +649,7 @@ assert_line_count_not_matches_format_case() {
 # Outputs:
 #   STDOUT: The resolved offset.
 ##
-line_resolve_index() {
+_line_resolve_index() {
   local given="${1-}"
 
   if ! [[ ${given} =~ ^-?[0-9]+$ ]]; then
@@ -670,7 +670,7 @@ line_resolve_index() {
   # An out-of-range index would otherwise compare against an empty string,
   # which reads as an ordinary mismatch and hides where the fault is.
   if [ "${index}" -lt 0 ] || [ "${index}" -ge "${total}" ]; then
-    flunk "Line index '${given}' is out of range for output with $(report_plural_lines "${total}")."
+    flunk "Line index '${given}' is out of range for output with $(_report_plural_lines "${total}")."
     return 1
   fi
 
@@ -687,7 +687,7 @@ line_resolve_index() {
 # Outputs:
 #   STDOUT: The label.
 ##
-line_label() {
+_line_label() {
   if [ "${1}" = "${2}" ]; then
     printf '%s\n' "${2}"
     return 0
@@ -712,7 +712,7 @@ line_label() {
 # Outputs:
 #   STDOUT: The window of lines, one per line.
 ##
-line_context() {
+_line_context() {
   local index="${1}"
   local total="${#lines[@]}"
   local window=2
@@ -744,7 +744,7 @@ line_context() {
 # Outputs:
 #   STDOUT: The participle.
 ##
-line_participle() {
+_line_participle() {
   local participle="containing"
   [ "${1}" != "literal" ] && participle="matching"
 
@@ -762,7 +762,7 @@ line_participle() {
 # Arguments:
 #   1. count: Value to validate.
 ##
-line_validate_count() {
+_line_validate_count() {
   if ! [[ ${1-} =~ ^[0-9]+$ ]]; then
     flunk "Line count '${1-}' is not a non-negative integer."
     return 1
@@ -784,7 +784,7 @@ line_validate_count() {
 # Outputs:
 #   STDOUT: The matching offsets, separated by spaces.
 ##
-line_match_indices() {
+_line_match_indices() {
   local negate="${1}"
   local mode="${2}"
   local case_sensitive="${3}"
@@ -838,7 +838,7 @@ line_match_indices() {
 # Outputs:
 #   STDOUT: The matching offsets, separated by spaces.
 ##
-line_equal_indices() {
+_line_equal_indices() {
   local expected="${1}"
   local total="${#lines[@]}"
   local matched=""
@@ -864,7 +864,7 @@ line_equal_indices() {
 # Globals:
 #   lines: Lines captured by the last 'run' call.
 ##
-line_assert_index_match() {
+_line_assert_index_match() {
   if [ "$#" -ne 5 ]; then
     flunk "A line index and a needle are required."
     return 1
@@ -877,7 +877,7 @@ line_assert_index_match() {
   local needle="${5}"
 
   local index
-  index="$(line_resolve_index "${given}")" || return 1
+  index="$(_line_resolve_index "${given}")" || return 1
 
   local haystack="${lines[index]}"
 
@@ -904,7 +904,7 @@ line_assert_index_match() {
   fi
 
   local noun
-  noun="$(string_needle_noun "${mode}")"
+  noun="$(_string_needle_noun "${mode}")"
 
   local verb="contain"
   local verb_third_person="contains"
@@ -928,9 +928,9 @@ line_assert_index_match() {
   [ "${opposite_status}" -ne "${match_status}" ] && case_decided=1
 
   local -a footer=()
-  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
+  mapfile -t footer < <(_string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
 
-  format_error "${title}" "line" "$(line_label "${given}" "${index}")" "${noun}" "${needle}" "${footer[@]}" "context" "$(line_context "${index}")" | flunk
+  format_error "${title}" "line" "$(_line_label "${given}" "${index}")" "${noun}" "${needle}" "${footer[@]}" "context" "$(_line_context "${index}")" | flunk
 }
 
 ##
@@ -944,7 +944,7 @@ line_assert_index_match() {
 # Globals:
 #   lines: Lines captured by the last 'run' call.
 ##
-line_assert_index_equal() {
+_line_assert_index_equal() {
   if [ "$#" -ne 3 ]; then
     flunk "A line index and a string are required."
     return 1
@@ -955,7 +955,7 @@ line_assert_index_equal() {
   local expected="${3}"
 
   local index
-  index="$(line_resolve_index "${given}")" || return 1
+  index="$(_line_resolve_index "${given}")" || return 1
 
   local equal=0
   [ "${lines[index]}" = "${expected}" ] || equal=1
@@ -967,7 +967,7 @@ line_assert_index_equal() {
   fi
 
   local title
-  local -a rows=("line" "$(line_label "${given}" "${index}")")
+  local -a rows=("line" "$(_line_label "${given}" "${index}")")
 
   # The line the assertion asked for is what it was compared against, so a
   # failed comparison names both sides; a negated one has only the one value.
@@ -979,7 +979,7 @@ line_assert_index_equal() {
     rows+=("expected" "${expected}" "actual" "${lines[index]}")
   fi
 
-  rows+=("context" "$(line_context "${index}")")
+  rows+=("context" "$(_line_context "${index}")")
 
   format_error "${title}" "${rows[@]}" | flunk
 }
@@ -996,7 +996,7 @@ line_assert_index_equal() {
 # Globals:
 #   lines: Lines captured by the last 'run' call.
 ##
-line_assert_any_match() {
+_line_assert_any_match() {
   if [ "$#" -ne 4 ]; then
     flunk "A needle is required."
     return 1
@@ -1008,7 +1008,7 @@ line_assert_any_match() {
   local needle="${4}"
 
   local matched
-  matched="$(line_match_indices 0 "${mode}" "${case_sensitive}" "${needle}")" || return 1
+  matched="$(_line_match_indices 0 "${mode}" "${case_sensitive}" "${needle}")" || return 1
 
   # shellcheck disable=SC2206
   local -a indices=(${matched})
@@ -1020,7 +1020,7 @@ line_assert_any_match() {
   fi
 
   local opposite
-  opposite="$(line_match_indices 0 "${mode}" $((1 - case_sensitive)) "${needle}")" || return 1
+  opposite="$(_line_match_indices 0 "${mode}" $((1 - case_sensitive)) "${needle}")" || return 1
 
   # shellcheck disable=SC2206
   local -a opposite_indices=(${opposite})
@@ -1033,10 +1033,10 @@ line_assert_any_match() {
   fi
 
   local noun
-  noun="$(string_needle_noun "${mode}")"
+  noun="$(_string_needle_noun "${mode}")"
 
   local participle
-  participle="$(line_participle "${mode}" 0)"
+  participle="$(_line_participle "${mode}" 0)"
 
   local title
   if [ "${negate}" = "1" ]; then
@@ -1046,12 +1046,12 @@ line_assert_any_match() {
   fi
 
   local -a footer=()
-  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
+  mapfile -t footer < <(_string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
 
   local -a rows=("${noun}" "${needle}" "${footer[@]}")
 
   if [ "${#indices[@]}" -gt 0 ]; then
-    rows+=("context" "$(line_context "${indices[0]}")")
+    rows+=("context" "$(_line_context "${indices[0]}")")
   fi
 
   format_error "${title}" "${rows[@]}" | flunk
@@ -1067,7 +1067,7 @@ line_assert_any_match() {
 # Globals:
 #   lines: Lines captured by the last 'run' call.
 ##
-line_assert_any_equal() {
+_line_assert_any_equal() {
   if [ "$#" -ne 2 ]; then
     flunk "A string is required."
     return 1
@@ -1077,7 +1077,7 @@ line_assert_any_equal() {
   local expected="${2}"
 
   local matched
-  matched="$(line_equal_indices "${expected}")"
+  matched="$(_line_equal_indices "${expected}")"
 
   # shellcheck disable=SC2206
   local -a indices=(${matched})
@@ -1098,7 +1098,7 @@ line_assert_any_equal() {
   local -a rows=("string" "${expected}")
 
   if [ "${#indices[@]}" -gt 0 ]; then
-    rows+=("context" "$(line_context "${indices[0]}")")
+    rows+=("context" "$(_line_context "${indices[0]}")")
   fi
 
   format_error "${title}" "${rows[@]}" | flunk
@@ -1114,7 +1114,7 @@ line_assert_any_equal() {
 # Globals:
 #   lines: Lines captured by the last 'run' call.
 ##
-line_assert_count() {
+_line_assert_count() {
   if [ "$#" -ne 2 ]; then
     flunk "A line count is required."
     return 1
@@ -1123,7 +1123,7 @@ line_assert_count() {
   local negate="${1}"
   local expected="${2}"
 
-  line_validate_count "${expected}" || return 1
+  _line_validate_count "${expected}" || return 1
 
   local total="${#lines[@]}"
 
@@ -1152,7 +1152,7 @@ line_assert_count() {
 # Globals:
 #   lines: Lines captured by the last 'run' call.
 ##
-line_assert_count_match() {
+_line_assert_count_match() {
   if [ "$#" -ne 5 ]; then
     flunk "A line count and a needle are required."
     return 1
@@ -1164,10 +1164,10 @@ line_assert_count_match() {
   local expected="${4}"
   local needle="${5}"
 
-  line_validate_count "${expected}" || return 1
+  _line_validate_count "${expected}" || return 1
 
   local matched
-  matched="$(line_match_indices "${negate}" "${mode}" "${case_sensitive}" "${needle}")" || return 1
+  matched="$(_line_match_indices "${negate}" "${mode}" "${case_sensitive}" "${needle}")" || return 1
 
   # shellcheck disable=SC2206
   local -a indices=(${matched})
@@ -1176,7 +1176,7 @@ line_assert_count_match() {
   [ "${actual}" -eq "${expected}" ] && return 0
 
   local opposite
-  opposite="$(line_match_indices "${negate}" "${mode}" $((1 - case_sensitive)) "${needle}")" || return 1
+  opposite="$(_line_match_indices "${negate}" "${mode}" $((1 - case_sensitive)) "${needle}")" || return 1
 
   # shellcheck disable=SC2206
   local -a opposite_indices=(${opposite})
@@ -1185,13 +1185,13 @@ line_assert_count_match() {
   [ "${#opposite_indices[@]}" -eq "${expected}" ] && case_decided=1
 
   local noun
-  noun="$(string_needle_noun "${mode}")"
+  noun="$(_string_needle_noun "${mode}")"
 
   local participle
-  participle="$(line_participle "${mode}" "${negate}")"
+  participle="$(_line_participle "${mode}" "${negate}")"
 
   local -a footer=()
-  mapfile -t footer < <(string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
+  mapfile -t footer < <(_string_match_rows "${mode}" "${case_sensitive}" "${case_decided}")
 
   format_error "Output does not have the expected number of lines ${participle} ${noun}" \
     "${noun}" "${needle}" \

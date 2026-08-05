@@ -209,12 +209,12 @@ load _test_helper
   assert_file_contains "${notice}" "Deprecated: 'ASSERT_DIR_EXCLUDE' will be removed in the next version. Use 'BATS_HELPERS_ASSERT_DIR_EXCLUDE' instead."
 }
 
-@test "mock_prepare_tmp with the deprecated temporary directory variable" {
+@test "_mock_prepare_tmp with the deprecated temporary directory variable" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   BATS_HELPERS_MOCK_TMPDIR=""
   export BATS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom"
 
-  run mock_prepare_tmp 3>"${notice}"
+  run _mock_prepare_tmp 3>"${notice}"
 
   assert_success
   assert_output "${BATS_TEST_TMPDIR}/custom/bats-helpers-mock"

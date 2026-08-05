@@ -105,23 +105,23 @@ bats_require_minimum_version 1.13.0
   mock_assert_call_args "${mock_curl}" "*" 2
 }
 
-@test "mock_resolve_n when the mock was not called enough times" {
+@test "_mock_resolve_n when the mock was not called enough times" {
   mock_curl="$(mock_command "curl")"
 
   curl example.com
 
-  run mock_resolve_n "${mock_curl}" 2
+  run _mock_resolve_n "${mock_curl}" 2
   assert_failure
   assert_output_contains "Mock must be called at least '2' time(s)"
 }
 
-@test "mock_resolve_n when the mock was not called enough times and the caller recovers" {
+@test "_mock_resolve_n when the mock was not called enough times and the caller recovers" {
   mock_curl="$(mock_command "curl")"
 
   curl example.com
 
   recovered=0
-  mock_resolve_n "${mock_curl}" 2 2>/dev/null || recovered=1
+  _mock_resolve_n "${mock_curl}" 2 2>/dev/null || recovered=1
 
   assert_equal 1 "${recovered}"
 }
@@ -162,7 +162,7 @@ bats_require_minimum_version 1.13.0
   assert_equal "someoneelse" "$(mock_get_call_user "${mock_curl}" 2)"
 }
 
-@test "mock_prepare_tmp defaults to a directory under BATS_TEST_TMPDIR" {
+@test "_mock_prepare_tmp defaults to a directory under BATS_TEST_TMPDIR" {
   assert_equal "${BATS_TEST_TMPDIR}/bats-helpers-mock" "${BATS_HELPERS_MOCK_TMPDIR}"
 
   mock_curl="$(mock_command "curl")"
@@ -171,17 +171,17 @@ bats_require_minimum_version 1.13.0
   assert_symlink_exists "${BATS_HELPERS_MOCK_TMPDIR}/curl"
 }
 
-@test "mock_prepare_tmp with a custom directory" {
+@test "_mock_prepare_tmp with a custom directory" {
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom"
 
-  run mock_prepare_tmp
+  run _mock_prepare_tmp
   assert_success
   assert_output "${BATS_TEST_TMPDIR}/custom/bats-helpers-mock"
 
   # A trailing slash does not produce a double separator.
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/custom/"
 
-  run mock_prepare_tmp
+  run _mock_prepare_tmp
   assert_success
   assert_output "${BATS_TEST_TMPDIR}/custom/bats-helpers-mock"
 }
@@ -212,21 +212,21 @@ bats_require_minimum_version 1.13.0
   assert_equal "curl 'example.com'" "$(mock_log_print)"
 }
 
-@test "mock_prepare_tmp when the directory cannot be created" {
+@test "_mock_prepare_tmp when the directory cannot be created" {
   touch "${BATS_TEST_TMPDIR}/regular_file"
   export BATS_HELPERS_MOCK_TMPDIR="${BATS_TEST_TMPDIR}/regular_file/custom"
 
-  run mock_prepare_tmp
+  run _mock_prepare_tmp
   assert_failure
 }
 
-@test "mock_prepare_tmp without a sandbox" {
+@test "_mock_prepare_tmp without a sandbox" {
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
   BATS_MOCK_TMPDIR=""
   BATS_TEST_TMPDIR=""
-  run mock_prepare_tmp
+  run _mock_prepare_tmp
   BATS_TEST_TMPDIR="${original}"
 
   assert_failure
@@ -246,38 +246,38 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
-@test "mock_paths" {
+@test "_mock_paths" {
   mock_curl="$(mock_command "curl")"
   mock_git="$(mock_command "git")"
 
-  assert_string_contains "$(mock_paths)" "${mock_curl}"
-  assert_string_contains "$(mock_paths)" "${mock_git}"
+  assert_string_contains "$(_mock_paths)" "${mock_curl}"
+  assert_string_contains "$(_mock_paths)" "${mock_git}"
 
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
   BATS_MOCK_TMPDIR=""
   BATS_TEST_TMPDIR=""
-  run mock_paths
+  run _mock_paths
   BATS_TEST_TMPDIR="${original}"
 
   assert_failure
   assert_output_contains "Set BATS_HELPERS_MOCK_TMPDIR to a writable directory"
 }
 
-@test "mock_names" {
+@test "_mock_names" {
   mock_command "curl" >/dev/null
   mock_command "git" >/dev/null
 
-  assert_string_contains "$(mock_names)" "curl"
-  assert_string_contains "$(mock_names)" "git"
+  assert_string_contains "$(_mock_names)" "curl"
+  assert_string_contains "$(_mock_names)" "git"
 
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
   BATS_MOCK_TMPDIR=""
   BATS_TEST_TMPDIR=""
-  run mock_names
+  run _mock_names
   BATS_TEST_TMPDIR="${original}"
 
   assert_failure
@@ -347,13 +347,13 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 equals "status"
 
-  mock_spec_matches "${spec}" "status"
+  _mock_spec_matches "${spec}" "status"
 
-  run mock_spec_matches "${spec}" "log"
+  run _mock_spec_matches "${spec}" "log"
   assert_failure
-  run mock_spec_matches "${spec}" "STATUS"
+  run _mock_spec_matches "${spec}" "STATUS"
   assert_failure
-  run mock_spec_matches "${spec}"
+  run _mock_spec_matches "${spec}"
   assert_failure
 }
 
@@ -362,9 +362,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_equals "status"
 
-  mock_spec_matches "${spec}" "log"
+  _mock_spec_matches "${spec}" "log"
 
-  run mock_spec_matches "${spec}" "status"
+  run _mock_spec_matches "${spec}" "status"
   assert_failure
 }
 
@@ -373,10 +373,10 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 starts_with "https://"
 
-  mock_spec_matches "${spec}" "https://example.com"
-  mock_spec_matches "${spec}" "HTTPS://example.com"
+  _mock_spec_matches "${spec}" "https://example.com"
+  _mock_spec_matches "${spec}" "HTTPS://example.com"
 
-  run mock_spec_matches "${spec}" "git@example.com"
+  run _mock_spec_matches "${spec}" "git@example.com"
   assert_failure
 }
 
@@ -385,11 +385,11 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_starts_with "https://"
 
-  mock_spec_matches "${spec}" "git@example.com"
+  _mock_spec_matches "${spec}" "git@example.com"
 
-  run mock_spec_matches "${spec}" "https://example.com"
+  run _mock_spec_matches "${spec}" "https://example.com"
   assert_failure
-  run mock_spec_matches "${spec}" "HTTPS://example.com"
+  run _mock_spec_matches "${spec}" "HTTPS://example.com"
   assert_failure
 }
 
@@ -398,9 +398,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 starts_with_case "https://"
 
-  mock_spec_matches "${spec}" "https://example.com"
+  _mock_spec_matches "${spec}" "https://example.com"
 
-  run mock_spec_matches "${spec}" "HTTPS://example.com"
+  run _mock_spec_matches "${spec}" "HTTPS://example.com"
   assert_failure
 }
 
@@ -409,9 +409,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_starts_with_case "https://"
 
-  mock_spec_matches "${spec}" "HTTPS://example.com"
+  _mock_spec_matches "${spec}" "HTTPS://example.com"
 
-  run mock_spec_matches "${spec}" "https://example.com"
+  run _mock_spec_matches "${spec}" "https://example.com"
   assert_failure
 }
 
@@ -420,10 +420,10 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 ends_with ".git"
 
-  mock_spec_matches "${spec}" "https://example.com/repo.git"
-  mock_spec_matches "${spec}" "https://example.com/repo.GIT"
+  _mock_spec_matches "${spec}" "https://example.com/repo.git"
+  _mock_spec_matches "${spec}" "https://example.com/repo.GIT"
 
-  run mock_spec_matches "${spec}" "https://example.com/repo"
+  run _mock_spec_matches "${spec}" "https://example.com/repo"
   assert_failure
 }
 
@@ -432,11 +432,11 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_ends_with ".git"
 
-  mock_spec_matches "${spec}" "https://example.com/repo"
+  _mock_spec_matches "${spec}" "https://example.com/repo"
 
-  run mock_spec_matches "${spec}" "https://example.com/repo.git"
+  run _mock_spec_matches "${spec}" "https://example.com/repo.git"
   assert_failure
-  run mock_spec_matches "${spec}" "https://example.com/repo.GIT"
+  run _mock_spec_matches "${spec}" "https://example.com/repo.GIT"
   assert_failure
 }
 
@@ -445,9 +445,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 ends_with_case ".git"
 
-  mock_spec_matches "${spec}" "https://example.com/repo.git"
+  _mock_spec_matches "${spec}" "https://example.com/repo.git"
 
-  run mock_spec_matches "${spec}" "https://example.com/repo.GIT"
+  run _mock_spec_matches "${spec}" "https://example.com/repo.GIT"
   assert_failure
 }
 
@@ -456,9 +456,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_ends_with_case ".git"
 
-  mock_spec_matches "${spec}" "https://example.com/repo.GIT"
+  _mock_spec_matches "${spec}" "https://example.com/repo.GIT"
 
-  run mock_spec_matches "${spec}" "https://example.com/repo.git"
+  run _mock_spec_matches "${spec}" "https://example.com/repo.git"
   assert_failure
 }
 
@@ -467,10 +467,10 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 contains "example"
 
-  mock_spec_matches "${spec}" "https://example.com/repo.git"
-  mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
+  _mock_spec_matches "${spec}" "https://example.com/repo.git"
+  _mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
 
-  run mock_spec_matches "${spec}" "https://other.com/repo.git"
+  run _mock_spec_matches "${spec}" "https://other.com/repo.git"
   assert_failure
 }
 
@@ -479,11 +479,11 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_contains "example"
 
-  mock_spec_matches "${spec}" "https://other.com/repo.git"
+  _mock_spec_matches "${spec}" "https://other.com/repo.git"
 
-  run mock_spec_matches "${spec}" "https://example.com/repo.git"
+  run _mock_spec_matches "${spec}" "https://example.com/repo.git"
   assert_failure
-  run mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
+  run _mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
   assert_failure
 }
 
@@ -492,9 +492,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 contains_case "example"
 
-  mock_spec_matches "${spec}" "https://example.com/repo.git"
+  _mock_spec_matches "${spec}" "https://example.com/repo.git"
 
-  run mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
+  run _mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
   assert_failure
 }
 
@@ -503,9 +503,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_contains_case "example"
 
-  mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
+  _mock_spec_matches "${spec}" "https://EXAMPLE.com/repo.git"
 
-  run mock_spec_matches "${spec}" "https://example.com/repo.git"
+  run _mock_spec_matches "${spec}" "https://example.com/repo.git"
   assert_failure
 }
 
@@ -514,10 +514,10 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 matches '^v[0-9]+$'
 
-  mock_spec_matches "${spec}" "v42"
-  mock_spec_matches "${spec}" "V42"
+  _mock_spec_matches "${spec}" "v42"
+  _mock_spec_matches "${spec}" "V42"
 
-  run mock_spec_matches "${spec}" "v42.1"
+  run _mock_spec_matches "${spec}" "v42.1"
   assert_failure
 }
 
@@ -526,11 +526,11 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_matches '^v[0-9]+$'
 
-  mock_spec_matches "${spec}" "v42.1"
+  _mock_spec_matches "${spec}" "v42.1"
 
-  run mock_spec_matches "${spec}" "v42"
+  run _mock_spec_matches "${spec}" "v42"
   assert_failure
-  run mock_spec_matches "${spec}" "V42"
+  run _mock_spec_matches "${spec}" "V42"
   assert_failure
 }
 
@@ -539,9 +539,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 matches_case '^v[0-9]+$'
 
-  mock_spec_matches "${spec}" "v42"
+  _mock_spec_matches "${spec}" "v42"
 
-  run mock_spec_matches "${spec}" "V42"
+  run _mock_spec_matches "${spec}" "V42"
   assert_failure
 }
 
@@ -550,9 +550,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 1 not_matches_case '^v[0-9]+$'
 
-  mock_spec_matches "${spec}" "V42"
+  _mock_spec_matches "${spec}" "V42"
 
-  run mock_spec_matches "${spec}" "v42"
+  run _mock_spec_matches "${spec}" "v42"
   assert_failure
 }
 
@@ -561,11 +561,11 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 2 present
 
-  mock_spec_matches "${spec}" "status" "--short"
+  _mock_spec_matches "${spec}" "status" "--short"
   # An empty argument is still an argument.
-  mock_spec_matches "${spec}" "status" ""
+  _mock_spec_matches "${spec}" "status" ""
 
-  run mock_spec_matches "${spec}" "status"
+  run _mock_spec_matches "${spec}" "status"
   assert_failure
 }
 
@@ -574,9 +574,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" 2 not_present
 
-  mock_spec_matches "${spec}" "status"
+  _mock_spec_matches "${spec}" "status"
 
-  run mock_spec_matches "${spec}" "status" "--short"
+  run _mock_spec_matches "${spec}" "status" "--short"
   assert_failure
 }
 
@@ -585,10 +585,10 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" '*' equals "--force"
 
-  mock_spec_matches "${spec}" "push" "--force"
-  mock_spec_matches "${spec}" "--force" "push"
+  _mock_spec_matches "${spec}" "push" "--force"
+  _mock_spec_matches "${spec}" "--force" "push"
 
-  run mock_spec_matches "${spec}" "push"
+  run _mock_spec_matches "${spec}" "push"
   assert_failure
 }
 
@@ -597,10 +597,10 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" '*' not_equals "--force"
 
-  mock_spec_matches "${spec}" "push" "origin"
+  _mock_spec_matches "${spec}" "push" "origin"
 
   # At '*' the negation requires that no argument matches.
-  run mock_spec_matches "${spec}" "push" "--force"
+  run _mock_spec_matches "${spec}" "push" "--force"
   assert_failure
 }
 
@@ -609,9 +609,9 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${spec}" '*' present
 
-  mock_spec_matches "${spec}" "status"
+  _mock_spec_matches "${spec}" "status"
 
-  run mock_spec_matches "${spec}"
+  run _mock_spec_matches "${spec}"
   assert_failure
 }
 
@@ -621,9 +621,9 @@ bats_require_minimum_version 1.13.0
   mock_spec_arg "${spec}" '*' equals "--force"
   mock_spec_arg "${spec}" '*' equals "--quiet"
 
-  mock_spec_matches "${spec}" "push" "--force" "--quiet"
+  _mock_spec_matches "${spec}" "push" "--force" "--quiet"
 
-  run mock_spec_matches "${spec}" "push" "--force"
+  run _mock_spec_matches "${spec}" "push" "--force"
   assert_failure
 }
 
@@ -686,11 +686,11 @@ bats_require_minimum_version 1.13.0
   spec="$(mock_spec_add "${mock_git}")"
   mock_spec_count "${spec}" 2
 
-  mock_spec_matches "${spec}" "status" "--short"
+  _mock_spec_matches "${spec}" "status" "--short"
 
-  run mock_spec_matches "${spec}" "status"
+  run _mock_spec_matches "${spec}" "status"
   assert_failure
-  run mock_spec_matches "${spec}" "status" "--short" "--branch"
+  run _mock_spec_matches "${spec}" "status" "--short" "--branch"
   assert_failure
 
   run mock_spec_count "${BATS_TEST_TMPDIR}/not_a_spec" 2
@@ -702,12 +702,12 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Count 'two' is not a non-negative integer."
 }
 
-@test "mock_match_value with an unknown matcher" {
-  run mock_match_value "value" "unknown" "needle"
+@test "_mock_match_value with an unknown matcher" {
+  run _mock_match_value "value" "unknown" "needle"
   assert_failure
 }
 
-@test "mock_match_index picks the first matching specification" {
+@test "_mock_match_index picks the first matching specification" {
   mock_git="$(mock_command "git")"
 
   broad="$(mock_spec_add "${mock_git}")"
@@ -722,13 +722,13 @@ bats_require_minimum_version 1.13.0
   assert_success
   assert_output "broad"
 
-  assert_equal "1" "$(mock_match_index "${mock_git}" "status")"
+  assert_equal "1" "$(_mock_match_index "${mock_git}" "status")"
 
-  run mock_match_index "${mock_git}" "log"
+  run _mock_match_index "${mock_git}" "log"
   assert_failure
 }
 
-@test "mock_spec_set_property through its wrappers" {
+@test "_mock_spec_set_property through its wrappers" {
   mock_git="$(mock_command "git")"
 
   spec="$(mock_spec_add "${mock_git}")"
@@ -751,7 +751,7 @@ bats_require_minimum_version 1.13.0
   assert_output "clean"
 }
 
-@test "mock_spec_set_property from STDIN" {
+@test "_mock_spec_set_property from STDIN" {
   mock_git="$(mock_command "git")"
 
   spec="$(mock_spec_add "${mock_git}")"
@@ -767,7 +767,7 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Create it with 'mock_spec_add' first."
 }
 
-@test "mock_spec_set_property writes the value literally" {
+@test "_mock_spec_set_property writes the value literally" {
   mock_git="$(mock_command "git")"
 
   flag="$(mock_spec_add "${mock_git}")"
@@ -829,24 +829,24 @@ bats_require_minimum_version 1.13.0
   assert_output "commits"
 }
 
-@test "mock_spec_describe" {
+@test "_mock_spec_describe" {
   mock_git="$(mock_command "git")"
 
   spec="$(mock_spec_add "${mock_git}")"
-  assert_equal "any call" "$(mock_spec_describe "${spec}")"
+  assert_equal "any call" "$(_mock_spec_describe "${spec}")"
 
   mock_spec_arg "${spec}" 1 equals "push"
   mock_spec_arg "${spec}" '*' not_equals "--force"
   mock_spec_arg "${spec}" 2 present
   mock_spec_count "${spec}" 3
 
-  assert_equal "argument 1 equals 'push', some argument not_equals '--force', argument 2 present, 3 argument(s)" "$(mock_spec_describe "${spec}")"
+  assert_equal "argument 1 equals 'push', some argument not_equals '--force', argument 2 present, 3 argument(s)" "$(_mock_spec_describe "${spec}")"
 }
 
-@test "mock_spec_describe_all" {
+@test "_mock_spec_describe_all" {
   mock_git="$(mock_command "git")"
 
-  assert_equal "" "$(mock_spec_describe_all "${mock_git}")"
+  assert_equal "" "$(_mock_spec_describe_all "${mock_git}")"
 
   first="$(mock_spec_add "${mock_git}")"
   mock_spec_arg "${first}" 1 equals "status"
@@ -855,7 +855,7 @@ bats_require_minimum_version 1.13.0
   mock_spec_arg "${second}" 1 equals "push"
 
   assert_equal "  specification 1: argument 1 equals 'status'
-  specification 2: argument 1 equals 'push'" "$(mock_spec_describe_all "${mock_git}")"
+  specification 2: argument 1 equals 'push'" "$(_mock_spec_describe_all "${mock_git}")"
 }
 
 @test "A call no specification accepts names the specifications" {
@@ -923,13 +923,13 @@ bats_require_minimum_version 1.13.0
 
   # A builtin resolves to a bare name, which the forwarded lookup has to
   # resolve outside the mock directory rather than back into the mock.
-  run mock_forward_exec "${mock_echo}" "echo" "text"
+  run _mock_forward_exec "${mock_echo}" "echo" "text"
   assert_success
   assert_output "text"
 }
 
-@test "mock_forward_path" {
-  PATH="/one:${BATS_HELPERS_MOCK_TMPDIR}:/two" run mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}"
+@test "_mock_forward_path" {
+  PATH="/one:${BATS_HELPERS_MOCK_TMPDIR}:/two" run _mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}"
   assert_success
   assert_output "/one:/two"
 }
@@ -1097,17 +1097,17 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "does not exist. Create it with 'mock_command' first."
 }
 
-@test "mock_strict_enabled" {
+@test "_mock_strict_enabled" {
   mock_git="$(mock_command "git")"
 
-  mock_strict_enabled "${mock_git}"
+  _mock_strict_enabled "${mock_git}"
 
   mock_set_strict "${mock_git}" 0
 
-  run mock_strict_enabled "${mock_git}"
+  run _mock_strict_enabled "${mock_git}"
   assert_failure
 
-  run mock_strict_enabled "${BATS_TEST_TMPDIR}/not_a_mock"
+  run _mock_strict_enabled "${BATS_TEST_TMPDIR}/not_a_mock"
   assert_failure
 }
 
@@ -1130,7 +1130,7 @@ bats_require_minimum_version 1.13.0
   assert_output_not_contains "no expectation covers"
 }
 
-@test "mock_expect_ordinal records an index once" {
+@test "_mock_expect_ordinal records an index once" {
   mock_git="$(mock_command "git")"
   mock_set_status "${mock_git}" 0 1
   mock_set_output "${mock_git}" "first" 1
@@ -1142,15 +1142,15 @@ bats_require_minimum_version 1.13.0
   assert_equal 1 "$(grep -c '^1$' "${mock_git}.expect_ordinal")"
 }
 
-@test "mock_expectations_exist" {
+@test "_mock_expectations_exist" {
   mock_git="$(mock_command "git")"
 
-  run mock_expectations_exist "${mock_git}"
+  run _mock_expectations_exist "${mock_git}"
   assert_failure
 
   mock_set_status "${mock_git}" 0 1
 
-  mock_expectations_exist "${mock_git}"
+  _mock_expectations_exist "${mock_git}"
 }
 
 ##
@@ -1325,15 +1325,15 @@ bats_require_minimum_version 1.13.0
   assert_output ""
 }
 
-@test "mock_sandbox_deny" {
+@test "_mock_sandbox_deny" {
   # Without a report to write to, the diagnostic still names the command.
-  run -127 mock_sandbox_deny "curl"
+  run -127 _mock_sandbox_deny "curl"
   assert_failure --status 127
   assert_output_contains "Command 'curl' is not mocked and the mock sandbox is enabled"
 
   mock_sandbox_enable
 
-  run -127 mock_sandbox_deny "curl"
+  run -127 _mock_sandbox_deny "curl"
   mock_sandbox_disable
 
   assert_failure --status 127
@@ -1343,19 +1343,19 @@ bats_require_minimum_version 1.13.0
   assert_output "Command 'curl' is not mocked and the mock sandbox denied it"
 }
 
-@test "mock_sandbox_real_path" {
-  assert_equal "$(mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}")" "$(mock_sandbox_real_path)"
+@test "_mock_sandbox_real_path" {
+  assert_equal "$(_mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}")" "$(_mock_sandbox_real_path)"
 
   path_before="${PATH}"
 
   mock_sandbox_enable
-  real_path="$(mock_sandbox_real_path)"
+  real_path="$(_mock_sandbox_real_path)"
   mock_sandbox_disable
 
-  assert_equal "$(mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}" "${path_before}")" "${real_path}"
+  assert_equal "$(_mock_forward_path "${BATS_HELPERS_MOCK_TMPDIR}" "${path_before}")" "${real_path}"
 }
 
-@test "mock_sandbox_link_base skips a command the machine does not have" {
+@test "_mock_sandbox_link_base skips a command the machine does not have" {
   mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
   mkdir -p "${BATS_TEST_TMPDIR}/empty"
 
@@ -1363,7 +1363,7 @@ bats_require_minimum_version 1.13.0
   # resolve the working directory instead.
   echo "${BATS_TEST_TMPDIR}/empty" >"${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
 
-  mock_sandbox_link_base "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+  _mock_sandbox_link_base "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
 
   assert_dir_empty "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
 
@@ -1472,10 +1472,10 @@ bats_require_minimum_version 1.13.0
   assert_equal "" "$(cat "${notice}")"
 }
 
-@test "mock_path_contains" {
-  mock_path_contains "${BATS_HELPERS_MOCK_TMPDIR}"
+@test "_mock_path_contains" {
+  _mock_path_contains "${BATS_HELPERS_MOCK_TMPDIR}"
 
-  run mock_path_contains "${BATS_TEST_TMPDIR}/not-on-path"
+  run _mock_path_contains "${BATS_TEST_TMPDIR}/not-on-path"
   assert_failure
 }
 
@@ -1483,27 +1483,27 @@ bats_require_minimum_version 1.13.0
 ## Call log.
 ##
 
-@test "mock_log_quote" {
-  assert_equal "'value'" "$(mock_log_quote "value")"
-  assert_equal "''" "$(mock_log_quote "")"
-  assert_equal "''" "$(mock_log_quote)"
-  assert_equal "'two words'" "$(mock_log_quote "two words")"
-  assert_equal "' leading and trailing '" "$(mock_log_quote " leading and trailing ")"
-  assert_equal "'it\\'s'" "$(mock_log_quote "it's")"
-  assert_equal "'back\\\\slash'" "$(mock_log_quote 'back\slash')"
-  assert_equal "'tab\\tseparated'" "$(mock_log_quote "$(printf 'tab\tseparated')")"
-  assert_equal "'first\\nsecond'" "$(mock_log_quote "$(printf 'first\nsecond')")"
+@test "_mock_log_quote" {
+  assert_equal "'value'" "$(_mock_log_quote "value")"
+  assert_equal "''" "$(_mock_log_quote "")"
+  assert_equal "''" "$(_mock_log_quote)"
+  assert_equal "'two words'" "$(_mock_log_quote "two words")"
+  assert_equal "' leading and trailing '" "$(_mock_log_quote " leading and trailing ")"
+  assert_equal "'it\\'s'" "$(_mock_log_quote "it's")"
+  assert_equal "'back\\\\slash'" "$(_mock_log_quote 'back\slash')"
+  assert_equal "'tab\\tseparated'" "$(_mock_log_quote "$(printf 'tab\tseparated')")"
+  assert_equal "'first\\nsecond'" "$(_mock_log_quote "$(printf 'first\nsecond')")"
 }
 
-@test "mock_log_line" {
-  assert_equal "git" "$(mock_log_line "git")"
-  assert_equal "git 'status'" "$(mock_log_line "git" "status")"
-  assert_equal "git 'commit' '-m' 'two words'" "$(mock_log_line "git" "commit" "-m" "two words")"
-  assert_equal "git '' 'after empty'" "$(mock_log_line "git" "" "after empty")"
+@test "_mock_log_line" {
+  assert_equal "git" "$(_mock_log_line "git")"
+  assert_equal "git 'status'" "$(_mock_log_line "git" "status")"
+  assert_equal "git 'commit' '-m' 'two words'" "$(_mock_log_line "git" "commit" "-m" "two words")"
+  assert_equal "git '' 'after empty'" "$(_mock_log_line "git" "" "after empty")"
 }
 
-@test "mock_log_path" {
-  assert_equal "${BATS_HELPERS_MOCK_TMPDIR}/mock.log" "$(mock_log_path)"
+@test "_mock_log_path" {
+  assert_equal "${BATS_HELPERS_MOCK_TMPDIR}/mock.log" "$(_mock_log_path)"
 }
 
 @test "mock_log_print" {
@@ -1516,25 +1516,25 @@ bats_require_minimum_version 1.13.0
   assert_equal "curl 'example.com'" "$(mock_log_print)"
 }
 
-@test "mock_log_calls_of" {
+@test "_mock_log_calls_of" {
   mock_command "curl" >/dev/null
   mock_command "git" >/dev/null
 
-  assert_equal "" "$(mock_log_calls_of "curl")"
+  assert_equal "" "$(_mock_log_calls_of "curl")"
 
   curl example.com
   git status
 
-  assert_equal "curl 'example.com'" "$(mock_log_calls_of "curl")"
-  assert_equal "git 'status'" "$(mock_log_calls_of "git")"
+  assert_equal "curl 'example.com'" "$(_mock_log_calls_of "curl")"
+  assert_equal "git 'status'" "$(_mock_log_calls_of "git")"
 }
 
-@test "mock_name_registered" {
+@test "_mock_name_registered" {
   mock_command "curl" >/dev/null
 
-  mock_name_registered "curl"
+  _mock_name_registered "curl"
 
-  run mock_name_registered "crul"
+  run _mock_name_registered "crul"
   assert_failure
 }
 
@@ -1647,13 +1647,13 @@ calls   : curl 'example.com'
   assert_output_contains "Command 'crul' is not mocked. Register it with 'mock_command' first."
 }
 
-@test "mock_log_path without a sandbox" {
+@test "_mock_log_path without a sandbox" {
   local original="${BATS_TEST_TMPDIR}"
 
   BATS_HELPERS_MOCK_TMPDIR=""
   BATS_MOCK_TMPDIR=""
   BATS_TEST_TMPDIR=""
-  run mock_log_path
+  run _mock_log_path
   BATS_TEST_TMPDIR="${original}"
 
   assert_failure
