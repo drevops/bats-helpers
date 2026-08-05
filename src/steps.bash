@@ -36,7 +36,7 @@
 #     '_mock_log_quote' documents. All such steps together are the complete
 #     ordered sequence of mocked calls.
 #
-# See README.md for worked examples.
+# See docs/steps.md for worked examples.
 #
 # Arguments:
 #   1. phase: Either 'setup' or 'assert'. Optional, defaults to 'assert'.

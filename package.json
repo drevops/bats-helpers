@@ -19,6 +19,7 @@
     "files": [
         "src",
         "load.bash",
+        "docs",
         "MIGRATION.md"
     ],
     "scripts": {

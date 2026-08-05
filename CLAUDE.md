@@ -72,7 +72,7 @@ bats_load_library bats-helpers
 ### Function Naming
 Bash has no namespaces: every sourced function lands in one global scope shared with the consumer's own helpers, with bats-assert and bats-file, and with every binary on `PATH`. The prefix is the namespace, so a helper is named `<subject>_<verb>` after the module that owns it - `steps_run`, `mock_setup`, `file_trim`, `fixture_prepare_dir`, `string_random`. This matches how bats-core namespaces `bats_*` and bats-support namespaces `batslib_*`.
 
-A leading underscore marks the private surface. A function the README and MIGRATION.md do not document is internal: its name opens with an underscore in front of the module prefix - `_mock_log_quote`, `_line_resolve_index`, `_steps_debug` - it is not part of the public API, and it may change or disappear in any release without a deprecation alias. After the underscore the name follows the same scheme as every other, so an internal assertion a module owns reads `_string_assert_match`. The one internal function without the marker is `command_not_found_handle`: Bash mandates that exact name for the lookup-failure handler, so the sandbox defines it as a bare wrapper delegating to `_mock_sandbox_deny`, which carries the marker in its place.
+A leading underscore marks the private surface. A function the API reference and MIGRATION.md do not document is internal: its name opens with an underscore in front of the module prefix - `_mock_log_quote`, `_line_resolve_index`, `_steps_debug` - it is not part of the public API, and it may change or disappear in any release without a deprecation alias. After the underscore the name follows the same scheme as every other, so an internal assertion a module owns reads `_string_assert_match`. The one internal function without the marker is `command_not_found_handle`: Bash mandates that exact name for the lookup-failure handler, so the sandbox defines it as a bare wrapper delegating to `_mock_sandbox_deny`, which carries the marker in its place.
 
 Two exceptions to the subject-first shape:
 
@@ -169,6 +169,24 @@ File headers and function docblocks follow one house style so the library reads 
 
 - **Punctuate comments as sentences.** A comment that is a sentence ends with a full stop; a `Key: value` label takes neither a capital nor a stop.
 - **Coverage markers** pair `# LCOV_EXCL_START` with `# LCOV_EXCL_STOP`. Those are the markers kcov recognises - `LCOV_EXCL_END` is silently ignored, leaving the region open to end of file.
+
+### Documentation Layout
+
+Prose documentation lives in `docs/`, one page per module of `src/`, so the question "where is this documented" has the same answer as "which file defines it". `docs/README.md` indexes the pages; three pages are cross-cutting rather than per-module - `match-modes.md`, `environment-variables.md` and `deprecations.md`. Each page opens with a one-line summary and a `Source:` line linking the module it documents.
+
+`README.md` holds only what a reader needs before choosing a page: the feature list, installation, the loader snippet, the index of documentation pages, the API reference table, and the contributing pointer. Prose that explains how a helper behaves belongs on the helper's page, never in the README.
+
+The API reference table in `README.md` is the index of the entire public surface: one row per public function, giving the name as inline code, a link to the source file that defines it, a one-line description, and a link to the heading that documents it. It is ordered by module in `load.bash` source order, and within a module in the order the functions are defined.
+
+**Any change to the public surface updates the documentation in the same commit**, and the change is not complete until all of the following hold:
+
+- A function added, removed or renamed has its row added, removed or renamed in the README API reference table, and its entry added, removed or renamed in the table on its module's page.
+- A change in behaviour is described on the module's page. The README description is one line and states what the function does, not how it behaves.
+- A new module gets a new page under `docs/`, a row in the README documentation index, and a row in `docs/README.md`.
+- A variable added, removed or renamed is reflected in `docs/environment-variables.md` as well as on the page of the feature that reads it.
+- A deprecation is added to `docs/deprecations.md` and to `MIGRATION.md`.
+
+The Documentation column links to a heading rather than to a page whenever the page has sections, so renaming a heading breaks every link pointing at it. Rename one only together with the links that target it, and remember that GitHub derives an anchor by lowercasing the heading, dropping punctuation and backticks, and replacing spaces with hyphens.
 
 ### Mocking System
 The mocking system creates temporary mock executables that record calls and can return configured outputs/exit codes.
