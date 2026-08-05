@@ -10,8 +10,8 @@ Source: [`src/assert.git.bash`](../src/assert.git.bash)
 | `assert_git_not_repo`         | Asserts that a directory is not a git repository |
 | `assert_git_clean`            | Asserts that a git repository is clean           |
 | `assert_git_not_clean`        | Asserts that a git repository is not clean       |
-| `assert_git_file_tracked`     | Checks if a file is tracked in git               |
-| `assert_git_file_not_tracked` | Checks if a file is not tracked in git           |
+| `assert_git_file_tracked`     | Asserts that a file is tracked in git            |
+| `assert_git_file_not_tracked` | Asserts that a file is not tracked in git        |
 
 `assert_git_file_tracked` and `assert_git_file_not_tracked` report through the exit status alone and print no message.
 

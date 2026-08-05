@@ -10,19 +10,19 @@ Source: [`src/assert.file.bash`](../src/assert.file.bash)
 |----------------------------------|--------------------------------------------------------|
 | `assert_file_exists`             | Asserts that a file exists                             |
 | `assert_file_not_exists`         | Asserts that a file does not exist                     |
-| `assert_file_contains`           | Checks if a file contains a specific string            |
-| `assert_file_not_contains`       | Checks if a file does not contain a specific string    |
-| `assert_file_matches`            | Checks if a file matches a regular expression          |
-| `assert_file_not_matches`        | Checks if a file does not match a regular expression   |
-| `assert_file_matches_format`     | Checks if a file matches a format string               |
-| `assert_file_not_matches_format` | Checks if a file does not match a format string        |
+| `assert_file_contains`           | Asserts that a file contains a string                  |
+| `assert_file_not_contains`       | Asserts that a file does not contain a string          |
+| `assert_file_matches`            | Asserts that a file matches a regular expression       |
+| `assert_file_not_matches`        | Asserts that a file does not match a regular expression |
+| `assert_file_matches_format`     | Asserts that a file matches a format string            |
+| `assert_file_not_matches_format` | Asserts that a file does not match a format string     |
 | `assert_files_equal`             | Asserts that two files are equal                       |
 | `assert_files_equal_ignore_spaces` | Asserts that two files are equal, ignoring blank lines and whitespace changes |
 | `assert_files_not_equal`         | Asserts that two files are not equal                   |
 | `assert_files_not_equal_ignore_spaces` | Asserts that two files are not equal, ignoring blank lines and whitespace changes |
-| `assert_file_mode`               | Checks the file permission mode                        |
-| `assert_binary_files_equal`      | Checks if two binary files are equal                   |
-| `assert_binary_files_not_equal`  | Checks if two binary files are not equal               |
+| `assert_file_mode`               | Asserts the file permission mode                       |
+| `assert_binary_files_equal`      | Asserts that two binary files are equal                |
+| `assert_binary_files_not_equal`  | Asserts that two binary files are not equal            |
 
 ## Directories and symlinks
 

@@ -1,8 +1,8 @@
 # Step runner
 
-When working with mocks, you would have to setup a mock for each command call with the expected argument numbers, return value, possible output and an index of the call. Then, you would run the code to be tested and run assertions for each of the mocked commands. For large scripts maintaining both parts becomes a tedious task.
+Mocking by hand means setting up a mock for each command call with its expected arguments, return value, possible output and call index, then running the code under test and asserting against each mock in turn. For a large script, keeping those two halves in step becomes a tedious task.
 
-The step runner allows to setup and process a sequence of string and mocked command assertions. It helps to make maintenance of complex tests easier.
+The step runner sets up and processes a sequence of string and mocked command assertions, so both halves are declared once in one array.
 
 Source: [`src/steps.bash`](../src/steps.bash)
 
@@ -81,7 +81,7 @@ Mock a command with the given status, optional output, and optional side effect.
   - Use `*` as wildcard to accept any arguments
 - `<mock_status>` - exit status to return (optional):
   - If not specified, `0` exit code will be used
-  - Can be omitted if only `<mock_output>` is needed
+  - Can be omitted and the output given in its place, unless that output is all digits, which parses as a status
 - `<mock_output>` - output to return (optional)
 - `<mock_side_effect>` - Bash code executed when mock is called (optional):
   - Useful for creating files/directories, setting env vars, logging, simulating complex behaviors

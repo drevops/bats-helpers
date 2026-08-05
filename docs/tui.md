@@ -76,6 +76,10 @@ prompt (1 line):
 Install profile
 matched (1 line):
 2 of 3
+match mode (1 line):
+literal
+case (1 line):
+insensitive
 remaining output (2 lines):
  [my_site]: 
 Installation complete

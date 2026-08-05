@@ -61,7 +61,7 @@ steps_run() {
   local mocked_commands_var="${2-}"
 
   if [ -z "${BATS_HELPERS_STEPS_DEBUG-}" ] && [ -n "${RUN_STEPS_DEBUG-}" ]; then
-    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'RUN_STEPS_DEBUG' will be removed in the next version. Use 'BATS_HELPERS_STEPS_DEBUG' instead." >&3
+    [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'RUN_STEPS_DEBUG' will be removed in v2.1. Use 'BATS_HELPERS_STEPS_DEBUG' instead." >&3
   fi
 
   if [ -z "${STEPS+x}" ]; then
@@ -121,7 +121,6 @@ steps_run() {
       command_parts=("${command_parts[@]/# /}")
       command_parts=("${command_parts[@]/% /}")
 
-      # Extract the command binary and its arguments from the first command part.
       local full_command
       IFS=' ' read -ra full_command <<<"${command_parts[0]:1}" # Removing '@'.
       local command_binary="${full_command[0]}"
@@ -131,7 +130,6 @@ steps_run() {
       local mock_output="${command_parts[2]-}"
       local mock_side_effect="${command_parts[3]-}"
 
-      # Restore escaped hashes in all parsed components.
       command_args="${command_args//${ESCAPED_HASH_PLACEHOLDER}/#}"
       mock_status="${mock_status//${ESCAPED_HASH_PLACEHOLDER}/#}"
       mock_output="${mock_output//${ESCAPED_HASH_PLACEHOLDER}/#}"
@@ -159,7 +157,6 @@ steps_run() {
       _steps_debug_sub "Command index for '${command_binary}' is '${command_index}'."
 
       if [ "${phase}" = "${PHASE_SETUP}" ]; then
-        # Get mock from passed array or create a new one.
         if [ -z "${mocked_commands["${command_binary}"]-}" ]; then
           mock="$(mock_command "${command_binary}")"
           mocked_commands["${command_binary}"]=${mock}
@@ -203,7 +200,6 @@ steps_run() {
         fi
         _steps_debug_sub "        actual args : ${mock_args_actual}"
 
-        # Use wildcard-aware assertion.
         if ! mock_assert_call_args "${mock}" "${command_args}" "${command_index}"; then
           flunk "Mocked command '${command_binary}' was called with arguments '${mock_args_actual}', but '${command_args}' was expected."
           return 1
@@ -312,10 +308,10 @@ _steps_debug_write() {
 }
 
 ##
-## Deprecated aliases, removed in the next version.
+## Deprecated aliases, removed in v2.1.
 ##
 
 run_steps() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'run_steps' will be removed in the next version. Use 'steps_run' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'run_steps' will be removed in v2.1. Use 'steps_run' instead." >&3
   steps_run "$@"
 }

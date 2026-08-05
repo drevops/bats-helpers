@@ -79,7 +79,7 @@ tui_run() {
 
   for answer in "${answers[@]}"; do
     if [ "${answer}" = "nothing" ]; then
-      [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'nothing' answer will be removed in the next version. Use an empty string instead." >&3
+      [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: the 'nothing' answer will be removed in v2.1. Use an empty string instead." >&3
       answer=""
     fi
 

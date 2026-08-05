@@ -147,20 +147,20 @@ assert_git_not_clean() {
 }
 
 ##
-## Deprecated aliases, removed in the next version.
+## Deprecated aliases, removed in v2.1.
 ##
 
 assert_not_git_repo() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_not_git_repo' will be removed in the next version. Use 'assert_git_not_repo' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_not_git_repo' will be removed in v2.1. Use 'assert_git_not_repo' instead." >&3
   assert_git_not_repo "$@"
 }
 
 assert_git_file_is_tracked() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_git_file_is_tracked' will be removed in the next version. Use 'assert_git_file_tracked' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_git_file_is_tracked' will be removed in v2.1. Use 'assert_git_file_tracked' instead." >&3
   assert_git_file_tracked "$@"
 }
 
 assert_git_file_is_not_tracked() {
-  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_git_file_is_not_tracked' will be removed in the next version. Use 'assert_git_file_not_tracked' instead." >&3
+  [ -n "${BATS_HELPERS_DEPRECATION_QUIET-}" ] || echo "Deprecated: 'assert_git_file_is_not_tracked' will be removed in v2.1. Use 'assert_git_file_not_tracked' instead." >&3
   assert_git_file_not_tracked "$@"
 }

@@ -15,12 +15,12 @@ Source: [`src/mock.bash`](../src/mock.bash)
 
 | Function                | Description                                                | Arguments                        | Returns   |
 |-------------------------|------------------------------------------------------------|----------------------------------|-----------|
-| `mock_setup`            | Setup mock support. Call from `setup()`                    | None                             | None      |
+| `mock_setup`            | Sets mocking up. Call from `setup()`                       | None                             | None      |
 | `mock_create`           | Creates a mock program that can be tracked                 | None                             | Mock path |
-| `mock_command`          | Mock provided command                                      | `command_name`                   | Mock path |
+| `mock_command`          | Mocks the provided command                                 | `command_name`                   | Mock path |
 | `mock_set_output`       | Sets the output of the mock                                | `mock`, `output`, `[call_index]` | None      |
 | `mock_set_status`       | Sets the exit status of the mock                           | `mock`, `status`, `[call_index]` | None      |
-| `mock_set_side_effect`  | Sets shell code to run when mock executes                  | `mock`, `code`, `[call_index]`   | None      |
+| `mock_set_side_effect`  | Sets shell code to run when the mock executes              | `mock`, `code`, `[call_index]`   | None      |
 | `mock_set_strict`       | Rejects the calls the mock's expectations do not cover     | `mock`, `[enabled]`              | None      |
 | `mock_set_forward`      | Runs the real command for calls no specification accepts   | `mock`, `[enabled]`              | None      |
 | `mock_spec_add`         | Adds an argument specification to the mock                 | `mock`                           | Spec      |
@@ -35,11 +35,11 @@ Source: [`src/mock.bash`](../src/mock.bash)
 
 | Function                 | Description                                                                    | Arguments                               | Returns          |
 |--------------------------|--------------------------------------------------------------------------------|-----------------------------------------|------------------|
-| `mock_get_call_args`     | Returns arguments the mock was called with                                     | `mock`, `[call_index]`                  | Arguments string |
-| `mock_get_call_num`      | Returns number of times mock was called                                        | `mock`                                  | Call count       |
-| `mock_get_call_user`     | Returns user the mock was called with                                          | `mock`, `[call_index]`                  | User name        |
-| `mock_get_call_env`      | Returns env variable value from mock call                                      | `mock`, `var_name`, `[call_index]`      | Variable value   |
-| `mock_assert_call_args`  | Checks the arguments the mock was called with, where `*` matches any arguments | `mock`, `expected_args`, `[call_index]` | `0` when matched |
+| `mock_get_call_args`     | Returns the arguments the mock was called with                                 | `mock`, `[call_index]`                  | Arguments string |
+| `mock_get_call_num`      | Returns the number of times the mock was called                                | `mock`                                  | Call count       |
+| `mock_get_call_user`     | Returns the user the mock was called with                                      | `mock`, `[call_index]`                  | User name        |
+| `mock_get_call_env`      | Returns an environment variable value from a mock call                         | `mock`, `var_name`, `[call_index]`      | Variable value   |
+| `mock_assert_call_args`  | Asserts the arguments the mock was called with, where `*` matches any arguments | `mock`, `expected_args`, `[call_index]` | `0` when matched |
 | `mock_assert_calls`      | Asserts the ordered sequence of every mocked call                              | `expected_call...`                      | None             |
 | `mock_assert_no_calls`   | Asserts that no mocked command outside the excluded ones was called            | None                                    | None             |
 | `mock_assert_called`     | Asserts that a command was called                                              | `command_name`                          | None             |
