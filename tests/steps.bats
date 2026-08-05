@@ -456,7 +456,7 @@ load _test_helper
       --opt3 \
   { \
   test: 1 \
-  }
+  } \
     # 0 # multi-line arg"
   )
 
@@ -467,6 +467,9 @@ load _test_helper
     "{" \
     "test": 1 \
     "}"
+  assert_success
+  assert_output "multi-line arg"
+
   steps_run "assert" "${mocks[@]}"
 }
 
@@ -651,6 +654,44 @@ load _test_helper
   assert_output_contains "The string should not contain consecutive '##' and should have a maximum of three '#' characters in total."
 }
 
+@test "steps_run with a newline in a command step" {
+  declare -a STEPS=(
+    "@somebin --opt1
+    # 0 # someval"
+  )
+
+  run steps_run "setup"
+  assert_failure
+  assert_output_contains "A command step must be a single line."
+}
+
+@test "steps_run with a newline in a command step and the caller recovers" {
+  declare -a STEPS=(
+    "@somebin --opt1
+    # 0 # someval"
+  )
+
+  recovered=0
+  steps_run "setup" 2>/dev/null || recovered=1
+
+  assert_equal 1 "${recovered}"
+}
+
+@test "steps_run with a newline in a substring presence step" {
+  declare -a STEPS=(
+    "first
+second"
+  )
+
+  run printf '%s\n' "first" "second"
+  steps_run "assert"
+
+  # Negative.
+  run printf '%s\n' "first" "third"
+  run steps_run "assert"
+  assert_failure
+}
+
 @test "steps_run with a wildcard command" {
   declare -a STEPS=(
     "@somebin * # 0 # wildcard output 1"
@@ -815,6 +856,86 @@ load _test_helper
   assert_success
 
   steps_run "assert" "${mocks[@]}"
+}
+
+@test "steps_run with an escaped newline in the output" {
+  declare -a STEPS=(
+    '@somebin # 0 # first\nsecond'
+  )
+
+  mocks="$(steps_run "setup")"
+  run somebin
+  assert_success
+  assert_output $'first\nsecond'
+
+  steps_run "assert" "${mocks[@]}"
+}
+
+@test "steps_run with an escaped newline in the output in shorthand" {
+  declare -a STEPS=(
+    '@somebin # first\nsecond'
+  )
+
+  mocks="$(steps_run "setup")"
+  run somebin
+  assert_success
+  assert_output $'first\nsecond'
+
+  steps_run "assert" "${mocks[@]}"
+}
+
+@test "steps_run with an escaped tab in the output" {
+  declare -a STEPS=(
+    '@somebin # 0 # first\tsecond'
+  )
+
+  mocks="$(steps_run "setup")"
+  run somebin
+  assert_success
+  assert_output $'first\tsecond'
+
+  steps_run "assert" "${mocks[@]}"
+}
+
+@test "steps_run with an escaped backslash in the output" {
+  declare -a STEPS=(
+    '@somebin # 0 # first\\nsecond'
+  )
+
+  mocks="$(steps_run "setup")"
+  run somebin
+  assert_success
+  assert_output 'first\nsecond'
+
+  steps_run "assert" "${mocks[@]}"
+}
+
+@test "steps_run with an escaped newline in the arguments" {
+  declare -a STEPS=(
+    '@somebin --opt1=first\nsecond # 0 # someval'
+  )
+
+  mocks="$(steps_run "setup")"
+  run somebin '--opt1=first\nsecond'
+  assert_success
+  assert_output "someval"
+
+  steps_run "assert" "${mocks[@]}"
+}
+
+@test "steps_run with an escaped newline in the side effect" {
+  declare -a STEPS=(
+    '@somebin # 0 # someval # printf "%s" "first\nsecond" > ${BATS_TEST_TMPDIR}/escaped_newline'
+  )
+
+  mocks="$(steps_run "setup")"
+  run somebin
+  assert_success
+  assert_output "someval"
+
+  steps_run "assert" "${mocks[@]}"
+
+  assert_file_contains "${BATS_TEST_TMPDIR}/escaped_newline" 'first\nsecond'
 }
 
 @test "steps_run with an escaped hash in the side effect" {
