@@ -91,7 +91,7 @@ load _loader.bash
 
 ## 📖 Documentation
 
-Each page documents one module of the library. The [API reference](#-api-reference) below links every function into the page that documents it.
+Most pages document one module of the library. The last three cut across modules: match modes are shared by every assertion family, and the variable and deprecation references cover the library as a whole. The [API reference](#-api-reference) below links every function into the page that documents it.
 
 | Page                                              | Source                                                  | Covers                                                               |
 |---------------------------------------------------|---------------------------------------------------------|----------------------------------------------------------------------|
@@ -119,8 +119,8 @@ Every public function, the file that defines it, and the page that documents it.
 
 | Function | Source | Description | Documentation |
 |----------|--------|-------------|---------------|
-| `flunk` | [assert.base.bash](src/assert.base.bash) | Fails the test with a message, its stack trace and stable paths | [Failure reporting](docs/failure-reporting.md) |
-| `format_error` | [assert.base.bash](src/assert.base.bash) | Formats a failure report as a titled block of aligned rows | [Failure reporting](docs/failure-reporting.md) |
+| `flunk` | [assert.base.bash](src/assert.base.bash) | Fails the test with a message, its stack trace and stable paths | [Failure reporting](docs/failure-reporting.md#failure-reporting) |
+| `format_error` | [assert.base.bash](src/assert.base.bash) | Formats a failure report as a titled block of aligned rows | [Failure reporting](docs/failure-reporting.md#failure-reporting) |
 | `assert_empty` | [assert.string.bash](src/assert.string.bash) | Asserts that a string is empty | [String assertions](docs/assertions-string.md#assertions) |
 | `assert_not_empty` | [assert.string.bash](src/assert.string.bash) | Asserts that a string is not empty | [String assertions](docs/assertions-string.md#assertions) |
 | `assert_equal` | [assert.string.bash](src/assert.string.bash) | Asserts that two strings are equal | [String assertions](docs/assertions-string.md#assertions) |
@@ -259,24 +259,24 @@ Every public function, the file that defines it, and the page that documents it.
 | `assert_dirs_equal` | [assert.file.bash](src/assert.file.bash) | Asserts that two directories are equal | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
 | `assert_symlink_exists` | [assert.file.bash](src/assert.file.bash) | Asserts that a symbolic link exists | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
 | `assert_symlink_not_exists` | [assert.file.bash](src/assert.file.bash) | Asserts that a symbolic link does not exist | [Directories and symlinks](docs/assertions-file.md#directories-and-symlinks) |
-| `assert_git_repo` | [assert.git.bash](src/assert.git.bash) | Asserts that a directory is a git repository | [Git assertions](docs/assertions-git.md) |
-| `assert_git_not_repo` | [assert.git.bash](src/assert.git.bash) | Asserts that a directory is not a git repository | [Git assertions](docs/assertions-git.md) |
-| `assert_git_clean` | [assert.git.bash](src/assert.git.bash) | Asserts that a git repository is clean | [Git assertions](docs/assertions-git.md) |
-| `assert_git_not_clean` | [assert.git.bash](src/assert.git.bash) | Asserts that a git repository is not clean | [Git assertions](docs/assertions-git.md) |
-| `assert_git_file_tracked` | [assert.git.bash](src/assert.git.bash) | Asserts that a file is tracked in git | [Git assertions](docs/assertions-git.md) |
-| `assert_git_file_not_tracked` | [assert.git.bash](src/assert.git.bash) | Asserts that a file is not tracked in git | [Git assertions](docs/assertions-git.md) |
-| `cleanup_register` | [cleanup.bash](src/cleanup.bash) | Registers a command to run once the current test has finished | [Cleanup](docs/cleanup.md) |
+| `assert_git_repo` | [assert.git.bash](src/assert.git.bash) | Asserts that a directory is a git repository | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_not_repo` | [assert.git.bash](src/assert.git.bash) | Asserts that a directory is not a git repository | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_clean` | [assert.git.bash](src/assert.git.bash) | Asserts that a git repository is clean | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_not_clean` | [assert.git.bash](src/assert.git.bash) | Asserts that a git repository is not clean | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_file_tracked` | [assert.git.bash](src/assert.git.bash) | Asserts that a file is tracked in git | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `assert_git_file_not_tracked` | [assert.git.bash](src/assert.git.bash) | Asserts that a file is not tracked in git | [Git assertions](docs/assertions-git.md#git-assertions) |
+| `cleanup_register` | [cleanup.bash](src/cleanup.bash) | Registers a command to run once the current test has finished | [Cleanup](docs/cleanup.md#cleanup) |
 | `cleanup_run` | [cleanup.bash](src/cleanup.bash) | Runs the registered commands in reverse order. Call from `teardown()` | [Cleanup](docs/cleanup.md#composing-with-your-teardown) |
 | `cleanup_registry_path` | [cleanup.bash](src/cleanup.bash) | Resolves the file the registry is stored in | [Cleanup sandbox](docs/cleanup.md#cleanup-sandbox) |
-| `retry_run` | [retry.bash](src/retry.bash) | Runs a command until it succeeds or until a bound is reached | [Retry](docs/retry.md) |
-| `file_mktouch` | [file.bash](src/file.bash) | Creates a file and any missing parent directories | [File utilities](docs/files.md) |
-| `file_trim` | [file.bash](src/file.bash) | Removes the last line of a file in place | [File utilities](docs/files.md) |
-| `file_read_env` | [file.bash](src/file.bash) | Evaluates an expression with the variables from the `./.env` file in scope | [File utilities](docs/files.md) |
+| `retry_run` | [retry.bash](src/retry.bash) | Runs a command until it succeeds or until a bound is reached | [Retry](docs/retry.md#retry) |
+| `file_mktouch` | [file.bash](src/file.bash) | Creates a file and any missing parent directories | [File utilities](docs/files.md#file-utilities) |
+| `file_trim` | [file.bash](src/file.bash) | Removes the last line of a file in place | [File utilities](docs/files.md#file-utilities) |
+| `file_read_env` | [file.bash](src/file.bash) | Evaluates an expression with the variables from the `./.env` file in scope | [File utilities](docs/files.md#file-utilities) |
 | `file_backup_path` | [file.bash](src/file.bash) | Resolves the backup location of a file | [File backups](docs/files.md#file-backups) |
 | `file_add_var` | [file.bash](src/file.bash) | Appends a variable assignment to a file, backing the file up first | [File backups](docs/files.md#file-backups) |
 | `file_restore` | [file.bash](src/file.bash) | Restores a file from the backup taken by `file_add_var` | [File backups](docs/files.md#file-backups) |
-| `fixture_prepare_dir` | [fixture.bash](src/fixture.bash) | Creates an empty directory for a fixture, removing any existing content | [Fixtures](docs/fixtures.md) |
-| `fixture_export_codebase` | [fixture.bash](src/fixture.bash) | Exports the codebase at the latest commit to a destination directory | [Fixtures](docs/fixtures.md) |
+| `fixture_prepare_dir` | [fixture.bash](src/fixture.bash) | Creates an empty directory for a fixture, removing any existing content | [Fixtures](docs/fixtures.md#fixtures) |
+| `fixture_export_codebase` | [fixture.bash](src/fixture.bash) | Exports the codebase at the latest commit to a destination directory | [Fixtures](docs/fixtures.md#fixtures) |
 | `fixture_create_dir` | [fixture.bash](src/fixture.bash) | Creates a file tree from an archive read from STDIN | [Fixture trees](docs/fixtures.md#fixture-trees) |
 | `fixture_dump_dir` | [fixture.bash](src/fixture.bash) | Prints a directory as an archive | [Fixture trees](docs/fixtures.md#fixture-trees) |
 | `fixture_assert_dir` | [fixture.bash](src/fixture.bash) | Asserts that a directory holds the file tree of an archive read from STDIN | [Fixture trees](docs/fixtures.md#fixture-trees) |
@@ -316,8 +316,8 @@ Every public function, the file that defines it, and the page that documents it.
 | `mock_sandbox_enabled` | [mock.bash](src/mock.bash) | Reports whether sandbox mode is enabled | [Sandbox mode](docs/mocking.md#sandbox-mode) |
 | `mock_sandbox_report` | [mock.bash](src/mock.bash) | Prints the denied and the escaped commands | [What escaped](docs/mocking.md#what-escaped) |
 | `mock_path_check` | [mock.bash](src/mock.bash) | Warns when `PATH` changed after `mock_setup` | [When PATH is rewritten](docs/mocking.md#when-path-is-rewritten) |
-| `steps_run` | [steps.bash](src/steps.bash) | Runs the `setup` or the `assert` phase of the `STEPS` array | [Step runner](docs/steps.md) |
-| `tui_run` | [tui.bash](src/tui.bash) | Runs the script named by `SCRIPT_FILE`, feeding it answers on STDIN | [Interactive scripts](docs/tui.md) |
+| `steps_run` | [steps.bash](src/steps.bash) | Runs the `setup` or the `assert` phase of the `STEPS` array | [Step runner](docs/steps.md#step-runner) |
+| `tui_run` | [tui.bash](src/tui.bash) | Runs the script named by `SCRIPT_FILE`, feeding it answers on STDIN | [Interactive scripts](docs/tui.md#interactive-scripts) |
 | `tui_assert_prompts` | [tui.bash](src/tui.bash) | Asserts the prompts appeared in order, ignoring case | [Prompt order](docs/tui.md#prompt-order) |
 | `tui_assert_prompts_case` | [tui.bash](src/tui.bash) | Asserts the prompts appeared in order, case-sensitively | [Prompt order](docs/tui.md#prompt-order) |
 

@@ -18,7 +18,7 @@ These names still work, but print a notice on every call and are removed in the 
 | `restore_file`                   | `file_restore`                |
 | `random_string`                  | `string_random`               |
 
-The variables follow the same pattern. The old name is read only when the new one is unset or empty, so setting both to real values leaves the new one in charge:
+The variables follow the same pattern. The old name is read only when the new one is unset or empty, so setting both to real values leaves the new one in charge. `BATS_HELPERS_ASSERT_DIR_EXCLUDE` is the exception: it holds an array, and a value test would read element 0 alone and fall back wrongly for an array such as `('' 'foo')`, so it falls back only when the replacement is *unset*. A declared empty array takes precedence over `ASSERT_DIR_EXCLUDE` rather than falling back to it.
 
 | Deprecated                             | Use instead                                    |
 |----------------------------------------|------------------------------------------------|

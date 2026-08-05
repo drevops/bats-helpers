@@ -1,6 +1,6 @@
 # Documentation
 
-Each page below documents one module of the library. The [API reference](../README.md#-api-reference) in the project README lists every public function with the source file that defines it and a link into the page that documents it.
+Most pages below document one module of the library and name it in a `Source:` line. Three cut across modules and have no single source: [Match modes](match-modes.md) is shared by every assertion family, and [Environment variables](environment-variables.md) and [Deprecations](deprecations.md) cover the library as a whole. The [API reference](../README.md#-api-reference) in the project README lists every public function with the source file that defines it and a link into the page that documents it.
 
 ## Assertions
 

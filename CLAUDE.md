@@ -172,7 +172,9 @@ File headers and function docblocks follow one house style so the library reads 
 
 ### Documentation Layout
 
-Prose documentation lives in `docs/`, one page per module of `src/`, so the question "where is this documented" has the same answer as "which file defines it". `docs/README.md` indexes the pages; three pages are cross-cutting rather than per-module - `match-modes.md`, `environment-variables.md` and `deprecations.md`. Each page opens with a one-line summary and a `Source:` line linking the module it documents.
+Prose documentation lives in `docs/`, one page per module of `src/`, so the question "where is this documented" has the same answer as "which file defines it". `docs/README.md` indexes the pages. A module page opens with a one-line summary and a `Source:` line linking the module it documents.
+
+Three pages are cross-cutting rather than per-module, and take no `Source:` line because no one module owns them: `match-modes.md` describes what every assertion family shares, and `environment-variables.md` and `deprecations.md` cover the library as a whole. Where such a page does have an implementation worth pointing at, it names it in prose instead.
 
 `README.md` holds only what a reader needs before choosing a page: the feature list, installation, the loader snippet, the index of documentation pages, the API reference table, and the contributing pointer. Prose that explains how a helper behaves belongs on the helper's page, never in the README.
 

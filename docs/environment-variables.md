@@ -2,7 +2,7 @@
 
 Every variable the library defines, in one place. Each is also covered by the page of the feature that uses it. Variables that belong to bats-core - `BATS_TEST_TMPDIR`, `BATS_TMPDIR`, `BATS_TEST_DIRNAME`, `BATS_VERBOSE_RUN` - are read but not owned here, and are documented by [bats-core](https://bats-core.readthedocs.io/). `NO_COLOR` is read the same way: any non-empty value suppresses the colour of a diff in a failure report, following [the convention](https://no-color.org/).
 
-`STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the test data a consumer declares right above the call that reads it, so they stay short and unprefixed. Everything the library reads from the wider environment carries the `BATS_HELPERS_` prefix.
+`STEPS`, `TEST_CASES` and `SCRIPT_FILE` are the test data a consumer declares right above the call that reads it, so they stay short and unprefixed. Every other variable the library defines carries the `BATS_HELPERS_` prefix. The prefix covers what the library provides, not what it consumes, which is why the variables named above stay as they are.
 
 | Variable                                       | Read by                                                       | Description                                                                                 |
 |------------------------------------------------|---------------------------------------------------------------|---------------------------------------------------------------------------------------------|

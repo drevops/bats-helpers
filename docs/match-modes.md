@@ -2,6 +2,8 @@
 
 How a needle is read, and whether case matters, is chosen by picking the assertion - there are no options to pass. Every combination has a name, so a call site says what it compares without being read against a flag elsewhere in the file.
 
+The modes below apply to every assertion family. The matching engine behind them is in [`src/assert.string.bash`](../src/assert.string.bash).
+
 Three things vary. **How the needle is read** is the verb:
 
 | Verb             | The needle is                             |
