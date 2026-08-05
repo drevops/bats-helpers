@@ -2,7 +2,7 @@
 #
 # Tests for file and directory assertions.
 #
-# shellcheck disable=SC2129,SC2030,SC2031,SC2034
+# shellcheck disable=SC2129,SC2030,SC2031,SC2034,SC2016
 
 load _test_helper
 
@@ -800,6 +800,6 @@ case       : insensitive
   run assert_dirs_equal "${BATS_TEST_TMPDIR}/t71" "${BATS_TEST_TMPDIR}/t72"
   assert_failure
   assert_output_contains "-- Directory holds a file the other directory does not --"
-  assert_output_contains "directory       : \${BATS_TEST_TMPDIR}/t71"
-  assert_output_contains "other directory : \${BATS_TEST_TMPDIR}/t72"
+  assert_output_contains 'directory       : ${BATS_TEST_TMPDIR}/t71'
+  assert_output_contains 'other directory : ${BATS_TEST_TMPDIR}/t72'
 }
