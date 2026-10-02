@@ -44,15 +44,15 @@ jobs:
         run: brew install bash
 
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
       - name: Setup sh-checker
-        uses: luizm/action-sh-checker@v0.10.0
+        uses: luizm/action-sh-checker@883217215b11c1fabbf00eb1a9a041f62d74c744 # v0.10.0
         if: matrix.os == 'ubuntu-latest' && matrix.deps == 'normal'
         env:
           SHFMT_OPTS: -i 2 -ci -s -d
@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.deps == 'normal'
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           directory: ./coverage
           fail_ci_if_error: true
@@ -99,5 +99,5 @@ jobs:
 
       - name: Setup tmate session
         if: ${{ !cancelled() && github.event.inputs.enable_terminal }}
-        uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@35b54afac29c97fb54faba5b513f8fbd1882f113 # v3.24
         timeout-minutes: 20
