@@ -829,9 +829,11 @@ case       : insensitive
   run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" '^beta$'
   assert_failure
 
-  # The '\n' escape does not compile and is reported as an invalid expression
-  # rather than read as a mismatch over a tree it cannot match.
-  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" '^alpha\nbeta$'
+  # An unterminated bracket is invalid under POSIX ERE on every platform, so
+  # the diagnostic is reported as an invalid expression rather than read as a
+  # mismatch over a tree it cannot match. ('\n' is not used here: whether it
+  # compiles depends on the regex engine behind bash, so it is not portable.)
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" '['
   assert_failure
   assert_output_contains "Invalid regular expression"
 }
