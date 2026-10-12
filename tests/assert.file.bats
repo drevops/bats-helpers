@@ -803,3 +803,52 @@ case       : insensitive
   assert_output_contains 'directory       : ${BATS_TEST_TMPDIR}/t71'
   assert_output_contains 'other directory : ${BATS_TEST_TMPDIR}/t72'
 }
+@test "assert_dir_contains_string matches a needle spanning lines" {
+  mkdir -p "${BATS_TEST_TMPDIR}/fixture"
+  printf 'first line\nsecond line\n' >"${BATS_TEST_TMPDIR}/fixture/multiline.txt"
+
+  # The contents of each file are matched as one string.
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "$(printf 'first line\nsecond line')"
+  assert_success
+
+  run assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "$(printf 'first line\nabsent line')"
+  assert_success
+}
+
+@test "assert_dir_matches anchors the expression to the whole file" {
+  mkdir -p "${BATS_TEST_TMPDIR}/fixture"
+  printf 'alpha\nbeta\n' >"${BATS_TEST_TMPDIR}/fixture/anchored.txt"
+
+  # '^' and '$' apply to the whole file, so an expression that contains a
+  # real newline spans the lines. Extended regular expressions have no '\n'
+  # escape, so the newline is provided by the shell.
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" "$(printf '^alpha\nbeta$')"
+  assert_success
+
+  # '^beta$' anchors at the file boundaries, not at the line boundaries.
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" '^beta$'
+  assert_failure
+
+  # The '\n' escape does not compile and is reported as an invalid expression
+  # rather than read as a mismatch over a tree it cannot match.
+  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" '^alpha\nbeta$'
+  assert_failure
+  assert_output_contains "Invalid regular expression"
+}
+
+@test "assert_dir search skips binary files" {
+  mkdir -p "${BATS_TEST_TMPDIR}/fixture"
+  # A binary that holds the needle before its first NUL byte: without the skip,
+  # reading it would stop right after the needle and match it.
+  printf 'secret-in-binary\x00binarytail\n' >"${BATS_TEST_TMPDIR}/fixture/binary.dat"
+  echo "readable text" >"${BATS_TEST_TMPDIR}/fixture/text.txt"
+
+  run assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "secret-in-binary"
+  assert_success
+
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "readable text"
+  assert_success
+
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "secret-in-binary"
+  assert_failure
+}
