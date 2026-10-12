@@ -579,7 +579,6 @@ case       : insensitive
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
   printf 'first line\nsecond line\n' >"${BATS_TEST_TMPDIR}/fixture/multiline.txt"
 
-  # The contents of each file are matched as one string.
   assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" "$(printf 'first line\nsecond line')"
 
   assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" "$(printf 'first line\nabsent line')"
@@ -589,9 +588,8 @@ case       : insensitive
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
   printf 'alpha\nbeta\n' >"${BATS_TEST_TMPDIR}/fixture/anchored.txt"
 
-  # '^' and '$' apply to the whole file, so an expression that contains a
-  # real newline spans the lines. Extended regular expressions have no '\n'
-  # escape, so the newline is provided by the shell.
+  # Extended regular expressions have no '\n' escape, so the newline is
+  # provided by the shell.
   assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" "$(printf '^alpha\nbeta$')"
 
   # '^beta$' anchors at the file boundaries, not at the line boundaries.
@@ -601,8 +599,6 @@ case       : insensitive
 
 @test "assert_dir_contains_string skips binary files" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
-  # A binary that holds the needle before its first NUL byte: without the skip,
-  # reading it would stop right after the needle and match it.
   printf 'secret-in-binary\x00binarytail\n' >"${BATS_TEST_TMPDIR}/fixture/binary.dat"
   echo "readable text" >"${BATS_TEST_TMPDIR}/fixture/text.txt"
 
