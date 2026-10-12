@@ -599,7 +599,7 @@ case       : insensitive
   assert_failure
 }
 
-@test "assert_dir search skips binary files" {
+@test "assert_dir_contains_string skips binary files" {
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
   # A binary that holds the needle before its first NUL byte: without the skip,
   # reading it would stop right after the needle and match it.
