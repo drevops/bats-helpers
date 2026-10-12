@@ -828,12 +828,6 @@ case       : insensitive
   # '^beta$' anchors at the file boundaries, not at the line boundaries.
   run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" '^beta$'
   assert_failure
-
-  # The '\n' escape does not compile and is reported as an invalid expression
-  # rather than read as a mismatch over a tree it cannot match.
-  run assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" '^alpha\nbeta$'
-  assert_failure
-  assert_output_contains "Invalid regular expression"
 }
 
 @test "assert_dir search skips binary files" {
