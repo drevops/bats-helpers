@@ -1680,3 +1680,22 @@ calls   : curl 'example.com'
 
   assert_equal "${mock##*/} '--flag'" "$(mock_log_print)"
 }
+
+
+@test "_mock_sandbox_link_base writes wrappers instead of links on Windows-style platforms" {
+  mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+  uname() {
+    echo MINGW64_NT-10.0
+  }
+
+  _mock_sandbox_link_base "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+
+  unset -f uname
+  assert_file_exists "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
+  # A link would resolve to the system binary; a wrapper names it explicitly.
+  assert_symlink_not_exists "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
+  run head -n 1 "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
+  assert_output "#!/bin/bash"
+  run sed -n 2p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
+  assert_output_contains 'exec "'
+}

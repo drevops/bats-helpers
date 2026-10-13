@@ -7,14 +7,14 @@
 # Load library.
 load '../load.bash'
 
-setup_file() {
-  # Windows shells copy symlinks by default, which turns every `ln -s` fixture
-  # (and the sandbox's base-command links) into a regular file. Native symlink
-  # mode makes them real links; probe it first, since the privilege is optional.
+# Windows shells copy symlinks by default, which turns every `ln -s` fixture
+# (and the sandbox's base-command links) into a regular file. Native symlink
+# mode makes them real links; probe it first, since the privilege is optional.
+# The result travels through a per-file marker file because a `setup_file`
+# export does not reach the test processes; `setup()` reads it back.
+_test_helper_probe_native_symlinks() {
   case "$(uname)" in
     MINGW* | MSYS* | CYGWIN*)
-      # A `setup_file` export does not reach the test processes, so the probe
-      # result travels through a per-file marker that `setup()` reads.
       local probe_dir
       probe_dir="$(mktemp -d)"
       if MSYS=winsymlinks:nativestrict ln -s "${probe_dir}" "${probe_dir}-link" 2>/dev/null && [ -h "${probe_dir}-link" ]; then
@@ -25,9 +25,13 @@ setup_file() {
   esac
 }
 
+setup_file() {
+  _test_helper_probe_native_symlinks
+}
+
 setup() {
   # Windows shells copy symlinks unless native symlink mode is enabled; the
-  # probe in setup_file records its result via a marker file (see above).
+  # probe records its result via a marker file (see above).
   if [ -e "${BATS_FILE_TMPDIR}/native_symlinks" ]; then
     export MSYS=winsymlinks:nativestrict
   fi
