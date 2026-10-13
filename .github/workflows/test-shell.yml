@@ -16,6 +16,9 @@ on:
         required: false
         default: false
 
+permissions:
+  contents: read
+
 env:
   BATS_LIB_PATH: "./node_modules"
   # Oldest supported version, kept in sync with the "bats" range in package.json.
@@ -33,10 +36,17 @@ jobs:
           - ubuntu-24.04
           - macos-14
           - macos-15
+          - windows-latest
         deps:
           - normal
           - lowest
     runs-on: ${{ matrix.os }}
+
+    # Windows runs steps in PowerShell by default, which reads
+    # '${BATS_VERSION_LOWEST}' as an unset PowerShell variable.
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Install current Bash on macOS
@@ -45,6 +55,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -82,7 +94,6 @@ jobs:
       - name: Run tests with coverage
         if: matrix.os == 'ubuntu-latest' && matrix.deps == 'normal'
         run: kcov --clean --include-pattern=.bash --bash-parse-files-in-dir=. --exclude-path=node_modules,vendor,coverage "$(pwd)"/coverage ./node_modules/.bin/bats tests
-        shell: bash
 
       - name: Upload coverage reports to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.deps == 'normal'
@@ -95,7 +106,6 @@ jobs:
       - name: Run tests
         if: matrix.os != 'ubuntu-latest' || matrix.deps != 'normal'
         run: ./node_modules/.bin/bats tests
-        shell: bash
 
       - name: Setup tmate session
         if: ${{ !cancelled() && github.event.inputs.enable_terminal }}

@@ -2,7 +2,7 @@
 #
 # Tests for mocking helpers.
 #
-# shellcheck disable=SC2129,SC2030,SC2031,SC2034
+# shellcheck disable=SC2129,SC2030,SC2031,SC2034,SC2329
 
 load _test_helper
 
@@ -1369,6 +1369,34 @@ bats_require_minimum_version 1.13.0
 
   # PATH was never replaced here, so only the saved value has to go back.
   rm -f "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
+}
+
+@test "_mock_sandbox_link_base writes wrappers on Windows" {
+  mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+
+  # Shell syntax in the path runs if the wrapper interpolates it raw.
+  real_dir="${BATS_TEST_TMPDIR}/real \$(echo hijacked) dir"
+  mkdir -p "${real_dir}"
+  printf '%s\n' '#!/usr/bin/env bash' 'printf "<%s>\n" "$@"' >"${real_dir}/cat"
+  chmod +x "${real_dir}/cat"
+  echo "${real_dir}" >"${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
+
+  uname() {
+    echo "MINGW64_NT-10.0"
+  }
+
+  _mock_sandbox_link_base "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+
+  unset -f uname
+  rm -f "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
+
+  assert_file_exists "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
+  assert_symlink_not_exists "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
+
+  run "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat" "a" "b c"
+  assert_success
+  assert_output "<a>
+<b c>"
 }
 
 @test "The sandbox reaches a Bash script under test" {

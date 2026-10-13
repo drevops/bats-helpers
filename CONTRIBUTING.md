@@ -32,7 +32,9 @@ Pass any other flag, or a single file, to `bats` directly:
 
 `--verbose-run` prints each test's `BATS_TEST_TMPDIR`, which is where the fixtures for that test are built.
 
-Coverage is measured with [kcov](https://github.com/SimonKagstrom/kcov) in CI and uploaded to [Codecov](https://codecov.io/gh/drevops/bats-helpers). CI runs the suite on Ubuntu and macOS, against both the current and the lowest supported `bats-core`.
+On Windows, run the suite from Git Bash. The symlink tests need Developer Mode or an elevated shell, because Windows creates a native symlink only with that privilege.
+
+Coverage is measured with [kcov](https://github.com/SimonKagstrom/kcov) in CI and uploaded to [Codecov](https://codecov.io/gh/drevops/bats-helpers). CI runs the suite on Ubuntu, macOS and Windows, against both the current and the lowest supported `bats-core`.
 
 ## Linting
 

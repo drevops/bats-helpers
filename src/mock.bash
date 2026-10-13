@@ -1516,6 +1516,9 @@ _mock_sandbox_base_commands() {
 ##
 # Links the commands the library and the BATS harness run into the sandbox.
 #
+# On Windows each command gets a wrapper script instead, because a link to an
+# MSYS binary cannot load the MSYS runtime DLL once PATH is stripped.
+#
 # Arguments:
 #   1. bin: Directory to link them into.
 ##
@@ -1528,8 +1531,14 @@ _mock_sandbox_link_base() {
   local -a names=()
   read -ra names <<<"$(_mock_sandbox_base_commands)"
 
+  local wrap=0
+  case "$(uname)" in
+    MINGW* | MSYS* | CYGWIN*) wrap=1 ;;
+  esac
+
   local name
   local real
+  local real_quoted
   for name in "${names[@]}"; do
     # An allowed command reports what it lets through, so its shim is not
     # replaced by a link that would let the same command through silently.
@@ -1538,9 +1547,18 @@ _mock_sandbox_link_base() {
     real="$(PATH="${real_path}" type -P "${name}")" || real=""
 
     # A command the machine does not have is nothing to link.
-    case "${real}" in
-      /*) ln -sf "${real}" "${bin}/${name}" ;;
-    esac
+    [[ ${real} == /* ]] || continue
+
+    if [ "${wrap}" = "1" ]; then
+      # The path comes from the consumer's PATH, so it is quoted for the shell
+      # rather than interpolated raw.
+      printf -v real_quoted '%q' "${real}"
+      printf '#!/bin/bash\nexec %s "$@"\n' "${real_quoted}" >"${bin}/${name}"
+      chmod +x "${bin}/${name}"
+      continue
+    fi
+
+    ln -sf "${real}" "${bin}/${name}"
   done
 
   return 0

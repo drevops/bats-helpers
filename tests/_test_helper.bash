@@ -8,6 +8,15 @@
 load '../load.bash'
 
 setup() {
+  # MSYS 'ln -s' copies the target unless native links are enabled, so
+  # symlink fixtures would be regular files. 'native' still copies where a
+  # link is not permitted, rather than failing.
+  # LCOV_EXCL_START
+  case "$(uname)" in
+    MINGW* | MSYS*) export MSYS="${MSYS:+${MSYS} }winsymlinks:native" ;;
+  esac
+  # LCOV_EXCL_STOP
+
   # Setup command mocking.
   mock_setup
 

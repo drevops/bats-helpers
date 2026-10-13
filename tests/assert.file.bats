@@ -133,6 +133,10 @@ load _test_helper
 }
 
 @test "assert_file_mode" {
+  case "$(uname)" in
+    MINGW* | MSYS* | CYGWIN*) skip "POSIX file modes are not representable on this filesystem." ;;
+  esac
+
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture_mode"
   echo "some existing text" >"${BATS_TEST_TMPDIR}/fixture_mode/1.txt"
   chmod 644 "${BATS_TEST_TMPDIR}/fixture_mode/1.txt"
