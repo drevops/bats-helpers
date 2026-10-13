@@ -2,6 +2,9 @@
 # exercised on every OS by stubbing `uname`, so coverage does not depend on
 # which machine runs the suite.
 
+# The platform and link stubs are invoked indirectly by the code under test.
+# shellcheck disable=SC2329
+
 load _test_helper
 
 setup() {

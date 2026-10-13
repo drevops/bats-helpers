@@ -2,7 +2,7 @@
 #
 # Tests for mocking helpers.
 #
-# shellcheck disable=SC2129,SC2030,SC2031,SC2034
+# shellcheck disable=SC2129,SC2030,SC2031,SC2034,SC2329
 
 load _test_helper
 
@@ -1680,7 +1680,6 @@ calls   : curl 'example.com'
 
   assert_equal "${mock##*/} '--flag'" "$(mock_log_print)"
 }
-
 
 @test "_mock_sandbox_link_base writes wrappers instead of links on Windows-style platforms" {
   mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
