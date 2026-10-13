@@ -189,6 +189,7 @@ two"
   if [ "$(id -u)" -eq 0 ]; then
     skip "Test requires a non-root user."
   fi
+
   case "$(uname)" in
     MINGW* | MSYS* | CYGWIN*) skip "POSIX directory modes are not representable on this filesystem." ;;
   esac
