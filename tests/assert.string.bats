@@ -466,3 +466,16 @@ absent"
   run assert_not_contains "n[ee]dle" "some n[ee]dle in a haystack"
   assert_failure
 }
+
+@test "string assertions match multiline needles across CRLF text" {
+  assert_string_contains $'xx\r\nalpha\r\nbeta\r\nyy' $'alpha\nbeta'
+}
+
+@test "string regex assertions match across CRLF text" {
+  assert_string_matches $'alpha\r\nbeta' $'^alpha\nbeta$'
+}
+
+@test "string assertions keep matching text that carries raw CR on both sides" {
+  assert_string_contains $'xxa\rbyy' $'a\rb'
+  assert_string_matches $'xxa\rbyy' $'a\rb'
+}

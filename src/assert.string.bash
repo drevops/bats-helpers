@@ -327,6 +327,13 @@ string_match() {
     shopt -s nocasematch
   fi
 
+  # Line endings are a transport detail, not content. Dropping CR from both
+  # sides lets a multiline needle written with LF match the same text in a
+  # CRLF file or in a command's output, and vice versa. With no CR present
+  # the substitution is a no-op, so LF-only inputs behave exactly as before.
+  haystack="${haystack//$'\r'/}"
+  needle="${needle//$'\r'/}"
+
   local result=1
 
   if [ "${mode}" = "literal" ]; then

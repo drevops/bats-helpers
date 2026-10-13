@@ -842,3 +842,17 @@ case       : insensitive
   assert_output_contains 'directory       : ${BATS_TEST_TMPDIR}/t71'
   assert_output_contains 'other directory : ${BATS_TEST_TMPDIR}/t72'
 }
+
+@test "assert_dir_contains_string multiline needle matches a CRLF fixture" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/crlf"
+  printf 'alpha\r\nbeta\r\n' >"${BATS_TEST_TMPDIR}/fixture/crlf/a.txt"
+
+  assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture/crlf" $'alpha\nbeta'
+}
+
+@test "assert_dir_matches anchored newline pattern matches a CRLF fixture" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/crlf"
+  printf 'alpha\r\nbeta\r\n' >"${BATS_TEST_TMPDIR}/fixture/crlf/a.txt"
+
+  assert_dir_matches "${BATS_TEST_TMPDIR}/fixture/crlf" $'^alpha\nbeta$'
+}
