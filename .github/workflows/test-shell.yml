@@ -111,3 +111,50 @@ jobs:
         if: ${{ !cancelled() && github.event.inputs.enable_terminal }}
         uses: mxschmitt/action-tmate@35b54afac29c97fb54faba5b513f8fbd1882f113 # v3.24
         timeout-minutes: 20
+
+  test-shell-distros:
+    # Distro shapes the hosted runner images do not provide: vanilla Debian,
+    # which is what Chrome OS runs through Crostini, and vanilla Ubuntu, whose
+    # userland Linux Mint ships unchanged (Mint adds desktop meta-packages on
+    # top of the same Ubuntu archive, and publishes no images of its own).
+    # Container legs run the normal deps only: coverage and sh-checker belong
+    # to the runner job above, and the lowest-bats leg is a bats-version
+    # question, not a distro question.
+    name: ${{ matrix.container }}, Deps normal
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - debian:12-slim
+          - ubuntu:24.04
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Install tooling
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git curl ca-certificates
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Config Git user for tests.
+        run: git config --global user.name "Test user" && git config --global user.email "someone@example.com"
+
+      - name: Run tests
+        run: ./node_modules/.bin/bats tests

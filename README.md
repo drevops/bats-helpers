@@ -28,6 +28,7 @@
 - [Usage](#-usage)
 - [Documentation](#-documentation)
 - [API reference](#-api-reference)
+- [Platform support](#platform-support)
 - [Contributing](#-contributing)
 
 ## ✨ Features
@@ -318,6 +319,19 @@ Every public function, the file that defines it, and the page that documents it.
 | `tui_run` | [tui.bash](src/tui.bash) | Runs the script named by `SCRIPT_FILE`, feeding it answers on STDIN | [Interactive scripts](docs/tui.md#interactive-scripts) |
 | `tui_assert_prompts` | [tui.bash](src/tui.bash) | Asserts the prompts appeared in order, ignoring case | [Prompt order](docs/tui.md#prompt-order) |
 | `tui_assert_prompts_case` | [tui.bash](src/tui.bash) | Asserts the prompts appeared in order, case-sensitively | [Prompt order](docs/tui.md#prompt-order) |
+
+## Platform support
+
+The suite runs on every push across the platforms below. Chrome OS and
+Linux Mint ship no CI images of their own, so each is covered by the
+distribution it is built from:
+
+| Platform | Covered by |
+|---|---|
+| Ubuntu 22.04 / 24.04 / latest, macOS 14 / 15 | runner legs (`deps` lowest + normal) |
+| Windows under Git Bash | runner leg |
+| Vanilla Debian 12 | container leg — the userland Chrome OS exposes through Crostini |
+| Vanilla Ubuntu 24.04 | container leg — the userland Linux Mint ships, unchanged under its desktop meta-packages |
 
 ## 🤝 Contributing
 
