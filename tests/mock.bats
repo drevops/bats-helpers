@@ -1371,6 +1371,33 @@ bats_require_minimum_version 1.13.0
   rm -f "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
 }
 
+@test "_mock_sandbox_link_base writes wrappers on Windows" {
+  mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+
+  # Shell syntax in the path runs if the wrapper interpolates it raw.
+  real_dir="${BATS_TEST_TMPDIR}/real \$(echo hijacked) dir"
+  mkdir -p "${real_dir}"
+  printf '%s\n' '#!/usr/bin/env bash' "echo \"real cat \$*\"" >"${real_dir}/cat"
+  chmod +x "${real_dir}/cat"
+  echo "${real_dir}" >"${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
+
+  uname() {
+    echo "MINGW64_NT-10.0"
+  }
+
+  _mock_sandbox_link_base "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
+
+  unset -f uname
+  rm -f "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
+
+  assert_file_exists "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
+  assert_symlink_not_exists "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
+
+  run "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat" "a" "b c"
+  assert_success
+  assert_output "real cat a b c"
+}
+
 @test "The sandbox reaches a Bash script under test" {
   script="${BATS_TEST_TMPDIR}/script.sh"
   echo '#!/usr/bin/env bash' >"${script}"
@@ -1679,22 +1706,4 @@ calls   : curl 'example.com'
   "${mock}" --flag
 
   assert_equal "${mock##*/} '--flag'" "$(mock_log_print)"
-}
-
-@test "_mock_sandbox_link_base writes wrappers instead of links on Windows-style platforms" {
-  mkdir -p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
-  uname() {
-    echo MINGW64_NT-10.0
-  }
-
-  _mock_sandbox_link_base "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin"
-
-  unset -f uname
-  assert_file_exists "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
-  # A link would resolve to the system binary; a wrapper names it explicitly.
-  assert_symlink_not_exists "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
-  run head -n 1 "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
-  assert_output "#!/bin/bash"
-  run sed -n 2p "${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/bin/cat"
-  assert_output_contains 'exec "'
 }
