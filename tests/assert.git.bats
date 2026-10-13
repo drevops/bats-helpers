@@ -20,6 +20,12 @@ load _test_helper
   run assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo_empty_dot_git"
   assert_failure
 
+  # Repository discovery from this directory resolves to 'git_repo'.
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo/nested_empty_dot_git"
+  mkdir "${BATS_TEST_TMPDIR}/fixture/git_repo/nested_empty_dot_git/.git"
+  run assert_git_repo "${BATS_TEST_TMPDIR}/fixture/git_repo/nested_empty_dot_git"
+  assert_failure
+
   run assert_git_repo "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
   assert_failure
 
@@ -63,6 +69,13 @@ load _test_helper
   (cd "${BATS_TEST_TMPDIR}/fixture/git_repo" && git add -A) >/dev/null
   (cd "${BATS_TEST_TMPDIR}/fixture/git_repo" && git commit -m "First commit") >/dev/null
   assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
+
+  # Git exports 'GIT_DIR' to hooks, so a suite run from one inherits it.
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dirty_repo"
+  (cd "${BATS_TEST_TMPDIR}/fixture/dirty_repo" && git init) >/dev/null
+  file_mktouch "${BATS_TEST_TMPDIR}/fixture/dirty_repo/uncommitted_file"
+  GIT_DIR="${BATS_TEST_TMPDIR}/fixture/dirty_repo/.git" assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
+
   file_mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/other_uncommitted_file"
   run assert_git_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
   assert_failure
