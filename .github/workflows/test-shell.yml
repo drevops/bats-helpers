@@ -128,7 +128,12 @@ jobs:
           - debian:12-slim
           - ubuntu:24.04
     runs-on: ubuntu-latest
-    container: ${{ matrix.container }}
+    container:
+      image: ${{ matrix.container }}
+      # No init in a container means no orphan reaper: the deadline test's
+      # killed worker stays a zombie and looks alive to `kill -0`. tini as
+      # PID1 reaps it, which is what any normal init does on a real system.
+      options: --init
 
     defaults:
       run:
@@ -155,6 +160,9 @@ jobs:
 
       - name: Config Git user for tests.
         run: git config --global user.name "Test user" && git config --global user.email "someone@example.com"
+
+      - name: Config Git safe.directory
+        run: git config --global --add safe.directory "${PWD}"
 
       - name: Run tests
         run: ./node_modules/.bin/bats tests
