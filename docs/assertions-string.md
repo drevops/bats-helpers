@@ -51,3 +51,5 @@ string_format_to_regex "Deleted %d files"
 ```
 
 `string_match` returns `0` when the needle matches, `1` when it does not, and `2` when the needle is not a usable regular expression. It reports through the exit status alone and prints nothing.
+
+A needle without a carriage return matches CRLF text as it matches LF text, and a needle that holds one is matched byte for byte. See [Line endings](match-modes.md#line-endings).

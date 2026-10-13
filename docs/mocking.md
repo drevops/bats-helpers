@@ -180,6 +180,8 @@ mock_spec_arg "${spec}" '*' not_equals "--force"
 mock_spec_arg "${spec}" 1 contains_case "Accept"
 ```
 
+The four needle matchers read line endings as the assertions do: a value without a carriage return matches a CRLF argument as it matches an LF one, while `equals` compares bytes. See [Line endings](match-modes.md#line-endings).
+
 `mock_spec_count` pins how many arguments the call carries:
 
 ```bash

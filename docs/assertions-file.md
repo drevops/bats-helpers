@@ -66,7 +66,7 @@ assert_files_not_equal_ignore_spaces "${file1}" "${file2}"
 
 ## Searching a directory
 
-`assert_dir_contains_string` and `assert_dir_not_contains_string` read the string as a literal substring, and `assert_dir_matches` and `assert_dir_not_matches` read it as an extended regular expression; all four ignore case and have the usual `_case` twins - see [Match modes](match-modes.md). The contents of each file are matched as one string, so a needle may span lines and `^` and `$` anchor to the whole file. The search is recursive over regular files, skips binary files, and always excludes `.git`, `.idea`, `vendor` and `node_modules`; a failed negated assertion lists the matching files in a `files` row of its report. Set `BATS_HELPERS_ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
+`assert_dir_contains_string` and `assert_dir_not_contains_string` read the string as a literal substring, and `assert_dir_matches` and `assert_dir_not_matches` read it as an extended regular expression; all four ignore case and have the usual `_case` twins - see [Match modes](match-modes.md). The contents of each file are matched as one string, so a needle may span lines and `^` and `$` anchor to the whole file. A needle without a carriage return matches a CRLF file as it matches an LF one - see [Line endings](match-modes.md#line-endings). The search is recursive over regular files, skips binary files, and always excludes `.git`, `.idea`, `vendor` and `node_modules`; a failed negated assertion lists the matching files in a `files` row of its report. Set `BATS_HELPERS_ASSERT_DIR_EXCLUDE` to an array of additional directory names to exclude:
 
 ```bash
 declare -a BATS_HELPERS_ASSERT_DIR_EXCLUDE=("build" "dist")
