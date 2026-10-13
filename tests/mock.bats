@@ -1377,7 +1377,7 @@ bats_require_minimum_version 1.13.0
   # Shell syntax in the path runs if the wrapper interpolates it raw.
   real_dir="${BATS_TEST_TMPDIR}/real \$(echo hijacked) dir"
   mkdir -p "${real_dir}"
-  printf '%s\n' '#!/usr/bin/env bash' "echo \"real cat \$*\"" >"${real_dir}/cat"
+  printf '%s\n' '#!/usr/bin/env bash' 'echo "real cat $*"' >"${real_dir}/cat"
   chmod +x "${real_dir}/cat"
   echo "${real_dir}" >"${BATS_HELPERS_MOCK_TMPDIR}/.sandbox/path"
 
