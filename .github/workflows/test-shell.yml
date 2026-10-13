@@ -33,10 +33,17 @@ jobs:
           - ubuntu-24.04
           - macos-14
           - macos-15
+          - windows-latest
         deps:
           - normal
           - lowest
     runs-on: ${{ matrix.os }}
+
+    # Windows runs steps in PowerShell by default, which reads
+    # '${BATS_VERSION_LOWEST}' as an unset PowerShell variable.
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Install current Bash on macOS
@@ -82,7 +89,6 @@ jobs:
       - name: Run tests with coverage
         if: matrix.os == 'ubuntu-latest' && matrix.deps == 'normal'
         run: kcov --clean --include-pattern=.bash --bash-parse-files-in-dir=. --exclude-path=node_modules,vendor,coverage "$(pwd)"/coverage ./node_modules/.bin/bats tests
-        shell: bash
 
       - name: Upload coverage reports to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.deps == 'normal'
@@ -95,7 +101,6 @@ jobs:
       - name: Run tests
         if: matrix.os != 'ubuntu-latest' || matrix.deps != 'normal'
         run: ./node_modules/.bin/bats tests
-        shell: bash
 
       - name: Setup tmate session
         if: ${{ !cancelled() && github.event.inputs.enable_terminal }}
