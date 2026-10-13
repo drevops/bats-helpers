@@ -168,6 +168,13 @@ load _test_helper
   assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some existing text"
   assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some EXISTING text"
 
+  printf 'first line\r\nsecond line\r\n' >"${BATS_TEST_TMPDIR}/fixture_file_assert/crlf.txt"
+  assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/crlf.txt" $'first line\nsecond line'
+  assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/crlf.txt" $'\r\n'
+
+  run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" $'\r'
+  assert_failure
+
   run assert_file_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/non_existing.txt" "some existing text"
   assert_failure
   assert_output_contains "does not exist"
@@ -211,11 +218,16 @@ load _test_helper
   echo "one more line of existing text" >>"${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt"
 
   assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "other non-existing text"
+  assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" $'\r'
 
   run assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some existing text"
   assert_failure
 
   run assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/1.txt" "some EXISTING text"
+  assert_failure
+
+  printf 'first line\r\nsecond line\r\n' >"${BATS_TEST_TMPDIR}/fixture_file_assert/crlf.txt"
+  run assert_file_not_contains "${BATS_TEST_TMPDIR}/fixture_file_assert/crlf.txt" $'first line\nsecond line'
   assert_failure
 
   # Text exists, non-existing file.
@@ -614,6 +626,42 @@ case       : insensitive
   assert_failure
 }
 
+@test "assert_dir_contains_string matches a needle spanning CRLF lines" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  printf 'alpha\r\nbeta\r\n' >"${BATS_TEST_TMPDIR}/fixture/crlf.txt"
+
+  assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture" $'alpha\nbeta'
+
+  run assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture" $'alpha\nbeta'
+  assert_failure
+}
+
+@test "assert_dir_matches anchors the expression to the whole CRLF file" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture"
+  printf 'alpha\r\nbeta\r\n' >"${BATS_TEST_TMPDIR}/fixture/crlf.txt"
+
+  assert_dir_matches "${BATS_TEST_TMPDIR}/fixture" $'^alpha\nbeta$'
+
+  run assert_dir_not_matches "${BATS_TEST_TMPDIR}/fixture" $'^alpha\nbeta$'
+  assert_failure
+}
+
+@test "assert_dir_contains_string matches a CR byte for byte" {
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/crlf"
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/lf"
+  printf 'alpha\r\nbeta\r\n' >"${BATS_TEST_TMPDIR}/fixture/crlf/a.txt"
+  printf 'alpha\nbeta\n' >"${BATS_TEST_TMPDIR}/fixture/lf/a.txt"
+
+  assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture/crlf" $'\r\n'
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture/lf" $'\r'
+
+  run assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture/lf" $'\r'
+  assert_failure
+
+  run assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/fixture/crlf" $'\r'
+  assert_failure
+}
+
 @test "assert_files_equal" {
   cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
   cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
@@ -841,18 +889,4 @@ case       : insensitive
   assert_output_contains "-- Directory holds a file the other directory does not --"
   assert_output_contains 'directory       : ${BATS_TEST_TMPDIR}/t71'
   assert_output_contains 'other directory : ${BATS_TEST_TMPDIR}/t72'
-}
-
-@test "assert_dir_contains_string multiline needle matches a CRLF fixture" {
-  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/crlf"
-  printf 'alpha\r\nbeta\r\n' >"${BATS_TEST_TMPDIR}/fixture/crlf/a.txt"
-
-  assert_dir_contains_string "${BATS_TEST_TMPDIR}/fixture/crlf" $'alpha\nbeta'
-}
-
-@test "assert_dir_matches anchored newline pattern matches a CRLF fixture" {
-  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/crlf"
-  printf 'alpha\r\nbeta\r\n' >"${BATS_TEST_TMPDIR}/fixture/crlf/a.txt"
-
-  assert_dir_matches "${BATS_TEST_TMPDIR}/fixture/crlf" $'^alpha\nbeta$'
 }
