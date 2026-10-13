@@ -189,6 +189,9 @@ two"
   if [ "$(id -u)" -eq 0 ]; then
     skip "Test requires a non-root user."
   fi
+  case "$(uname)" in
+    MINGW* | MSYS* | CYGWIN*) skip "POSIX directory modes are not representable on this filesystem." ;;
+  esac
 
   export BATS_HELPERS_CLEANUP_DIR="${BATS_TEST_TMPDIR}/readonly"
 
