@@ -1539,7 +1539,21 @@ _mock_sandbox_link_base() {
 
     # A command the machine does not have is nothing to link.
     case "${real}" in
-      /*) ln -sf "${real}" "${bin}/${name}" ;;
+      /*)
+        case "$(uname)" in
+          MINGW* | MSYS* | CYGWIN*)
+            # A symlink to a system binary dies once PATH is stripped for the
+            # sandbox: the MSYS runtime can no longer locate its own DLL, so
+            # the link fails with "error while loading shared libraries".
+            # A wrapper with absolute paths needs nothing from PATH.
+            printf '#!/bin/bash\nexec "%s" "$@"\n' "${real}" >"${bin}/${name}"
+            chmod +x "${bin}/${name}"
+            ;;
+          *)
+            ln -sf "${real}" "${bin}/${name}"
+            ;;
+        esac
+        ;;
     esac
   done
 
