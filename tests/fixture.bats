@@ -55,7 +55,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
   # A repository without commits has no HEAD, so 'git archive' fails.
   src_dir="${BATS_TEST_TMPDIR//\/\//\/}/src-no-commits"
   fixture_prepare_dir "${src_dir}"
-  git -C "${src_dir}" init --quiet
+  (cd "${src_dir}" && git init --quiet)
 
   run fixture_export_codebase "${build_dir}" "${src_dir}"
   assert_failure
@@ -70,7 +70,7 @@ directory : ${BATS_TEST_TMPDIR}/non-existing
 
   src_dir="${BATS_TEST_TMPDIR//\/\//\/}/src-no-commits"
   fixture_prepare_dir "${src_dir}"
-  git -C "${src_dir}" init --quiet
+  (cd "${src_dir}" && git init --quiet)
 
   recovered=0
   fixture_export_codebase "${build_dir}" "${src_dir}" 2>/dev/null || recovered=1

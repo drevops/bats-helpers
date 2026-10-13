@@ -21,9 +21,9 @@ load _test_helper
 @test "assert_git_file_is_tracked" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
+  (cd "${BATS_TEST_TMPDIR}/fixture/git_repo" && git init) >/dev/null
   touch "${BATS_TEST_TMPDIR}/fixture/git_repo/1.txt"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" add 1.txt >/dev/null
+  (cd "${BATS_TEST_TMPDIR}/fixture/git_repo" && git add 1.txt) >/dev/null
 
   assert_git_file_is_tracked "1.txt" "${BATS_TEST_TMPDIR}/fixture/git_repo" 3>"${notice}"
 
@@ -33,10 +33,10 @@ load _test_helper
 @test "assert_git_file_is_not_tracked" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
+  (cd "${BATS_TEST_TMPDIR}/fixture/git_repo" && git init) >/dev/null
   touch "${BATS_TEST_TMPDIR}/fixture/git_repo/1.txt"
   touch "${BATS_TEST_TMPDIR}/fixture/git_repo/2.txt"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" add 1.txt >/dev/null
+  (cd "${BATS_TEST_TMPDIR}/fixture/git_repo" && git add 1.txt) >/dev/null
 
   assert_git_file_is_not_tracked "2.txt" "${BATS_TEST_TMPDIR}/fixture/git_repo" 3>"${notice}"
 
@@ -281,7 +281,7 @@ load _test_helper
 @test "Assertions calling other assertions emit no notices" {
   notice="${BATS_TEST_TMPDIR}/notice.txt"
   fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/git_repo"
-  git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" init >/dev/null
+  (cd "${BATS_TEST_TMPDIR}/fixture/git_repo" && git init) >/dev/null
   echo "some needle in a haystack" >"${BATS_TEST_TMPDIR}/haystack.txt"
 
   assert_file_contains "${BATS_TEST_TMPDIR}/haystack.txt" "needle" 3>"${notice}"

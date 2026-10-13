@@ -17,7 +17,10 @@ assert_git_repo() {
 
   if [ -d "${dir}/.git" ]; then
     local message
-    message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status 2>&1)"
+    # Run from inside the repository: git for Windows rejects the POSIX paths
+    # ("C:/..." is what it needs, "/tmp/..." is what bash has), while a `cd`
+    # works identically on Linux, macOS and Windows.
+    message="$(cd "${dir}" && git status 2>&1)"
 
     if string_match "${message}" "not a git repository" "literal" 0 "anywhere"; then
       format_error "Directory is not a git repository" "directory" "${dir}" | flunk
@@ -69,7 +72,7 @@ assert_git_file_tracked() {
     return 1
   fi
 
-  git --work-tree="${dir}" --git-dir="${dir}/.git" ls-files --error-unmatch "${file}" &>/dev/null
+  (cd "${dir}" && git ls-files --error-unmatch "${file}") &>/dev/null
   return $?
 }
 
@@ -93,7 +96,7 @@ assert_git_file_not_tracked() {
     return 1
   fi
 
-  if git --work-tree="${dir}" --git-dir="${dir}/.git" ls-files --error-unmatch "${file}" &>/dev/null; then
+  if (cd "${dir}" && git ls-files --error-unmatch "${file}") &>/dev/null; then
     return 1
   else
     return 0
@@ -112,7 +115,7 @@ assert_git_clean() {
 
   assert_git_repo "${dir}" || return 1
 
-  message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status)"
+  message="$(cd "${dir}" && git status)"
 
   if string_match "${message}" "nothing to commit" "literal" 0 "anywhere"; then
     return 0
@@ -135,7 +138,7 @@ assert_git_not_clean() {
 
   assert_git_repo "${dir}" || return 1
 
-  message="$(git --work-tree="${dir}" --git-dir="${dir}/.git" status)"
+  message="$(cd "${dir}" && git status)"
 
   if ! string_match "${message}" "nothing to commit" "literal" 0 "anywhere"; then
     return 0
