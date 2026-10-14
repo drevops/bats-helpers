@@ -627,6 +627,34 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
+@test "mock_spec_arg reads line endings as the assertions do" {
+  mock_git="$(mock_command "git")"
+
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 ends_with ".json"
+  _mock_spec_matches "${spec}" $'config.json\r'
+  run _mock_spec_matches "${spec}" $'config.yml\r'
+  assert_failure
+
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 equals "config.json"
+  _mock_spec_matches "${spec}" "config.json"
+  run _mock_spec_matches "${spec}" $'config.json\r'
+  assert_failure
+
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 contains $'\r'
+  _mock_spec_matches "${spec}" $'config.json\r'
+  run _mock_spec_matches "${spec}" "config.json"
+  assert_failure
+
+  spec="$(mock_spec_add "${mock_git}")"
+  mock_spec_arg "${spec}" 1 matches $'^[^\r]*$'
+  _mock_spec_matches "${spec}" "config.json"
+  run _mock_spec_matches "${spec}" $'config.json\r'
+  assert_failure
+}
+
 @test "mock_spec_arg with invalid input" {
   mock_git="$(mock_command "git")"
   spec="$(mock_spec_add "${mock_git}")"

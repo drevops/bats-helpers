@@ -251,6 +251,12 @@ bats_require_minimum_version 1.13.0
   output="output not needle"
   run assert_output "output needle"
   assert_failure
+
+  # Equality compares bytes, so CRLF output does not equal its LF counterpart.
+  output=$'first\r\nsecond'
+  assert_output $'first\r\nsecond'
+  run assert_output $'first\nsecond'
+  assert_failure
 }
 
 @test "assert_output_contains" {
@@ -261,6 +267,13 @@ bats_require_minimum_version 1.13.0
   assert_output_contains <<<"existing"
 
   run assert_output_contains "non-existing"
+  assert_failure
+
+  run printf 'first\r\nsecond\r\n'
+  assert_output_contains $'first\nsecond'
+
+  run printf 'first\nsecond\n'
+  run assert_output_contains $'\r'
   assert_failure
 }
 
@@ -291,6 +304,13 @@ bats_require_minimum_version 1.13.0
 
   run assert_output_not_contains "existing"
   assert_failure
+
+  run printf 'first\nsecond\n'
+  assert_output_not_contains $'\r'
+
+  run printf 'first\r\nsecond\r\n'
+  run assert_output_not_contains $'first\nsecond'
+  assert_failure
 }
 
 @test "assert_output_not_contains_case" {
@@ -313,6 +333,13 @@ bats_require_minimum_version 1.13.0
 
   run echo "some existing text"
   run assert_output_matches 'existing [0-9]+'
+  assert_failure
+
+  run printf 'Done\r\n'
+  assert_output_matches '^Done$'
+
+  run printf 'Done\n'
+  run assert_output_matches $'\r$'
   assert_failure
 }
 
@@ -339,6 +366,13 @@ bats_require_minimum_version 1.13.0
 
   run echo "some existing 42 text"
   run assert_output_not_matches 'EXISTING [0-9]+'
+  assert_failure
+
+  run printf 'Done\n'
+  assert_output_not_matches $'\r$'
+
+  run printf 'Done\r\n'
+  run assert_output_not_matches '^Done$'
   assert_failure
 }
 

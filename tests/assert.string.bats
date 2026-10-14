@@ -11,8 +11,11 @@ load _test_helper
   assert_string_contains "some n[ee]dle in a haystack" "n[ee]dle"
   assert_string_contains "some NEEDLE in a haystack" "needle"
   assert_string_contains $'first line\nsecond line' $'line\nsecond'
+  assert_string_contains $'xx\r\nalpha\r\nbeta\r\nyy' $'alpha\nbeta'
 
   run assert_string_contains "some ne edle in a haystack" "needle"
+  assert_failure
+  run assert_string_contains $'first line\nsecond line' $'\r'
   assert_failure
 }
 
@@ -29,12 +32,15 @@ load _test_helper
 @test "assert_string_not_contains" {
   assert_string_not_contains "some needle in a haystack" "otherneedle"
   assert_string_not_contains "some n[ee]dle in a haystack" "othern[ee]dle"
+  assert_string_not_contains $'first line\nsecond line' $'\r'
 
   run assert_string_not_contains "some needle in a haystack" "needle"
   assert_failure
   run assert_string_not_contains "some n[ee]dle in a haystack" "n[ee]dle"
   assert_failure
   run assert_string_not_contains "some NEEDLE in a haystack" "needle"
+  assert_failure
+  run assert_string_not_contains $'first line\r\nsecond line' $'line\nsecond'
   assert_failure
 }
 
@@ -51,12 +57,15 @@ load _test_helper
   assert_string_matches "some NEEDLE 42" 'needle [0-9]+'
   assert_string_matches "some needle" '^some'
   assert_string_matches "some needle" 'needle$'
+  assert_string_matches $'alpha\r\nbeta' $'^alpha\nbeta$'
 
   # The anchors apply to the whole string, not to each of its lines.
   run assert_string_matches $'first\nsecond' '^second'
   assert_failure
 
   run assert_string_matches "some needle" 'needle [0-9]+'
+  assert_failure
+  run assert_string_matches "b" $'a\r?b'
   assert_failure
 }
 
@@ -72,10 +81,13 @@ load _test_helper
 @test "assert_string_not_matches" {
   assert_string_not_matches "some needle" 'needle [0-9]+'
   assert_string_not_matches $'first\nsecond' '^second'
+  assert_string_not_matches $'first\nsecond' $'\r$'
 
   run assert_string_not_matches "some needle 42" 'needle [0-9]+'
   assert_failure
   run assert_string_not_matches "some NEEDLE 42" 'needle [0-9]+'
+  assert_failure
+  run assert_string_not_matches $'alpha\r\nbeta' $'^alpha\nbeta$'
   assert_failure
 }
 
@@ -205,8 +217,13 @@ load _test_helper
 
 @test "assert_equal" {
   assert_equal 1 1
+  assert_equal $'first\r\nsecond' $'first\r\nsecond'
 
   run assert_equal 1 2
+  assert_failure
+
+  # Equality compares bytes, so CRLF text does not equal its LF counterpart.
+  run assert_equal $'first\nsecond' $'first\r\nsecond'
   assert_failure
 }
 
@@ -296,6 +313,51 @@ load _test_helper
   assert_equal 1 "${was_set}"
 
   shopt -u nocasematch
+}
+
+@test "string_match reads CRLF line endings as LF unless the needle holds a CR" {
+  run string_match $'first\r\nsecond' $'first\nsecond' "literal" 1 "anywhere"
+  assert_success
+  run string_match $'FIRST\r\nsecond' $'first\nsecond' "literal" 0 "anywhere"
+  assert_success
+  run string_match $'first\r\nsecond' $'^first\nsecond$' "regex" 1 "anywhere"
+  assert_success
+  run string_match $'first\r\nsecond\r\n' $'second\n' "literal" 1 "end"
+  assert_success
+
+  # Command substitution strips the final LF of a CRLF value, leaving its CR.
+  run string_match $'first\r\nsecond\r' "second" "literal" 1 "end"
+  assert_success
+  run string_match $'first\r\nsecond\r' 'second$' "regex" 1 "anywhere"
+  assert_success
+
+  # A line break survives the fold, and a CR outside a line ending is text.
+  run string_match $'first\r\nsecond' "firstsecond" "literal" 1 "anywhere"
+  assert_equal 1 "${status}"
+  run string_match $'50%\r100%' "50%100%" "literal" 1 "anywhere"
+  assert_equal 1 "${status}"
+
+  # A needle that holds a CR is matched byte for byte.
+  run string_match $'first\r\nsecond' $'\r' "literal" 1 "anywhere"
+  assert_success
+  run string_match $'first\nsecond' $'\r' "literal" 1 "anywhere"
+  assert_equal 1 "${status}"
+  run string_match $'first\nsecond' $'first\r\nsecond' "literal" 1 "anywhere"
+  assert_equal 1 "${status}"
+  run string_match $'xxa\rbyy' $'a\rb' "literal" 1 "anywhere"
+  assert_success
+  run string_match "xxabyy" $'a\rb' "literal" 1 "anywhere"
+  assert_equal 1 "${status}"
+
+  # An expression that names a CR is compiled as written.
+  run string_match $'first\r' $'\r$' "regex" 1 "anywhere"
+  assert_success
+  run string_match $'first\nsecond' $'\r$' "regex" 1 "anywhere"
+  assert_equal 1 "${status}"
+  run string_match "b" $'a\r?b' "regex" 1 "anywhere"
+  assert_equal 1 "${status}"
+  run string_match "some text" $'^[^\r]*$' "regex" 1 "anywhere"
+  assert_success
 }
 
 @test "string_format_to_regex" {

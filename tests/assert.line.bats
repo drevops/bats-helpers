@@ -29,6 +29,12 @@ capture_formatted_mixed() {
   run printf '%s\n' "Deleted 12 files" "ok" "DELETED 3 files"
 }
 
+# The same lines as 'capture', each ended with CRLF. A capture on Windows drops
+# the CR of the final line ending, so the tests read an earlier line.
+capture_crlf() {
+  run printf '%s\r\n' "Usage: tool.sh" "Reading config" "Deleted 12 files" "Done."
+}
+
 ##
 ## Line assertions.
 ##
@@ -893,4 +899,45 @@ actual     : 2"
   assert_line_count 3
   assert_line 1 ""
   assert_line 2 "third"
+}
+
+##
+## CRLF line endings.
+##
+
+@test "A line's CRLF ending is ignored by a match but not by an equality" {
+  capture_crlf
+  assert_line_matches 2 '^Deleted 12 files$'
+  assert_any_line_matches '^Deleted 12 files$'
+  assert_line_count_matches 4 '[a-z.]$'
+  assert_line 2 $'Deleted 12 files\r'
+
+  capture_crlf
+  run assert_line_not_matches 2 '^Deleted 12 files$'
+  assert_failure
+
+  capture_crlf
+  run assert_line 2 "Deleted 12 files"
+  assert_failure
+
+  capture_crlf
+  run assert_any_line "Deleted 12 files"
+  assert_failure
+}
+
+@test "A needle that holds a CR is matched against each line byte for byte" {
+  capture_crlf
+  assert_any_line_contains $'\r'
+  assert_line_contains 2 $'\r'
+
+  capture
+  assert_no_line_contains $'\r'
+
+  capture
+  run assert_any_line_contains $'\r'
+  assert_failure
+
+  capture_crlf
+  run assert_no_line_contains $'\r'
+  assert_failure
 }

@@ -63,6 +63,28 @@ The prefix and suffix assertions, and the `^` and `$` anchors of a regular expre
 assert_output_matches '^Done$'
 ```
 
+## Line endings
+
+A needle without a carriage return matches CRLF text as it matches LF text. Every carriage return that precedes a line feed is dropped from the value before the match, and so is one that ends it, which is what a captured CRLF value keeps of its last line ending. A carriage return anywhere else is part of the text:
+
+```bash
+# Both pass whether the output ends its lines with LF or with CRLF.
+assert_output_contains $'Reading config\nDone'
+assert_output_matches 'Done$'
+```
+
+A needle that holds a carriage return is matched byte for byte, so an assertion can check the line endings themselves:
+
+```bash
+# The output holds a carriage return.
+assert_output_contains $'\r'
+
+# The output holds no carriage return.
+assert_output_not_contains $'\r'
+```
+
+The equality assertions compare bytes, so a CRLF value does not equal its LF counterpart. That covers `assert_equal`, `assert_output`, `assert_stderr`, `assert_line`, `assert_any_line`, the file and directory equality assertions, and the `equals` mock matcher.
+
 ## Failures
 
 A needle that is not a usable regular expression is reported as an error rather than as a mismatch, so a `not_matches` assertion fails on it too:

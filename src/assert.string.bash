@@ -296,6 +296,12 @@ assert_string_not_ends_with_case() {
 # Both anchors apply to the whole haystack rather than to each of its lines, so
 # a regular expression anchored with '^' or '$' behaves the same way.
 #
+# A needle without a carriage return matches CRLF text as it matches LF text.
+# Each carriage return that precedes a line feed or ends the haystack is
+# dropped before the match.
+#
+# A needle that holds a carriage return is matched byte for byte.
+#
 # Runs inside the mock's own process, so it must not call 'flunk'.
 #
 # Arguments:
@@ -315,6 +321,31 @@ string_match() {
   local mode="${3}"
   local case_sensitive="${4}"
   local anchor="${5}"
+
+  if [[ ${needle} != *$'\r'* ]]; then
+    # Command substitution strips a captured value's final LF, so a CRLF value
+    # ends in a CR. Suffix removal without a match and pattern substitution are
+    # both quadratic in Bash, so a CR is removed only after '[[ == ]]' finds it.
+    if [[ ${haystack} == *$'\r' ]]; then
+      haystack="${haystack%$'\r'}"
+    fi
+
+    if [[ ${haystack} == *$'\r\n'* ]]; then
+      local -a haystack_lines
+      local i
+
+      mapfile -t haystack_lines <<<"${haystack}"
+
+      for i in "${!haystack_lines[@]}"; do
+        if [[ ${haystack_lines[i]} == *$'\r' ]]; then
+          haystack_lines[i]="${haystack_lines[i]%$'\r'}"
+        fi
+      done
+
+      printf -v haystack '%s\n' "${haystack_lines[@]}"
+      haystack="${haystack%$'\n'}"
+    fi
+  fi
 
   local nocasematch_was_set=0
   if shopt -q nocasematch; then
