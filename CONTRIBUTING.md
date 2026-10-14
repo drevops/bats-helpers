@@ -34,7 +34,7 @@ Pass any other flag, or a single file, to `bats` directly:
 
 On Windows, run the suite from Git Bash. The symlink tests need Developer Mode or an elevated shell, because Windows creates a native symlink only with that privilege.
 
-Coverage is measured with [kcov](https://github.com/SimonKagstrom/kcov) in CI and uploaded to [Codecov](https://codecov.io/gh/drevops/bats-helpers). CI runs the suite on Ubuntu, macOS and Windows, against both the current and the lowest supported `bats-core`.
+Coverage is measured with [kcov](https://github.com/SimonKagstrom/kcov) in CI and uploaded to [Codecov](https://codecov.io/gh/drevops/bats-helpers). CI runs the suite on Ubuntu, macOS and Windows, against both the current and the lowest supported `bats-core`. It also runs it on Alpine against the current one, where `stat`, `grep` and `diff` are BusyBox rather than GNU or BSD tools.
 
 ## Linting
 

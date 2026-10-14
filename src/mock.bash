@@ -1501,16 +1501,17 @@ _mock_sandbox_deny() {
 # Writes the commands the library and the BATS harness run.
 #
 # These stay available inside the sandbox, so that the assertions, the file
-# helpers, the generated mocks and 'run' itself keep working there. A test that
-# needs one of them denied mocks it: the mock directory comes first on PATH and
-# shadows the link. 'git' and 'tar' are left out, because a mode that allows
-# them by default answers none of the questions it exists to answer.
+# and fixture helpers, the retry and TUI runners, the generated mocks and
+# 'run' itself keep working there. A test that needs one of them denied mocks
+# it: the mock directory comes first on PATH and shadows the link. 'git' and
+# 'tar' are left out, because a mode that allows them by default answers none
+# of the questions it exists to answer.
 #
 # Outputs:
 #   STDOUT: The command names, separated by spaces.
 ##
 _mock_sandbox_base_commands() {
-  echo 'bash cat chmod cp diff dirname find grep head id ln ls mkdir mktemp rm sed stat touch wc'
+  echo 'bash cat chmod cmp cp diff dirname find grep head id ln ls mkdir mktemp rm sed sleep sort stat touch uname wc'
 }
 
 ##

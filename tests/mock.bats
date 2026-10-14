@@ -1223,6 +1223,94 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
+@test "mock_sandbox_enable keeps the directory search working inside the sandbox" {
+  mkdir -p "${BATS_TEST_TMPDIR}/dir"
+  printf 'needle\n' >"${BATS_TEST_TMPDIR}/dir/text.txt"
+  printf 'binary\000needle\n' >"${BATS_TEST_TMPDIR}/dir/binary.dat"
+
+  mock_sandbox_enable
+
+  assert_dir_contains_string "${BATS_TEST_TMPDIR}/dir" "needle"
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/dir" "binary"
+
+  mock_verify
+}
+
+@test "mock_sandbox_enable keeps the binary comparison working inside the sandbox" {
+  printf 'one\000\n' >"${BATS_TEST_TMPDIR}/one.dat"
+  printf 'two\000\n' >"${BATS_TEST_TMPDIR}/two.dat"
+
+  mock_sandbox_enable
+
+  assert_binary_files_equal "${BATS_TEST_TMPDIR}/one.dat" "${BATS_TEST_TMPDIR}/one.dat"
+  assert_binary_files_not_equal "${BATS_TEST_TMPDIR}/one.dat" "${BATS_TEST_TMPDIR}/two.dat"
+
+  mock_verify
+}
+
+@test "mock_sandbox_enable keeps the file helpers working inside the sandbox" {
+  printf 'line1\nline2\n' >"${BATS_TEST_TMPDIR}/file.txt"
+
+  mock_sandbox_enable
+
+  file_trim "${BATS_TEST_TMPDIR}/file.txt"
+
+  assert_file_contains "${BATS_TEST_TMPDIR}/file.txt" "line1"
+  assert_file_not_contains "${BATS_TEST_TMPDIR}/file.txt" "line2"
+
+  mock_verify
+}
+
+@test "mock_sandbox_enable keeps the fixture helpers working inside the sandbox" {
+  fixture_create_dir "${BATS_TEST_TMPDIR}/tree" <<'FIXTURE'
+-- b.txt --
+two
+-- a.txt --
+one
+FIXTURE
+
+  mock_sandbox_enable
+
+  run fixture_dump_dir "${BATS_TEST_TMPDIR}/tree"
+  assert_success
+  assert_output_contains $'-- a.txt --\none\n-- b.txt --\ntwo'
+
+  mock_verify
+}
+
+@test "mock_sandbox_enable keeps retry_run working inside the sandbox" {
+  ready_on_second_attempt() {
+    [ -e "${BATS_TEST_TMPDIR}/attempted" ] && return 0
+    touch "${BATS_TEST_TMPDIR}/attempted"
+    return 1
+  }
+
+  mock_sandbox_enable
+
+  retry_run 2 0 ready_on_second_attempt
+
+  assert_equal 2 "${BATS_HELPERS_RETRY_ATTEMPTS}"
+
+  mock_verify
+}
+
+@test "mock_sandbox_enable keeps tui_run working inside the sandbox" {
+  export SCRIPT_FILE="tests/fixtures/tui_script.sh"
+
+  declare -a answers=(
+    "custom answer1"
+    "custom answer2"
+  )
+
+  mock_sandbox_enable
+
+  tui_run "${answers[@]}"
+
+  assert_output_contains "custom answer2"
+
+  mock_verify
+}
+
 @test "mock_sandbox_enable keeps the BATS harness working inside the sandbox" {
   mock_curl="$(mock_command "curl")"
 

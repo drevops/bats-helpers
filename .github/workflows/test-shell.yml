@@ -111,3 +111,38 @@ jobs:
         if: ${{ !cancelled() && github.event.inputs.enable_terminal }}
         uses: mxschmitt/action-tmate@35b54afac29c97fb54faba5b513f8fbd1882f113 # v3.24
         timeout-minutes: 20
+
+  test-shell-alpine:
+    # Alpine provides BusyBox in place of the GNU or BSD userland of the other
+    # legs.
+    name: alpine, Deps normal
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+      # The init reaps the processes the tests kill, so none stays a zombie.
+      options: --init
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Install tooling
+        # Bash is not installed until this step has run.
+        shell: sh
+        run: apk add -q bash nodejs npm git
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # 'actions/setup-node' installs a glibc build, so Node comes from Alpine.
+      - name: Install dependencies
+        run: npm install
+
+      - name: Config Git user for tests.
+        run: git config --global user.name "Test user" && git config --global user.email "someone@example.com" && git config --global --add safe.directory "${PWD}"
+
+      - name: Run tests
+        run: ./node_modules/.bin/bats tests

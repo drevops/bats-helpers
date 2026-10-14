@@ -166,7 +166,7 @@ fixture_dump_dir() {
   local line
 
   while IFS= read -r file; do
-    if [ -s "${dir}/${file}" ] && ! LC_ALL=C grep -Iq '^' "${dir}/${file}"; then
+    if _file_is_binary "${dir}/${file}"; then
       flunk "Fixture file '${file}' is not a text file."
       return 1
     fi

@@ -184,7 +184,7 @@ assert_file_mode() {
   if [ "$(uname)" = "Darwin" ]; then
     parsed="$(printf "%.3o\n" $(($(stat -f '0%Lp' "${file}") & ~0022)))"
   else
-    parsed="$(printf "%.3o\n" $(($(stat --printf '0%a' "${file}") & ~0022)))"
+    parsed="$(printf "%.3o\n" $(($(stat -c '0%a' "${file}") & ~0022)))"
   fi
 
   if [ "${parsed}" != "${perm}" ]; then
@@ -414,6 +414,22 @@ _file_dir_exclude_names() {
 }
 
 ##
+# Reports whether a file is binary.
+#
+# A file holding a NUL byte is binary. 'read' stops at the first NUL and fails
+# at the end of the file, so it succeeds only for a binary file.
+#
+# Arguments:
+#   1. file: Path to check.
+#
+# Returns:
+#   0 when the file is binary, 1 when it is not.
+##
+_file_is_binary() {
+  IFS= read -r -d '' _ <"${1}"
+}
+
+##
 # Writes the paths of the files of a directory whose contents a needle matches.
 #
 # Regular files only are searched, and binary files are skipped. The contents
@@ -455,9 +471,8 @@ _file_dir_match_files() {
 
   while IFS= read -r -d '' file; do
     # Reading a binary file into a Bash string would stop at its first NUL, so
-    # binaries are told apart first, with the same probe the fixture serialiser
-    # uses.
-    if [ -s "${file}" ] && ! LC_ALL=C grep -Iq '^' "${file}"; then
+    # binaries are told apart first.
+    if _file_is_binary "${file}"; then
       continue
     fi
 
@@ -844,7 +859,9 @@ _file_assert_equal() {
   local file1="${3}"
   local file2="${4}"
 
-  local -a diff_opts=(--normal)
+  # BusyBox diff writes the unified format only. The labels name the report
+  # rows, so the headers hold no paths or timestamps.
+  local -a diff_opts=(-u -L file -L "other file")
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
 
   assert_file_exists "${file1}" || return 1
@@ -853,6 +870,13 @@ _file_assert_equal() {
   local difference
   local compare_status=0
   difference="$(diff "${diff_opts[@]}" "${file1}" "${file2}" 2>&1)" || compare_status=$?
+
+  # BusyBox diff exits 0 or 1 when it cannot read an operand. A unified diff
+  # prefixes every line of the files, so a line opening with 'diff: ' is a
+  # diagnostic.
+  if [[ $'\n'${difference} == *$'\n'"diff: "* ]]; then
+    compare_status=2
+  fi
 
   # A comparison that could not run is checked before the outcome, so that its
   # status is never read as a difference between the files.
