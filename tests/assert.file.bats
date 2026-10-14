@@ -672,6 +672,7 @@ case       : insensitive
   run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
   assert_failure
   assert_output_contains "difference (7 lines):"
+  assert_output_contains $'--- file\n+++ other file\n@@ -1,3 +1,3 @@'
   assert_output_contains "-Third line"
   assert_output_contains "+Third line changed"
 

@@ -861,11 +861,9 @@ _file_assert_equal() {
   local file1="${3}"
   local file2="${4}"
 
-  # `-u` pins the output format: GNU diff defaults to the normal format,
-  # BusyBox diff is often built with unified as its default and does not
-  # know `--normal`, so neither default nor a GNU-only spelling is
-  # portable. BusyBox, BSD and GNU all honour `-u`.
-  local -a diff_opts=(-u)
+  # BusyBox diff writes the unified format only. The labels name the report
+  # rows, so the headers hold no paths or timestamps.
+  local -a diff_opts=(-u -L file -L "other file")
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
 
   assert_file_exists "${file1}" || return 1
