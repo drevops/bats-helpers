@@ -416,6 +416,22 @@ _file_dir_exclude_names() {
 }
 
 ##
+# Reports whether a file is binary.
+#
+# A file holding a NUL byte is binary. 'read' stops at the first NUL and fails
+# at the end of the file, so it succeeds only for a binary file.
+#
+# Arguments:
+#   1. file: Path to check.
+#
+# Returns:
+#   0 when the file is binary, 1 when it is not.
+##
+_file_is_binary() {
+  IFS= read -r -d '' _ <"${1}"
+}
+
+##
 # Writes the paths of the files of a directory whose contents a needle matches.
 #
 # Regular files only are searched, and binary files are skipped. The contents
@@ -457,10 +473,8 @@ _file_dir_match_files() {
 
   while IFS= read -r -d '' file; do
     # Reading a binary file into a Bash string would stop at its first NUL, so
-    # binaries are told apart first. A NUL count via `tr` is used instead of
-    # `grep -I`, whose binary-detection option BusyBox grep does not
-    # implement and silently ignores.
-    if [ -s "${file}" ] && [ "$(LC_ALL=C tr -dc '\0' <"${file}" | wc -c)" -gt 0 ]; then
+    # binaries are told apart first.
+    if _file_is_binary "${file}"; then
       continue
     fi
 

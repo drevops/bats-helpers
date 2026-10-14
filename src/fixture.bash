@@ -166,9 +166,7 @@ fixture_dump_dir() {
   local line
 
   while IFS= read -r file; do
-    # A NUL count via `tr` instead of `grep -I`, which BusyBox grep does
-    # not implement and silently ignores.
-    if [ -s "${dir}/${file}" ] && [ "$(LC_ALL=C tr -dc '\0' <"${dir}/${file}" | wc -c)" -gt 0 ]; then
+    if _file_is_binary "${dir}/${file}"; then
       flunk "Fixture file '${file}' is not a text file."
       return 1
     fi

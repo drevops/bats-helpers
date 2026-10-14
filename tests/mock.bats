@@ -1223,6 +1223,19 @@ bats_require_minimum_version 1.13.0
   assert_failure
 }
 
+@test "mock_sandbox_enable keeps the directory search working inside the sandbox" {
+  mkdir -p "${BATS_TEST_TMPDIR}/dir"
+  printf 'needle\n' >"${BATS_TEST_TMPDIR}/dir/text.txt"
+  printf 'binary\000needle\n' >"${BATS_TEST_TMPDIR}/dir/binary.dat"
+
+  mock_sandbox_enable
+
+  assert_dir_contains_string "${BATS_TEST_TMPDIR}/dir" "needle"
+  assert_dir_not_contains_string "${BATS_TEST_TMPDIR}/dir" "binary"
+
+  mock_verify
+}
+
 @test "mock_sandbox_enable keeps the BATS harness working inside the sandbox" {
   mock_curl="$(mock_command "curl")"
 
