@@ -847,9 +847,11 @@ _file_assert_equal() {
   local file1="${3}"
   local file2="${4}"
 
-  # Plain diff already defaults to the normal format on GNU, BSD and
-  # BusyBox; `--normal` is a GNU-only spelling BusyBox rejects.
-  local -a diff_opts=()
+  # `-u` pins the output format: GNU diff defaults to the normal format,
+  # BusyBox diff is often built with unified as its default and does not
+  # know `--normal`, so neither default nor a GNU-only spelling is
+  # portable. BusyBox, BSD and GNU all honour `-u`.
+  local -a diff_opts=(-u)
   [ "${ignore_spaces}" = 1 ] && diff_opts+=(-B -b)
 
   assert_file_exists "${file1}" || return 1

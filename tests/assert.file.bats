@@ -671,9 +671,9 @@ case       : insensitive
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
   assert_failure
-  assert_output_contains "difference (4 lines):"
-  assert_output_contains "< Third line"
-  assert_output_contains "> Third line changed"
+  assert_output_contains "difference (7 lines):"
+  assert_output_contains "-Third line"
+  assert_output_contains "+Third line changed"
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"
   assert_failure
@@ -695,8 +695,8 @@ case       : insensitive
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
   assert_failure
-  assert_output_contains "< Third line"
-  assert_output_contains "> Third line changed"
+  assert_output_contains "-Third line"
+  assert_output_contains "+Third line changed"
 
   run assert_files_equal "${BATS_TEST_TMPDIR}/missing.txt" "${BATS_TEST_TMPDIR}/missing_other.txt"
   assert_failure
@@ -715,12 +715,12 @@ case       : insensitive
 
   run assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
   assert_failure
-  assert_output_not_contains "< Third line"
-  assert_output_not_contains "> Third line changed"
+  assert_output_not_contains "-Third line"
+  assert_output_not_contains "+Third line changed"
 
   run assert_files_not_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_newline.txt" 1
   assert_failure
-  assert_output_not_contains "<"
+  assert_output_not_contains "+++"
 
   run assert_files_not_equal "${BATS_TEST_TMPDIR}/missing.txt" "${BATS_TEST_TMPDIR}/text.txt"
   assert_failure
