@@ -133,6 +133,9 @@ jobs:
 
     steps:
       - name: Install tooling
+        # Bash is what this step installs, so the step itself runs under sh,
+        # which Alpine ships.
+        shell: sh
         run: apk add -q bash nodejs npm git
 
       - name: Checkout code
