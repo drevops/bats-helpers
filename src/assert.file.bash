@@ -181,8 +181,6 @@ assert_file_mode() {
   local parsed
   assert_file_exists "${file}" || return 1
 
-  # BSD stat speaks `-f`. Both GNU and BusyBox stat speak `-c`; GNU accepts
-  # `--printf` too, BusyBox does not, so the portable form is used.
   if [ "$(uname)" = "Darwin" ]; then
     parsed="$(printf "%.3o\n" $(($(stat -f '0%Lp' "${file}") & ~0022)))"
   else
