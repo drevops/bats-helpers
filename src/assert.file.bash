@@ -181,10 +181,12 @@ assert_file_mode() {
   local parsed
   assert_file_exists "${file}" || return 1
 
+  # BSD stat speaks `-f`. Both GNU and BusyBox stat speak `-c`; GNU accepts
+  # `--printf` too, BusyBox does not, so the portable form is used.
   if [ "$(uname)" = "Darwin" ]; then
     parsed="$(printf "%.3o\n" $(($(stat -f '0%Lp' "${file}") & ~0022)))"
   else
-    parsed="$(printf "%.3o\n" $(($(stat --printf '0%a' "${file}") & ~0022)))"
+    parsed="$(printf "%.3o\n" $(($(stat -c '0%a' "${file}") & ~0022)))"
   fi
 
   if [ "${parsed}" != "${perm}" ]; then
@@ -455,9 +457,10 @@ _file_dir_match_files() {
 
   while IFS= read -r -d '' file; do
     # Reading a binary file into a Bash string would stop at its first NUL, so
-    # binaries are told apart first, with the same probe the fixture serialiser
-    # uses.
-    if [ -s "${file}" ] && ! LC_ALL=C grep -Iq '^' "${file}"; then
+    # binaries are told apart first. A NUL count via `tr` is used instead of
+    # `grep -I`, whose binary-detection option BusyBox grep does not
+    # implement and silently ignores.
+    if [ -s "${file}" ] && [ "$(LC_ALL=C tr -dc '\0' <"${file}" | wc -c)" -gt 0 ]; then
       continue
     fi
 
