@@ -815,6 +815,21 @@ case       : insensitive
   assert_output_contains "Unable to compare the files."
 }
 
+@test "A line holding 'diff:' is compared as content rather than read as an error" {
+  printf 'lint:\n  diff: false\n' >"${BATS_TEST_TMPDIR}/changed.yml"
+  printf 'lint:\n  diff: true\n' >"${BATS_TEST_TMPDIR}/changed_other.yml"
+  printf 'diff: kept\nvalue: 1\n' >"${BATS_TEST_TMPDIR}/context.txt"
+  printf 'diff: kept\nvalue: 2\n' >"${BATS_TEST_TMPDIR}/context_other.txt"
+
+  assert_files_not_equal "${BATS_TEST_TMPDIR}/changed.yml" "${BATS_TEST_TMPDIR}/changed_other.yml"
+  assert_files_not_equal "${BATS_TEST_TMPDIR}/context.txt" "${BATS_TEST_TMPDIR}/context_other.txt"
+
+  run assert_files_equal "${BATS_TEST_TMPDIR}/changed.yml" "${BATS_TEST_TMPDIR}/changed_other.yml"
+  assert_failure
+  assert_output_contains "-- Files are not equal --"
+  assert_output_not_contains "Unable to compare the files."
+}
+
 @test "assert_dirs_equal" {
   mkdir -p "${BATS_TEST_TMPDIR}/t11"
   mkdir -p "${BATS_TEST_TMPDIR}/t12"

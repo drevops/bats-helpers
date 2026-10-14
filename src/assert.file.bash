@@ -757,13 +757,7 @@ assert_dir_not_matches_case() {
 #   not.
 ##
 _file_compare_failed() {
-  # GNU diff exits 2 when it cannot read an operand; BusyBox diff exits 1
-  # there, indistinguishable from a difference by status alone. A real
-  # difference only ever prints hunks, so diff's diagnostic output is what
-  # tells the two apart on both implementations.
-  if [ "${1}" -le 1 ] && ! [[ ${2} == *"diff:"* ]]; then
-    return 0
-  fi
+  [ "${1}" -le 1 ] && return 0
 
   flunk "Unable to compare the files. ${2}"
 }
@@ -866,6 +860,13 @@ _file_assert_equal() {
   local difference
   local compare_status=0
   difference="$(diff "${diff_opts[@]}" "${file1}" "${file2}" 2>&1)" || compare_status=$?
+
+  # BusyBox diff exits 0 or 1 when it cannot read an operand. A unified diff
+  # prefixes every line of the files, so a line opening with 'diff: ' is a
+  # diagnostic.
+  if [[ $'\n'${difference} == *$'\n'"diff: "* ]]; then
+    compare_status=2
+  fi
 
   # A comparison that could not run is checked before the outcome, so that its
   # status is never read as a difference between the files.
