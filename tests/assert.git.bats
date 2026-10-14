@@ -103,6 +103,14 @@ load _test_helper
   git --work-tree="${BATS_TEST_TMPDIR}/fixture/git_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" commit -m "First commit" >/dev/null
   run assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
   assert_failure
+
+  # Git exports 'GIT_DIR' to hooks, so a suite run from one inherits it.
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/dirty_repo"
+  git --work-tree="${BATS_TEST_TMPDIR}/fixture/dirty_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/dirty_repo/.git" init >/dev/null
+  file_mktouch "${BATS_TEST_TMPDIR}/fixture/dirty_repo/uncommitted_file"
+  GIT_DIR="${BATS_TEST_TMPDIR}/fixture/dirty_repo/.git" run assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
+  assert_failure
+
   file_mktouch "${BATS_TEST_TMPDIR}/fixture/git_repo/other_uncommitted_file"
   assert_git_not_clean "${BATS_TEST_TMPDIR}/fixture/git_repo"
 }
@@ -149,4 +157,9 @@ load _test_helper
 
   run assert_git_file_not_tracked "2.txt" "${BATS_TEST_TMPDIR}/fixture/not_git_repo"
   assert_failure
+
+  # Git exports 'GIT_DIR' to hooks, so a suite run from one inherits it.
+  fixture_prepare_dir "${BATS_TEST_TMPDIR}/fixture/empty_repo"
+  git --work-tree="${BATS_TEST_TMPDIR}/fixture/empty_repo" --git-dir="${BATS_TEST_TMPDIR}/fixture/empty_repo/.git" init >/dev/null
+  GIT_DIR="${BATS_TEST_TMPDIR}/fixture/git_repo/.git" assert_git_file_not_tracked "1.txt" "${BATS_TEST_TMPDIR}/fixture/empty_repo"
 }
