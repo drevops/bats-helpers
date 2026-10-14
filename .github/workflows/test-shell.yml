@@ -111,3 +111,45 @@ jobs:
         if: ${{ !cancelled() && github.event.inputs.enable_terminal }}
         uses: mxschmitt/action-tmate@35b54afac29c97fb54faba5b513f8fbd1882f113 # v3.24
         timeout-minutes: 20
+
+  test-shell-alpine:
+    # Alpine runs BusyBox coreutils and BusyBox grep, not the GNU userland
+    # the runner legs provide. That is a real dependency difference - the
+    # runner matrix cannot see BusyBox behaviour - so the leg exists to keep
+    # the assertions portable. The image is pinned by digest so Renovate can
+    # track it. Deps-normal only: the lowest leg is a bats-version axis
+    # already covered on every runner OS.
+    name: alpine:3.20, Deps normal
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:3.20@sha256:c64c687cbea9300178b30c95835354e34c4e4febc4badfe27102879de0483b5e
+      # No init in a container means no orphan reaper; tini as PID1 provides
+      # what the init on a real system does.
+      options: --init
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Install tooling
+        run: apk add -q bash nodejs npm git
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Config Git user for tests.
+        run: git config --global user.name "Test user" && git config --global user.email "someone@example.com" && git config --global --add safe.directory "${PWD}"
+
+      - name: Run tests
+        run: ./node_modules/.bin/bats tests
