@@ -757,7 +757,13 @@ assert_dir_not_matches_case() {
 #   not.
 ##
 _file_compare_failed() {
-  [ "${1}" -le 1 ] && return 0
+  # GNU diff exits 2 when it cannot read an operand; BusyBox diff exits 1
+  # there, indistinguishable from a difference by status alone. A real
+  # difference only ever prints hunks, so diff's diagnostic output is what
+  # tells the two apart on both implementations.
+  if [ "${1}" -le 1 ] && ! [[ ${2} == *"diff:"* ]]; then
+    return 0
+  fi
 
   flunk "Unable to compare the files. ${2}"
 }
