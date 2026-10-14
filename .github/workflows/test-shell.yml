@@ -113,18 +113,13 @@ jobs:
         timeout-minutes: 20
 
   test-shell-alpine:
-    # Alpine runs BusyBox coreutils and BusyBox grep, not the GNU userland
-    # the runner legs provide. That is a real dependency difference - the
-    # runner matrix cannot see BusyBox behaviour - so the leg exists to keep
-    # the assertions portable. The image is pinned by digest so Renovate can
-    # track it. Deps-normal only: the lowest leg is a bats-version axis
-    # already covered on every runner OS.
-    name: alpine:3.20, Deps normal
+    # Alpine provides BusyBox in place of the GNU or BSD userland of the other
+    # legs.
+    name: alpine, Deps normal
     runs-on: ubuntu-latest
     container:
-      image: alpine:3.20@sha256:c64c687cbea9300178b30c95835354e34c4e4febc4badfe27102879de0483b5e
-      # No init in a container means no orphan reaper; tini as PID1 provides
-      # what the init on a real system does.
+      image: alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+      # The init reaps the processes the tests kill, so none stays a zombie.
       options: --init
 
     defaults:
@@ -133,8 +128,7 @@ jobs:
 
     steps:
       - name: Install tooling
-        # Bash is what this step installs, so the step itself runs under sh,
-        # which Alpine ships.
+        # Bash is not installed until this step has run.
         shell: sh
         run: apk add -q bash nodejs npm git
 
@@ -143,8 +137,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # setup-node's cached build is glibc-linked and cannot run on musl;
-      # Alpine's own nodejs package is used instead.
+      # 'actions/setup-node' installs a glibc build, so Node comes from Alpine.
       - name: Install dependencies
         run: npm install
 
