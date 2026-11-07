@@ -1,9 +1,6 @@
 <p align="center">
   <a href="https://bats-helpers.drevops.com" rel="noopener">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="logo-dark.png">
-    <img width="420" src="logo.png" alt="BATS helpers logo">
-  </picture></a>
+  <img width="420" src="logo.png" alt="BATS helpers logo"></a>
 </p>
 
 <h1 align="center">BATS helpers</h1>
