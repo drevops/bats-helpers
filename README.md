@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://bats-helpers.drevops.com" rel="noopener">
- <img width=200px height=200px src="https://placehold.jp/000000/ffffff/200x200.png?text=BATS%20helpers&css=%7B%22border-radius%22%3A%22%20100px%22%7D" alt="BATS helpers logo"></a>
+  <img width="420" src="logo.png" alt="BATS helpers logo"></a>
 </p>
 
 <h1 align="center">BATS helpers</h1>
