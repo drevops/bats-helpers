@@ -91,7 +91,7 @@ format_error() {
     esac
 
     [ "${#1}" -gt "${width}" ] && width="${#1}"
-    [[ ${2} == *$'\n'* ]] && multiline=1
+    case "${2}" in *$'\n'*) multiline=1 ;; esac
 
     keys+=("${1}")
     values+=("${2}")
@@ -103,9 +103,9 @@ format_error() {
   # is what makes the mismatch readable only once either of them spans lines.
   local diffable=0
   if [ "${expected_index}" -ge 0 ] && [ "${actual_index}" -ge 0 ]; then
-    if [[ ${values[expected_index]} == *$'\n'* ]] || [[ ${values[actual_index]} == *$'\n'* ]]; then
-      diffable=1
-    fi
+    case "${values[expected_index]}${values[actual_index]}" in
+      *$'\n'*) diffable=1 ;;
+    esac
   fi
 
   ##

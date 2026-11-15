@@ -706,6 +706,16 @@ case       : insensitive
   assert_failure
 }
 
+@test "assert_files_equal keeps each conditional on 1 trace line" {
+  local trace="${BATS_TEST_TMPDIR}/trace.log"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
+  cp "${BATS_TEST_DIRNAME}/fixtures/text_changed.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  trace_run "${trace}" assert_files_equal "${BATS_TEST_TMPDIR}/text.txt" "${BATS_TEST_TMPDIR}/text_changed.txt"
+
+  assert_trace_single_line "${trace}" '+ assert_files_equal '
+}
+
 @test "assert_files_not_equal" {
   cp "${BATS_TEST_DIRNAME}/fixtures/text.txt" "${BATS_TEST_TMPDIR}/text.txt"
   cp "${BATS_TEST_DIRNAME}/fixtures/text_newline.txt" "${BATS_TEST_TMPDIR}/text_newline.txt"

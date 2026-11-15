@@ -400,9 +400,9 @@ _mock_set_property() {
   local property_value="${3?'Property value must be specified'}"
   local n="${4-}"
 
-  if [[ ${property_value} == '-' ]]; then
-    property_value="$(cat -)"
-  fi
+  case "${property_value}" in
+    '-') property_value="$(cat -)" ;;
+  esac
 
   # The value is written with 'printf' because 'echo' would read a value of
   # '-n', '-e' or '-E' as one of its own flags and swallow it.
@@ -638,9 +638,9 @@ _mock_spec_set_property() {
     return 1
   fi
 
-  if [[ ${property_value} == '-' ]]; then
-    property_value="$(cat -)"
-  fi
+  case "${property_value}" in
+    '-') property_value="$(cat -)" ;;
+  esac
 
   # The value is written with 'printf' because 'echo' would read a value of
   # '-n', '-e' or '-E' as one of its own flags and swallow it.

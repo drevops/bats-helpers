@@ -795,6 +795,18 @@ bats_require_minimum_version 1.13.0
   assert_output_contains "Create it with 'mock_spec_add' first."
 }
 
+@test "_mock_set_property and _mock_spec_set_property keep each conditional on 1 trace line" {
+  local trace="${BATS_TEST_TMPDIR}/trace.log"
+  mock_git="$(mock_command "git")"
+  spec="$(mock_spec_add "${mock_git}")"
+
+  trace_run "${trace}" mock_set_output "${mock_git}" $'first\nsecond'
+  trace_run "${trace}" mock_spec_set_output "${spec}" $'first\nsecond'
+
+  assert_trace_single_line "${trace}" '+ mock_set_output '
+  assert_trace_single_line "${trace}" '+ mock_spec_set_output '
+}
+
 @test "_mock_spec_set_property writes the value literally" {
   mock_git="$(mock_command "git")"
 

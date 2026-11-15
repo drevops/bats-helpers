@@ -271,10 +271,13 @@ dataprovider_matrix() {
       return 1
     fi
 
-    if [[ $(declare -p "${name}") != "declare -a"* ]]; then
-      flunk "Value list '${name}' is not an indexed array."
-      return 1
-    fi
+    case "$(declare -p "${name}")" in
+      "declare -a"*) ;;
+      *)
+        flunk "Value list '${name}' is not an indexed array."
+        return 1
+        ;;
+    esac
 
     ref="${name}[@]"
     list=("${!ref}")

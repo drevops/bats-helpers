@@ -369,10 +369,12 @@ _fixture_list_files() {
 
     file="${file#./}"
 
-    if [[ ${file} == *$'\n'* ]]; then
-      flunk "Fixture file name '${file}' contains a newline, which a marker line cannot hold."
-      return 1
-    fi
+    case "${file}" in
+      *$'\n'*)
+        flunk "Fixture file name '${file}' contains a newline, which a marker line cannot hold."
+        return 1
+        ;;
+    esac
 
     files+=("${file}")
   done < <({ cd "${dir}" && find . -type f -print0; } || printf '\0')

@@ -465,6 +465,17 @@ EXPECTED
   assert_output_contains "contains a newline"
 }
 
+@test "fixture_dump_dir keeps each conditional on 1 trace line" {
+  local trace="${BATS_TEST_TMPDIR}/trace.log"
+  dir="${BATS_TEST_TMPDIR}/tree"
+  mkdir -p "${dir}"
+  printf 'first\nsecond\n' >"${dir}/file.txt"
+
+  trace_run "${trace}" fixture_dump_dir "${dir}"
+
+  assert_trace_single_line "${trace}" '+ fixture_dump_dir '
+}
+
 @test "_fixture_list_files with a directory it cannot walk" {
   run _fixture_list_files "${BATS_TEST_TMPDIR}/missing"
   assert_failure

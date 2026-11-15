@@ -692,6 +692,21 @@ second"
   assert_failure
 }
 
+@test "steps_run keeps each conditional on 1 trace line" {
+  local trace="${BATS_TEST_TMPDIR}/trace.log"
+  declare -a STEPS=(
+    "@somebin # 0 # someval"
+    "first
+second"
+    "- first
+third"
+  )
+
+  trace_run "${trace}" steps_run "setup"
+
+  assert_trace_single_line "${trace}" '+ steps_run '
+}
+
 @test "steps_run with a wildcard command" {
   declare -a STEPS=(
     "@somebin * # 0 # wildcard output 1"

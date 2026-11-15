@@ -35,3 +35,49 @@ setup() {
 teardown() {
   cleanup_run
 }
+
+##
+# Runs a command with shell tracing on and appends the trace to a file.
+#
+# Arguments:
+#   1. trace: File to append the trace to.
+#   2. command: Command to run, followed by its arguments.
+##
+trace_run() {
+  local trace="${1}"
+  shift
+
+  # The subshell keeps the outer trace descriptor, which kcov reads, open.
+  (
+    exec 3>>"${trace}"
+    BASH_XTRACEFD=3
+    PS4='+ '
+    set -x
+    "$@" || true
+    set +x
+  )
+}
+
+##
+# Asserts that a trace holds a record and keeps each conditional on 1 line.
+#
+# Arguments:
+#   1. trace: Trace file written by 'trace_run'.
+#   2. record: Substring of a record the trace must hold.
+##
+assert_trace_single_line() {
+  local trace="${1}"
+  local record="${2}"
+  local -a lines
+  local line
+
+  assert_file_contains_case "${trace}" "${record}"
+
+  mapfile -t lines <"${trace}"
+
+  # Bash before 5.3 traces a multi-line word in single quotes with its line
+  # breaks intact, so only the '[[ ]]' records are checked for spanning lines.
+  for line in "${lines[@]}"; do
+    case "${line}" in *'[['*) assert_string_ends_with_case "${line}" "]]" ;; esac
+  done
+}

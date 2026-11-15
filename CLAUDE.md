@@ -95,6 +95,9 @@ A renamed variable is resolved into a local at the top of the function that owns
 ### Assertion Functions
 All assertion functions follow the pattern of checking conditions and calling `flunk()` with formatted error messages on failure.
 
+### Shell Trace Output
+Coverage runs trace every line of the library, and kcov reads only the first line of each trace record and prints the rest into the test log. Bash traces a `[[ ]]` test with its operands expanded and unquoted, so a `[[ ]]` whose pattern holds a newline, or whose operand may span lines, spreads across several trace lines. Test such a value with `case`, whose trace prints the word unexpanded: `case "${value}" in *$'\n'*) ... ;; esac`. `[ ]` is no substitute, since Bash before 5.3 traces a multi-line argument with its line breaks intact. The one exception is `=~` in `string_match`, which has no `case` equivalent. Each module's tests guard this with `trace_run` and `assert_trace_single_line` from `tests/_test_helper.bash`.
+
 ### Match Modes
 A match mode is chosen by picking the assertion, never by passing an option or setting a variable. Every combination of the three axes has its own name, so a call site says what it compares without a reader having to resolve a flag: the verb says how the needle is read (`contains`, `starts_with`, `ends_with`, `matches`, `matches_format`), the `not_` prefix negates, and the `_case` suffix matches case-sensitively. Absent that suffix the match ignores case. The mock argument matchers speak the same vocabulary: `starts_with`, `ends_with`, `contains` and `matches` ignore case and take the same `_case` suffix, while `equals` compares exactly and `present` reads no needle, so neither takes it.
 
