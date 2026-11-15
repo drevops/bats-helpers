@@ -322,29 +322,34 @@ string_match() {
   local case_sensitive="${4}"
   local anchor="${5}"
 
-  if [[ ${needle} != *$'\r'* ]]; then
+  # A '[[ ]]' trace prints its operands expanded and unquoted, so a multi-line
+  # value spans several trace lines. A 'case' trace prints the word unexpanded.
+  local needle_has_cr=0
+  case "${needle}" in *$'\r'*) needle_has_cr=1 ;; esac
+
+  if [ "${needle_has_cr}" = "0" ]; then
     # Command substitution strips a captured value's final LF, so a CRLF value
     # ends in a CR. Suffix removal without a match and pattern substitution are
-    # both quadratic in Bash, so a CR is removed only after '[[ == ]]' finds it.
-    if [[ ${haystack} == *$'\r' ]]; then
-      haystack="${haystack%$'\r'}"
-    fi
+    # both quadratic in Bash, so a CR is removed only after a match finds it.
+    case "${haystack}" in *$'\r') haystack="${haystack%$'\r'}" ;; esac
 
-    if [[ ${haystack} == *$'\r\n'* ]]; then
-      local -a haystack_lines
-      local i
+    case "${haystack}" in
+      *$'\r\n'*)
+        local -a haystack_lines
+        local i
 
-      mapfile -t haystack_lines <<<"${haystack}"
+        mapfile -t haystack_lines <<<"${haystack}"
 
-      for i in "${!haystack_lines[@]}"; do
-        if [[ ${haystack_lines[i]} == *$'\r' ]]; then
-          haystack_lines[i]="${haystack_lines[i]%$'\r'}"
-        fi
-      done
+        for i in "${!haystack_lines[@]}"; do
+          if [[ ${haystack_lines[i]} == *$'\r' ]]; then
+            haystack_lines[i]="${haystack_lines[i]%$'\r'}"
+          fi
+        done
 
-      printf -v haystack '%s\n' "${haystack_lines[@]}"
-      haystack="${haystack%$'\n'}"
-    fi
+        printf -v haystack '%s\n' "${haystack_lines[@]}"
+        haystack="${haystack%$'\n'}"
+        ;;
+    esac
   fi
 
   local nocasematch_was_set=0
@@ -363,13 +368,13 @@ string_match() {
   if [ "${mode}" = "literal" ]; then
     case "${anchor}" in
       start)
-        [[ ${haystack} == "${needle}"* ]] && result=0
+        case "${haystack}" in "${needle}"*) result=0 ;; esac
         ;;
       end)
-        [[ ${haystack} == *"${needle}" ]] && result=0
+        case "${haystack}" in *"${needle}") result=0 ;; esac
         ;;
       *)
-        [[ ${haystack} == *"${needle}"* ]] && result=0
+        case "${haystack}" in *"${needle}"*) result=0 ;; esac
         ;;
     esac
   else
@@ -386,6 +391,8 @@ string_match() {
 
     # A needle Bash cannot compile makes '[[ =~ ]]' write its own diagnostic,
     # which would reach the test output ahead of the library's own message.
+    # '=~' has no 'case' equivalent, so a multi-line haystack still spans
+    # several trace lines here.
     { [[ ${haystack} =~ ${pattern} ]] && result=0; } 2>/dev/null || result=$?
   fi
 
