@@ -360,7 +360,7 @@ load _test_helper
   assert_success
 }
 
-@test "string_match keeps a multi-line value on 1 trace line in literal mode" {
+@test "string_match keeps each conditional on 1 trace line in literal mode" {
   local trace="${BATS_TEST_TMPDIR}/trace.log"
   local haystack=$'HAYSTACK1\r\nHAYSTACK2\r\nHAYSTACK3\r'
 
@@ -385,8 +385,10 @@ load _test_helper
 
   mapfile -t lines <"${trace}"
 
+  # Bash before 5.3 traces a multi-line word in single quotes with its line
+  # breaks intact, so only the '[[ ]]' records are checked for spanning lines.
   for line in "${lines[@]}"; do
-    assert_string_starts_with_case "${line}" "+"
+    case "${line}" in *'[['*) assert_string_ends_with_case "${line}" "]]" ;; esac
   done
 }
 
