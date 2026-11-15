@@ -874,9 +874,9 @@ _file_assert_equal() {
   # BusyBox diff exits 0 or 1 when it cannot read an operand. A unified diff
   # prefixes every line of the files, so a line opening with 'diff: ' is a
   # diagnostic.
-  if [[ $'\n'${difference} == *$'\n'"diff: "* ]]; then
-    compare_status=2
-  fi
+  case $'\n'"${difference}" in
+    *$'\n'"diff: "*) compare_status=2 ;;
+  esac
 
   # A comparison that could not run is checked before the outcome, so that its
   # status is never read as a difference between the files.

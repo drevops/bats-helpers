@@ -396,6 +396,17 @@ provide_matrix_triples() {
   assert_equal "a1x a1y a2x a2y b1x b1y b2x b2y" "${matrix_seen[*]}"
 }
 
+@test "dataprovider_matrix keeps each conditional on 1 trace line" {
+  local trace="${BATS_TEST_TMPDIR}/trace.log"
+  declare -a matrix_first=($'first\nsecond' "third")
+
+  matrix_ignore() { :; }
+
+  trace_run "${trace}" dataprovider_matrix "matrix_ignore" matrix_first
+
+  assert_trace_single_line "${trace}" '+ dataprovider_matrix '
+}
+
 @test "dataprovider_matrix with failing cases" {
   declare -a matrix_first=("a" "b")
   declare -a matrix_second=("1" "2")

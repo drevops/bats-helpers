@@ -179,6 +179,15 @@ second
 --"
 }
 
+@test "format_error keeps each conditional on 1 trace line" {
+  local trace="${BATS_TEST_TMPDIR}/trace.log"
+
+  trace_run "${trace}" format_error "Strings are not equal" "expected" "3" "actual" "2"
+  trace_run "${trace}" format_error "Strings are not equal" "expected" $'first\nsecond' "actual" $'first\nchanged'
+
+  assert_trace_single_line "${trace}" '+ format_error '
+}
+
 @test "format_error rewrites the volatile paths" {
   run format_error "File does not exist" "file" "${BATS_TEST_TMPDIR}/some.txt"
   assert_success

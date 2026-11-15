@@ -364,32 +364,13 @@ load _test_helper
   local trace="${BATS_TEST_TMPDIR}/trace.log"
   local haystack=$'HAYSTACK1\r\nHAYSTACK2\r\nHAYSTACK3\r'
 
-  # The subshell keeps the outer trace descriptor, which kcov reads, open.
-  (
-    exec 3>"${trace}"
-    BASH_XTRACEFD=3
-    PS4='+ '
-    set -x
-    string_match "${haystack}" "haystack1" "literal" 0 "start" || true
-    string_match "${haystack}" "HAYSTACK3" "literal" 1 "end" || true
-    string_match "${haystack}" $'HAYSTACK2\nHAYSTACK3' "literal" 1 "anywhere" || true
-    string_match "${haystack}" $'HAYSTACK2\r\nHAYSTACK3' "literal" 0 "anywhere" || true
-    string_match "${haystack}" $'ABSENT\nHAYSTACK3' "literal" 1 "anywhere" || true
-    set +x
-  )
+  trace_run "${trace}" string_match "${haystack}" "haystack1" "literal" 0 "start"
+  trace_run "${trace}" string_match "${haystack}" "HAYSTACK3" "literal" 1 "end"
+  trace_run "${trace}" string_match "${haystack}" $'HAYSTACK2\nHAYSTACK3' "literal" 1 "anywhere"
+  trace_run "${trace}" string_match "${haystack}" $'HAYSTACK2\r\nHAYSTACK3' "literal" 0 "anywhere"
+  trace_run "${trace}" string_match "${haystack}" $'ABSENT\nHAYSTACK3' "literal" 1 "anywhere"
 
-  local -a lines
-  local line
-
-  assert_file_contains_case "${trace}" '+ string_match '
-
-  mapfile -t lines <"${trace}"
-
-  # Bash before 5.3 traces a multi-line word in single quotes with its line
-  # breaks intact, so only the '[[ ]]' records are checked for spanning lines.
-  for line in "${lines[@]}"; do
-    case "${line}" in *'[['*) assert_string_ends_with_case "${line}" "]]" ;; esac
-  done
+  assert_trace_single_line "${trace}" '+ string_match '
 }
 
 @test "string_format_to_regex" {

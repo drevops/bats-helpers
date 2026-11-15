@@ -96,10 +96,17 @@ steps_run() {
 
     _steps_debug "STEP START: '${item}'"
 
+    local item_type="present"
+    case "${item}" in
+      "@"*) item_type="command" ;;
+      "-"*) item_type="absent" ;;
+      "= "*) item_type="call" ;;
+    esac
+
     ##
     ## Command.
     ##
-    if [[ ${item} == "@"* ]]; then
+    if [ "${item_type}" = "command" ]; then
       _steps_debug "Type: command"
       _steps_debug
 
@@ -111,10 +118,12 @@ steps_run() {
 
       # A step is split with 'read', which stops at the first newline, so a step
       # holding one would lose its status, output and side effect in silence.
-      if [[ ${item} == *$'\n'* ]]; then
-        flunk "A command step must be a single line. Continue a long step with '\\' and write a newline in the output as '\\n'."
-        return 1
-      fi
+      case "${item}" in
+        *$'\n'*)
+          flunk "A command step must be a single line. Continue a long step with '\\' and write a newline in the output as '\\n'."
+          return 1
+          ;;
+      esac
 
       local ESCAPED_HASH_PLACEHOLDER="__ESCAPED_HASH__"
       local item_with_placeholders="${item//\\#/${ESCAPED_HASH_PLACEHOLDER}}"
@@ -224,7 +233,7 @@ steps_run() {
     ##
     ## String absent.
     ##
-    elif [[ ${item} == "-"* ]]; then
+    elif [ "${item_type}" = "absent" ]; then
       _steps_debug "Type: string absent"
 
       if [ "${phase}" = "${PHASE_ASSERT}" ]; then
@@ -233,7 +242,7 @@ steps_run() {
     ##
     ## Expected call.
     ##
-    elif [[ ${item} == "= "* ]]; then
+    elif [ "${item_type}" = "call" ]; then
       _steps_debug "Type: expected call"
 
       if [ "${phase}" = "${PHASE_ASSERT}" ]; then
